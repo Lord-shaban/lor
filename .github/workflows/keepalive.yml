@@ -1,7 +1,7 @@
 name: Keepalive
 
 # Supabase pauses free projects after 7 days of inactivity.
-# A weekly no-op query keeps the demo database awake.
+# A weekly no-op request keeps the demo database awake.
 on:
   schedule:
     - cron: '17 6 * * 1'
@@ -12,5 +12,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping database
-        if: ${{ secrets.SUPABASE_KEEPALIVE_URL != '' }}
-        run: curl -sfS "${{ secrets.SUPABASE_KEEPALIVE_URL }}" -o /dev/null && echo "database awake"
+        env:
+          # The `secrets` context cannot be read from a step-level `if`, so the
+          # guard lives in the script instead. A fork or a fresh clone has no
+          # secret configured and should skip rather than fail.
+          KEEPALIVE_URL: ${{ secrets.SUPABASE_KEEPALIVE_URL }}
+        run: |
+          if [ -z "$KEEPALIVE_URL" ]; then
+            echo "SUPABASE_KEEPALIVE_URL is not set; nothing to ping."
+            exit 0
+          fi
+          curl -sfS "$KEEPALIVE_URL" -o /dev/null
+          echo "Database is awake."
