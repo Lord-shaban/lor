@@ -8,6 +8,13 @@
       "when": 1788462315407,
       "tag": "0000_rooms_and_knocks",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788466841208,
+      "tag": "0001_rate_limits",
+      "breakpoints": true
     }
   ]
 }

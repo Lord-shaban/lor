@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { RoomLauncher } from "@/components/room-launcher";
 import { LiveDot } from "@/components/ui/live-dot";
 
 const REPO = "https://github.com/Lord-shaban/lor";
@@ -68,6 +69,8 @@ export default function Home({ params }: PageProps<"/[locale]">) {
               ),
             })}
           </p>
+
+          <RoomLauncher />
 
           <section className="mt-12 rounded-lg border border-border bg-surface p-6">
             <h2 className="sr-only">{t("roadmapHeading")}</h2>
