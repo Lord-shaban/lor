@@ -2,7 +2,7 @@
   "name": "lor",
   "version": "0.0.0",
   "private": true,
-  "description": "LOR. \u2014 open-source video meetings that remember. No account, no time limit, no download.",
+  "description": "LOR. — open-source video meetings that remember. No account, no time limit, no download.",
   "license": "AGPL-3.0-only",
   "workspaces": [
     "apps/*",
@@ -17,10 +17,11 @@
     "start": "npm run start --workspace web",
     "lint": "npm run lint --workspace web",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "prepare": "husky",
+    "prepare": "node .husky/install.mjs",
     "db:generate": "npm run db:generate --workspace @lor/db",
     "db:migrate": "npm run db:migrate --workspace @lor/db",
-    "db:studio": "npm run db:studio --workspace @lor/db"
+    "db:studio": "npm run db:studio --workspace @lor/db",
+    "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",
