@@ -1,0 +1,16 @@
+# Normalize line endings so the repository is identical on every platform.
+* text=auto eol=lf
+
+# Shell scripts and git hooks must stay LF even on Windows checkouts.
+*.sh text eol=lf
+.husky/* text eol=lf
+
+# Binary assets.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.woff2 binary
+*.webm binary
+*.wav binary
+*.mp3 binary
