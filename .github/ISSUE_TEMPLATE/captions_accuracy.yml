@@ -1,0 +1,56 @@
+name: Caption accuracy
+description: Captions got a bilingual (Arabic/English) sentence wrong.
+labels: ['type:fix', 'area:stt']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Mixed Arabic/English speech is the hardest thing LOR does, and real examples are
+        the most useful thing you can give us. Every report here can become an eval case.
+
+  - type: textarea
+    id: said
+    attributes:
+      label: What was actually said
+      placeholder: عملت الـ deploy على الـ server وشوفت الـ logs
+    validations:
+      required: true
+
+  - type: textarea
+    id: got
+    attributes:
+      label: What the caption showed
+      placeholder: عملت الديبلوي على السيرفر وشوفت اللوجز
+    validations:
+      required: true
+
+  - type: dropdown
+    id: failure
+    attributes:
+      label: Failure type
+      options:
+        - English word written in Arabic script (transliteration)
+        - Sentence was translated instead of transcribed
+        - Word order or punctuation scrambled (bidi rendering)
+        - Wrong words entirely
+        - Proper noun / technical term wrong
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Engine in use
+      options:
+        - Default (server key)
+        - My own key (BYOK)
+        - Local Whisper (in-browser)
+        - Web Speech API
+        - Not sure
+
+  - type: input
+    id: dialect
+    attributes:
+      label: Dialect / accent
+      placeholder: Egyptian Arabic (Cairo)
