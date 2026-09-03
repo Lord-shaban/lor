@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 344 140" width="344" height="140" role="img" aria-label="LOR.">
+  <title>LOR.</title>
+  <!--
+    The wordmark is drawn as a single uniform stroke so it holds up at small sizes.
+    The dot is not punctuation: it is the live indicator, which is why it carries
+    the accent colour while the letters stay neutral.
+  -->
+  <g fill="none" stroke="#f8fafc" stroke-width="24" stroke-linecap="butt" stroke-linejoin="round">
+    <path d="M12 20 V108 H66" />
+    <circle cx="138" cy="70" r="38" />
+    <path d="M222 20 V120" />
+    <path d="M222 32 H244 A22 22 0 0 1 244 76 H222" />
+    <path d="M222 76 L260 113" />
+  </g>
+  <circle cx="317" cy="105" r="15" fill="#818cf8" />
+</svg>

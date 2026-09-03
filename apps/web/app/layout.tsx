@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LOR — Live Open Rooms",
+  title: "LOR. — Live Open Rooms",
   description:
     "Open-source video meetings that remember. No account, no time limit, no download.",
 };

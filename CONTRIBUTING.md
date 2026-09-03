@@ -1,6 +1,6 @@
-# Contributing to LOR
+# Contributing to LOR.
 
-Thanks for being here. LOR is built in the open, one issue at a time.
+Thanks for being here. LOR. is built in the open, one issue at a time.
 
 ## The one rule
 
@@ -93,7 +93,7 @@ are not going to fix it. Good examples become eval cases.
 
 ### Both directions, always
 
-LOR is Arabic-first and English-second, not English with a translation bolted on. If
+LOR. is Arabic-first and English-second, not English with a translation bolted on. If
 you change layout, check it in both. Use CSS logical properties (`margin-inline-start`,
 not `margin-left`). Never hardcode `dir="rtl"` on text that may contain Latin script —
 use `dir="auto"` and wrap Latin runs in `<bdi>`.
