@@ -58,11 +58,6 @@
     "copied": "Copied",
     "getReady": "Get ready",
     "checkBeforeJoining": "See and hear yourself before anyone else does.",
-    "connected": "In the room",
-    "joinedAs": "Joined as {name}",
-    "canPublish": "Your camera and microphone are live.",
-    "waitingForHost": "Waiting for the host to let you in. You can see and hear the room, but cannot turn anything on yet.",
-    "videoComingSoon": "The video grid arrives in v0.1, immediately after this.",
     "errors": {
       "locked": "This room is locked. The host has stopped letting people in.",
       "notFound": "That room does not exist. Check the link.",
@@ -123,6 +118,29 @@
       "firefox": "Firefox",
       "safari": "Safari",
       "other": "Your browser"
+    }
+  },
+  "call": {
+    "aloneInRoom": "You are the only one here. Send the link to someone.",
+    "youLabel": "{name} (you)",
+    "muted": "Microphone off",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "quality": {
+      "fair": "Fair connection",
+      "poor": "Poor connection"
+    },
+    "muteMic": "Mute",
+    "unmuteMic": "Unmute",
+    "stopCamera": "Stop camera",
+    "startCamera": "Start camera",
+    "shareScreen": "Share screen",
+    "stopSharing": "Stop sharing",
+    "waitingToPublish": "Waiting for the host to let you in before you can turn anything on.",
+    "leave": "Leave",
+    "reconnecting": "Connection lost — reconnecting.",
+    "errors": {
+      "connection": "Connection problem: {message}"
     }
   }
 }
