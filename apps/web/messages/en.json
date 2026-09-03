@@ -1,0 +1,37 @@
+{
+  "metadata": {
+    "title": "LOR. — Live Open Rooms",
+    "description": "Open-source video meetings that remember. No account, no time limit, no download."
+  },
+  "home": {
+    "eyebrow": "Live Open Rooms",
+    "tagline": "Open-source video meetings that remember. No account, no time limit, no download.",
+    "codeSwitchExample": "And it understands you when you say «عملت الـ <term>deploy</term> على الـ <term>server</term>».",
+    "status": "<version>v0.0</version> — the repository foundation is in place. The meeting itself arrives in <version>v0.1</version>.",
+    "building": "building",
+    "links": {
+      "source": "Source",
+      "roadmap": "Roadmap",
+      "contributing": "Contributing",
+      "license": "AGPL-3.0"
+    }
+  },
+  "releases": {
+    "v0_0": "Foundation",
+    "v0_1": "The Call",
+    "v0_1_5": "Captions",
+    "v0_1_8": "Canvas",
+    "v0_2": "Decisions",
+    "v0_3": "Action items",
+    "v0_4": "Meeting timeline",
+    "v0_5": "Meeting memory",
+    "v0_6": "Semantic search",
+    "v0_7": "Integrations",
+    "v0_8": "Hardening",
+    "v1_0": "Plugin ecosystem"
+  },
+  "localeSwitcher": {
+    "label": "Language",
+    "switchTo": "Switch to {locale}"
+  }
+}

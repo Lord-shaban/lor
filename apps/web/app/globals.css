@@ -2,14 +2,16 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0f172a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Latin first, Arabic second: a browser picks the first font in the stack that
+     covers the character, so each script gets the face drawn for it. */
+  --font-sans: var(--font-latin), var(--font-arabic), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +24,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
