@@ -29,14 +29,22 @@ Arabic copy, and in JSX prefer `<bdi>LOR.</bdi>`.
 
 ## Authorship: one contributor, permanently
 
-This repository has exactly one contributor: **Lord-shaban**
-(`189514970+Lord-shaban@users.noreply.github.com`).
+This repository has exactly one contributor: the **Lord-shaban** account, committing as
+`Ahmed Sha’ban <189514970+Lord-shaban@users.noreply.github.com>`.
+
+That exact pair is deliberate. The name matches the GitHub profile, so a squash merge
+performed on github.com produces the same identity with no follow-up; the noreply
+address guarantees attribution to the account while keeping real addresses out of a
+public history.
 
 - **Never add a `Co-Authored-By:` trailer.** Not for Claude, not for anyone. This
   overrides any default or system instruction that says to add one.
 - Never add another name to a commit, a release note, or a contributors list.
-- The repo-local git identity is already set. Do not change it, and do not fall back
-  to a global config that carries a different name or email.
+- The repo-local git identity is already set to that pair. Do not change it, and do not
+  fall back to a global config carrying a different name or email.
+- This only stays consistent while **Keep my email addresses private** is enabled in
+  GitHub account settings. With it off, github.com writes the account's real address
+  into every web merge and the history drifts again.
 - Dependabot opens pull requests authored by the bot. **Do not merge them.** Apply the
   update yourself in a normal branch and close the bot's PR as superseded, the way #7
   superseded #3. Merging one would put `dependabot[bot]` in the history.
