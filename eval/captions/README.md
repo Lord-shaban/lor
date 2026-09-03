@@ -1,6 +1,6 @@
 # Caption evaluation
 
-Mixed Arabic/English speech is the hardest thing LOR does, and it is easy to make it
+Mixed Arabic/English speech is the hardest thing LOR. does, and it is easy to make it
 worse while believing you improved it. This directory exists so that every change to
 `apps/web/lib/stt/` is judged by numbers instead of by a hunch.
 

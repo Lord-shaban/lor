@@ -11,7 +11,7 @@ before any public disclosure.
 
 ## What we consider high severity
 
-LOR handles live audio, meeting transcripts, and third-party API keys. Anything that
+LOR. handles live audio, meeting transcripts, and third-party API keys. Anything that
 exposes those is treated as high severity:
 
 - An API key reaching our server logs, our database, or another user

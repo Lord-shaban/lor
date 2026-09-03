@@ -1,6 +1,9 @@
 <div align="center">
 
-# LOR
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
+  <img src="assets/logo.svg" alt="LOR." width="200">
+</picture>
 
 **Live Open Rooms** — open-source video meetings that remember.
 
@@ -23,10 +26,10 @@ No account. No time limit. No download.
 > tagged with the release it ships in, so nothing here claims to work before it does.
 > Follow the [milestones](https://github.com/Lord-shaban/lor/milestones) to track progress.
 
-## What LOR is
+## What LOR. is
 
 Most video tools treat a meeting as something that happens and then disappears. You get
-a recording nobody watches and a chat log nobody reads. LOR treats the meeting as the
+a recording nobody watches and a chat log nobody reads. LOR. treats the meeting as the
 beginning: what was decided, who owes what, and what was said stay searchable
 afterwards.
 
@@ -38,9 +41,9 @@ It is also built for people who speak two languages in one sentence. **"عملت
 transcription tool mangles it. Getting that right is a first-class goal here, not an
 afterthought.
 
-## Why LOR
+## Why LOR.
 
-|  | LOR | Google Meet (free) | Zoom (free) | Jitsi |
+|  | LOR. | Google Meet (free) | Zoom (free) | Jitsi |
 |---|:---:|:---:|:---:|:---:|
 | Time limit | none | 60 min for 3+ | 40 min | none |
 | Account required | no | host needs one | host needs one | no |
@@ -72,7 +75,7 @@ afterthought.
 
 Standard speech recognition fails on bilingual speech in a specific, documented way:
 it transliterates English into Arabic script — *"ديبلوي"* instead of *"deploy"* — or
-quietly translates instead of transcribing. LOR addresses this in layers:
+quietly translates instead of transcribing. LOR. addresses this in layers:
 
 - **Voice-activity chunking**, so audio is split on sentence boundaries rather than
   arbitrary five-second windows. Cutting mid-word is the single biggest cause of
@@ -104,13 +107,13 @@ whiteboard and collaborative notes sync live over the meeting's own data channel
 ### Integrations and plugins — `v0.7`, `v1.0`
 
 Signed outgoing webhooks, calendar and note-taking integrations, task export, and a
-documented plugin API with a permission model so the community can extend LOR without
+documented plugin API with a permission model so the community can extend LOR. without
 forking it.
 
 ## AI keys
 
 AI features work out of the box on the hosted demo using the operator's key, with a
-fair per-user daily quota. When that quota runs out, LOR points you at a free key of
+fair per-user daily quota. When that quota runs out, LOR. points you at a free key of
 your own and shows you how to get one — it takes about two minutes.
 
 Your own key is stored encrypted in your browser and sent **directly to the provider**
@@ -221,13 +224,13 @@ Every change goes through an issue and a pull request — including small ones. 
 [`good first issue`](https://github.com/Lord-shaban/lor/labels/good%20first%20issue), and
 read [CONTRIBUTING.md](CONTRIBUTING.md) first.
 
-Bilingual speech examples that LOR gets wrong are genuinely useful even without a fix.
+Bilingual speech examples that LOR. gets wrong are genuinely useful even without a fix.
 Open a [caption accuracy issue](https://github.com/Lord-shaban/lor/issues/new?template=captions_accuracy.yml)
 and it becomes an eval case.
 
 ## License
 
-[AGPL-3.0](LICENSE). You may run, modify, and self-host LOR freely. If you offer a
+[AGPL-3.0](LICENSE). You may run, modify, and self-host LOR. freely. If you offer a
 modified version as a network service, you must publish your changes.
 
 Built on [LiveKit](https://livekit.io), [Yjs](https://yjs.dev),
