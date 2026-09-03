@@ -1,6 +1,12 @@
 /** @type {import('@commitlint/types').UserConfig} */
 export default {
   extends: ['@commitlint/config-conventional'],
+
+  // Dependabot writes "chore(deps): Bump foo from 1 to 2" and offers no way to
+  // lowercase that verb, so its commits would fail subject-case forever. Exempt
+  // the bot rather than relaxing the rule for people.
+  ignores: [(message) => /^Signed-off-by: dependabot\[bot\]/m.test(message)],
+
   rules: {
     'scope-enum': [
       2,
