@@ -24,6 +24,7 @@ export function ParticipantTile({
   isLocal,
   isPinned,
   onTogglePin,
+  source = Track.Source.Camera,
   className,
   style,
 }: {
@@ -32,16 +33,19 @@ export function ParticipantTile({
   isLocal: boolean;
   isPinned: boolean;
   onTogglePin: () => void;
+  /** Which of this participant's tracks to draw. */
+  source?: Track.Source;
   className?: string;
   style?: React.CSSProperties;
 }) {
   const t = useTranslations("call");
 
-  const cameraPublication = participant.getTrackPublication(Track.Source.Camera);
+  const isScreenShare = source === Track.Source.ScreenShare;
+  const videoPublication = participant.getTrackPublication(source);
   const micPublication = participant.getTrackPublication(Track.Source.Microphone);
 
-  const cameraOn = Boolean(
-    cameraPublication?.isSubscribed && !cameraPublication.isMuted,
+  const videoOn = Boolean(
+    videoPublication?.isSubscribed && !videoPublication.isMuted,
   );
   const micOn = Boolean(micPublication && !micPublication.isMuted);
 
@@ -58,9 +62,15 @@ export function ParticipantTile({
         className,
       )}
     >
-      <MediaTrack publication={cameraPublication} muted={isLocal} />
+      <MediaTrack
+        publication={videoPublication}
+        muted={isLocal}
+        // A shared window is any shape. Cropping it to 16:9 is the one case
+        // where filling the tile loses information people need to read.
+        contain={isScreenShare}
+      />
 
-      {!cameraOn && (
+      {!videoOn && (
         <div className="absolute inset-0 flex items-center justify-center">
           <span
             aria-hidden="true"
@@ -93,7 +103,20 @@ export function ParticipantTile({
           className="min-w-0 truncate text-sm text-[#f4f4f5]"
           title={name}
         >
-          {isLocal ? t("youLabel", { name }) : name}
+          {/* The name is isolated in <bdi>. "أحمد's screen" reorders into
+              "s screen'أحمد" without it: the Latin possessive is neutral text
+              following an RTL run, so it lands on the wrong side. */}
+          {isScreenShare
+            ? t.rich("sharingLabel", {
+                name: isLocal ? t("you") : name,
+                n: (chunks) => <bdi>{chunks}</bdi>,
+              })
+            : isLocal
+              ? t.rich("youLabel", {
+                  name,
+                  n: (chunks) => <bdi>{chunks}</bdi>,
+                })
+              : name}
         </span>
 
         <QualityBadge quality={participant.connectionQuality} />
@@ -117,9 +140,11 @@ export function ParticipantTile({
 function MediaTrack({
   publication,
   muted,
+  contain = false,
 }: {
   publication: TrackPublication | undefined;
   muted: boolean;
+  contain?: boolean;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
 
@@ -144,7 +169,7 @@ function MediaTrack({
       // The local tile is the one showing you. Playing your own audio back is
       // an echo, so it is always silenced.
       muted={muted}
-      className="h-full w-full object-cover"
+      className={cn("h-full w-full", contain ? "object-contain" : "object-cover")}
     />
   );
 }

@@ -122,7 +122,7 @@
   },
   "call": {
     "aloneInRoom": "You are the only one here. Send the link to someone.",
-    "youLabel": "{name} (you)",
+    "youLabel": "<n>{name}</n> (you)",
     "muted": "Microphone off",
     "pin": "Pin",
     "unpin": "Unpin",
@@ -141,6 +141,10 @@
     "reconnecting": "Connection lost — reconnecting.",
     "errors": {
       "connection": "Connection problem: {message}"
-    }
+    },
+    "you": "you",
+    "sharingLabel": "<n>{name}</n>'s screen",
+    "youAreSharing": "You are sharing your screen",
+    "someoneElseSharing": "Someone else is already sharing"
   }
 }

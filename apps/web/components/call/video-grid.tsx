@@ -63,13 +63,19 @@ export function VideoGrid() {
     participant.getTrackPublication(Track.Source.ScreenShare)?.isSubscribed,
   );
 
-  const focused =
-    participants.find((participant) => participant.identity === pinned) ??
-    sharing ??
-    null;
+  // A screen share wins over a pin: whoever is sharing is what the room is
+  // looking at, and a stale pin from earlier should not hide it.
+  const focused = sharing
+    ? sharing
+    : (participants.find((participant) => participant.identity === pinned) ??
+      null);
 
+  // The sharer stays in the filmstrip as well, so their face is still visible
+  // beside their screen rather than replaced by it.
   const others = focused
-    ? participants.filter((p) => p.identity !== focused.identity)
+    ? sharing
+      ? participants
+      : participants.filter((p) => p.identity !== focused.identity)
     : participants;
 
   const layout = computeGridLayout({
@@ -102,6 +108,7 @@ export function VideoGrid() {
           <div className="min-h-0 flex-1">
             <ParticipantTile
               participant={focused}
+              source={sharing ? Track.Source.ScreenShare : Track.Source.Camera}
               isActiveSpeaker={activeSpeaker === focused.identity}
               isLocal={focused.identity === localParticipant.identity}
               isPinned={pinned === focused.identity}

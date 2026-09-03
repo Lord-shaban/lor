@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { LiveKitRoom, useRoomContext } from "@livekit/components-react";
-import { RoomEvent, type RoomOptions } from "livekit-client";
+import {
+  LiveKitRoom,
+  useLocalParticipant,
+  useRoomContext,
+} from "@livekit/components-react";
+import { RoomEvent, Track, type RoomOptions } from "livekit-client";
 import { VideoGrid } from "@/components/call/video-grid";
 import { CallControls } from "@/components/call/call-controls";
 import type { JoinDetails } from "@/components/prejoin/prejoin";
@@ -45,6 +49,19 @@ export function CallRoom({
       // Three layers, so the server can hand a large tile a good stream and a
       // thumbnail a cheap one without the sender encoding twice.
       simulcast: true,
+
+      // A shared screen is mostly still text. Resolution is what makes it
+      // readable and frame rate is what does not, so the bitrate goes into
+      // pixels: 1080p at 5fps rather than 720p at 30. Encoding a screen like a
+      // face is the usual reason shared code is unreadable.
+      screenShareEncoding: {
+        maxBitrate: 2_500_000,
+        maxFramerate: 5,
+        priority: "high",
+      },
+      // One layer. Simulcasting a screen share halves the bitrate available to
+      // the layer people are actually reading.
+      screenShareSimulcastLayers: [],
     },
     videoCaptureDefaults: {
       deviceId: details.videoDeviceId,
@@ -74,6 +91,8 @@ export function CallRoom({
         // element is styled entirely by the design system.
         className="flex min-h-0 flex-1 flex-col"
       >
+        <SharingBanner />
+
         <main className="min-h-0 flex-1 overflow-hidden p-3">
           <VideoGrid />
         </main>
@@ -134,5 +153,43 @@ function ConnectionWatcher() {
     >
       {t("reconnecting")}
     </p>
+  );
+}
+
+/**
+ * A standing reminder that your screen is on other people's monitors.
+ *
+ * Forgetting is the expensive mistake in a video call — the one that puts a
+ * password manager or a private message in front of a room. The browser shows
+ * its own bar, but it is easy to miss behind a maximised window, so this says
+ * it inside the call and offers the stop button right there.
+ *
+ * It also covers the reverse case: when someone stops from the browser's own
+ * bar, LiveKit ends the track and this disappears without any extra wiring,
+ * because it reads the publication rather than a flag we set ourselves.
+ */
+function SharingBanner() {
+  const t = useTranslations("call");
+  const { localParticipant } = useLocalParticipant();
+
+  const publication = localParticipant.getTrackPublication(
+    Track.Source.ScreenShare,
+  );
+  if (!publication) return null;
+
+  return (
+    <div
+      role="status"
+      className="flex items-center justify-center gap-3 bg-[#f87171] px-4 py-2 text-sm text-[#0a0a0b]"
+    >
+      <span>{t("youAreSharing")}</span>
+      <button
+        type="button"
+        onClick={() => localParticipant.setScreenShareEnabled(false)}
+        className="rounded-md bg-[#0a0a0b] px-3 py-1 text-xs font-medium text-[#f4f4f5]"
+      >
+        {t("stopSharing")}
+      </button>
+    </div>
   );
 }
