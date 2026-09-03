@@ -38,5 +38,26 @@
     "light": "Light",
     "dark": "Dark",
     "current": "Theme: {theme}"
+  },
+  "launcher": {
+    "start": "Start a meeting",
+    "starting": "Starting…",
+    "join": "Join",
+    "joinLabel": "Or join one you were sent",
+    "joinPlaceholder": "mza-krfq-tqn",
+    "errors": {
+      "badCode": "That code is not right. Check it, or paste the whole link.",
+      "createFailed": "The meeting could not be created. Try again.",
+      "tooMany": "That is a lot of meetings in a short time. Wait a little and try again.",
+      "offline": "No connection. Check your network and try again."
+    }
+  },
+  "room": {
+    "title": "Your meeting is ready",
+    "ready": "Room created",
+    "shareToInvite": "Send this link to anyone you want in the room.",
+    "copy": "Copy link",
+    "copied": "Copied",
+    "comingSoon": "Video and audio arrive in v0.1, with the prejoin screen just before them."
   }
 }

@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
+  integer,
   jsonb,
   pgEnum,
   pgTable,
@@ -130,3 +131,31 @@ export type Room = typeof rooms.$inferSelect;
 export type NewRoom = typeof rooms.$inferInsert;
 export type Knock = typeof knocks.$inferSelect;
 export type NewKnock = typeof knocks.$inferInsert;
+
+/**
+ * A fixed-window counter, keyed by whatever the caller decides identifies a
+ * requester.
+ *
+ * We run on serverless, where an in-memory limiter is worthless: every instance
+ * keeps its own counter and the effective limit is the real one multiplied by
+ * however many instances happen to be warm. This has to live in the database.
+ *
+ * The same table carries the AI quotas in `v0.1.5`, which is why the key is an
+ * opaque string rather than something room- or IP-shaped.
+ */
+export const rateLimits = pgTable("rate_limits", {
+  /**
+   * Opaque. For room creation it is a daily-salted hash of the client address,
+   * so the counter works without keeping an address that can be correlated
+   * across days.
+   */
+  key: text("key").primaryKey(),
+
+  count: integer("count").notNull().default(0),
+
+  windowStart: timestamp("window_start", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type RateLimit = typeof rateLimits.$inferSelect;
