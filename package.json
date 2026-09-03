@@ -16,8 +16,11 @@
     "build": "npm run build --workspace web",
     "start": "npm run start --workspace web",
     "lint": "npm run lint --workspace web",
-    "typecheck": "npm run typecheck --workspace web",
-    "prepare": "husky"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "prepare": "husky",
+    "db:generate": "npm run db:generate --workspace @lor/db",
+    "db:migrate": "npm run db:migrate --workspace @lor/db",
+    "db:studio": "npm run db:studio --workspace @lor/db"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",
