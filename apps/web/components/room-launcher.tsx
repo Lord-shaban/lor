@@ -73,7 +73,7 @@ export function RoomLauncher() {
         {creating ? t("starting") : t("start")}
       </Button>
 
-      <form onSubmit={join} className="mt-6 flex flex-wrap items-start gap-3">
+      <form onSubmit={join} className="mt-6 flex flex-wrap items-end gap-3">
         <div className="min-w-0 flex-1">
           <label htmlFor="join-code" className="mb-2 block text-sm text-muted">
             {t("joinLabel")}
@@ -100,11 +100,12 @@ export function RoomLauncher() {
           />
         </div>
 
+        {/* items-end on the form lines this up with the bottom of the input,
+            so the label's height can change without a magic offset here. */}
         <Button
           type="submit"
           variant="secondary"
           size="lg"
-          className="mt-[1.875rem]"
           disabled={!joinInput.trim()}
         >
           {t("join")}
