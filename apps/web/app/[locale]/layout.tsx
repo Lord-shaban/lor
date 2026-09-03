@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Geist, Geist_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { ThemeScript } from "@/components/theme-script";
 import { direction, routing, type Locale } from "@/i18n/routing";
 import "../globals.css";
 
@@ -12,7 +13,7 @@ const geistSans = Geist({
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-mono",
+  variable: "--font-mono-latin",
   subsets: ["latin"],
 });
 
@@ -71,6 +72,9 @@ export default async function LocaleLayout({
       dir={direction[locale as Locale]}
       className={`${geistSans.variable} ${geistMono.variable} ${plexArabic.variable} h-full antialiased`}
     >
+      <head>
+        <ThemeScript />
+      </head>
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>

@@ -4,17 +4,16 @@
     "description": "Open-source video meetings that remember. No account, no time limit, no download."
   },
   "home": {
-    "eyebrow": "Live Open Rooms",
     "tagline": "Open-source video meetings that remember. No account, no time limit, no download.",
     "codeSwitchExample": "And it understands you when you say «عملت الـ <term>deploy</term> على الـ <term>server</term>».",
-    "status": "<version>v0.0</version> — the repository foundation is in place. The meeting itself arrives in <version>v0.1</version>.",
     "building": "building",
     "links": {
       "source": "Source",
       "roadmap": "Roadmap",
       "contributing": "Contributing",
       "license": "AGPL-3.0"
-    }
+    },
+    "roadmapHeading": "Release roadmap"
   },
   "releases": {
     "v0_0": "Foundation",
@@ -33,5 +32,11 @@
   "localeSwitcher": {
     "label": "Language",
     "switchTo": "Switch to {locale}"
+  },
+  "theme": {
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark",
+    "current": "Theme: {theme}"
   }
 }

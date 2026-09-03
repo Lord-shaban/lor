@@ -4,17 +4,16 @@
     "description": "اجتماعات فيديو مفتوحة المصدر بتفتكر. من غير حساب، من غير حد زمني، من غير تحميل."
   },
   "home": {
-    "eyebrow": "Live Open Rooms",
     "tagline": "اجتماعات فيديو مفتوحة المصدر بتفتكر. من غير حساب، من غير حد زمني، من غير تحميل.",
     "codeSwitchExample": "وبيفهم لما تقول «عملت الـ <term>deploy</term> على الـ <term>server</term>».",
-    "status": "‏<version>v0.0</version> — أساس المشروع جاهز. المكالمة نفسها بتنزل في <version>v0.1</version>.",
     "building": "جارٍ",
     "links": {
       "source": "الكود",
       "roadmap": "خريطة الطريق",
       "contributing": "المساهمة",
       "license": "AGPL-3.0"
-    }
+    },
+    "roadmapHeading": "خريطة الإصدارات"
   },
   "releases": {
     "v0_0": "الأساس",
@@ -33,5 +32,11 @@
   "localeSwitcher": {
     "label": "اللغة",
     "switchTo": "التبديل إلى {locale}"
+  },
+  "theme": {
+    "system": "تلقائي",
+    "light": "فاتح",
+    "dark": "غامق",
+    "current": "المظهر: {theme}"
   }
 }

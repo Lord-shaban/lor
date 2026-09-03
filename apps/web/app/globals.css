@@ -1,28 +1,121 @@
 @import "tailwindcss";
 
+/*
+ * Tokens. The reasoning lives in docs/design-system.md — read it before adding a
+ * shade or a radius, so the next change extends this rather than works around it.
+ */
+
 :root {
+  /* Neutrals are true grey with a barely perceptible cool cast. Faces are the
+     subject of this product, and a tinted surround shifts skin tones. */
   --background: #ffffff;
-  --foreground: #0f172a;
+  --surface: #f7f7f8;
+  --surface-strong: #eeeef0;
+  --foreground: #0f0f11;
+  --muted: #6b6b73;
+  --border: #e4e4e7;
+
+  /* Red means live: recording, an open microphone, a transmitting caption.
+     Never a brand accent, never a default button. `--danger` shares the value
+     because both mean "this is consequential right now". */
+  --live: #dc2626;
+  --danger: #dc2626;
+  --on-live: #ffffff;
+
+  /* A primary action is the foreground at full strength. There is deliberately
+     no decorative accent hue to compete with `--live`. */
+  --on-foreground: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #0a0a0b;
+    --surface: #141416;
+    --surface-strong: #1e1e21;
+    --foreground: #f4f4f5;
+    --muted: #a1a1aa;
+    --border: #2a2a2e;
+    --live: #f87171;
+    --danger: #f87171;
+    --on-live: #0a0a0b;
+    --on-foreground: #0a0a0b;
+  }
+}
+
+/* An explicit choice wins over the system preference in both directions. */
+:root[data-theme="dark"] {
+  --background: #0a0a0b;
+  --surface: #141416;
+  --surface-strong: #1e1e21;
+  --foreground: #f4f4f5;
+  --muted: #a1a1aa;
+  --border: #2a2a2e;
+  --live: #f87171;
+  --danger: #f87171;
+  --on-live: #0a0a0b;
+  --on-foreground: #0a0a0b;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
   --color-foreground: var(--foreground);
-  /* Latin first, Arabic second: a browser picks the first font in the stack that
-     covers the character, so each script gets the face drawn for it. */
-  --font-sans: var(--font-latin), var(--font-arabic), system-ui, sans-serif;
-  --font-mono: var(--font-mono), ui-monospace, monospace;
-}
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-live: var(--live);
+  --color-danger: var(--danger);
+  --color-on-live: var(--on-live);
+  --color-on-foreground: var(--on-foreground);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Latin first, Arabic second: the browser picks the first face in the stack
+     that covers the character, so each script gets the one drawn for it. */
+  --font-sans: var(--font-latin), var(--font-arabic), system-ui, sans-serif;
+  --font-mono: var(--font-mono-latin), ui-monospace, monospace;
+
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1rem;
+  --text-base--line-height: 1.6;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.4;
+  --text-xl: 1.75rem;
+  --text-xl--line-height: 1.25;
+  --text-2xl: 2.5rem;
+  --text-2xl--line-height: 1.1;
+
+  /* Tiered on purpose: one radius everywhere flattens the hierarchy it should
+     be expressing. Small for inputs, medium for buttons, large for panels. */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+/* A focus ring is never removed. The foreground colour is the highest contrast
+   available in either theme, and the offset keeps it legible on a filled
+   control. */
+:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Motion explains a change; it never decorates. Everything here is opt-out. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

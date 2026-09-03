@@ -2,6 +2,8 @@ import { use } from "react";
 import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { LiveDot } from "@/components/ui/live-dot";
 
 const REPO = "https://github.com/Lord-shaban/lor";
 
@@ -34,92 +36,101 @@ export default function Home({ params }: PageProps<"/[locale]">) {
   const releases = useTranslations("releases");
 
   return (
-    <main className="flex flex-1 items-center justify-center px-6 py-16">
-      <div className="w-full max-w-xl">
-        <div className="flex items-start justify-between gap-6">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] opacity-50">
-            {t("eyebrow")}
+    <div className="flex min-h-full flex-1 flex-col">
+      <header className="flex items-center justify-end gap-2 px-6 py-4">
+        <ThemeToggle />
+        <LocaleSwitcher />
+      </header>
+
+      <main className="flex flex-1 items-center justify-center px-6 pb-20">
+        <div className="w-full max-w-xl">
+          {/* The dot is part of the wordmark, not punctuation: it is the live
+              indicator, so it takes the red the logo uses. <bdi> keeps it on
+              the right of the letters when the page direction is RTL. */}
+          <h1 className="text-2xl font-semibold tracking-tight">
+            <bdi>
+              LOR<span className="text-live">.</span>
+            </bdi>
+          </h1>
+
+          <p className="mt-4 max-w-prose text-base text-balance">
+            {t("tagline")}
           </p>
-          <LocaleSwitcher />
-        </div>
 
-        {/* The dot is part of the wordmark, not punctuation: it is the live
-            indicator, so it takes the red the logo uses. <bdi> keeps it on the
-            right of the letters when the page direction is RTL. */}
-        <h1 className="mt-3 text-5xl font-semibold tracking-tight">
-          <bdi>
-            LOR<span className="text-red-500">.</span>
-          </bdi>
-        </h1>
-
-        <p className="mt-4 text-lg text-balance opacity-80">{t("tagline")}</p>
-
-        {/* dir="auto" lets the browser pick the paragraph direction from the
-            first strong character, and <bdi> isolates each Latin run so the
-            surrounding Arabic does not scramble its word order. */}
-        <p dir="auto" className="mt-2 text-lg text-balance opacity-80">
-          {t.rich("codeSwitchExample", {
-            term: (chunks) => <bdi className="font-medium">{chunks}</bdi>,
-          })}
-        </p>
-
-        <div className="mt-10 rounded-lg border border-current/15 p-5">
-          <p className="text-sm">
-            {t.rich("status", {
-              version: (chunks) => (
-                <span className="font-mono font-medium">{chunks}</span>
+          {/* The line that says what this product is for better than a feature
+              list would. dir="auto" picks the paragraph direction from the first
+              strong character, and <bdi> isolates each Latin run so the
+              surrounding Arabic does not scramble its word order. */}
+          <p dir="auto" className="mt-3 max-w-prose text-base text-muted">
+            {t.rich("codeSwitchExample", {
+              term: (chunks) => (
+                <bdi className="font-medium text-foreground">{chunks}</bdi>
               ),
             })}
           </p>
 
-          {/* Monospace suits the version tags, but no mono face covers Arabic, so
-              the release names would drop to an unrelated system fallback. The
-              tags keep mono; the names use the sans stack. */}
-          <ol className="mt-5 space-y-1.5 text-xs">
-            {RELEASES.map((release) => {
-              const isCurrent = release.tag === CURRENT_RELEASE;
-              return (
-                <li
-                  key={release.tag}
-                  className={isCurrent ? "flex gap-3" : "flex gap-3 opacity-45"}
-                >
-                  <span
-                    dir="ltr"
-                    className="w-14 shrink-0 font-mono tabular-nums"
-                  >
-                    {release.tag}
-                  </span>
-                  <span>{releases(release.key)}</span>
-                  {isCurrent && (
-                    <span className="ms-auto opacity-60">{t("building")}</span>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-        </div>
+          <section className="mt-12 rounded-lg border border-border bg-surface p-6">
+            <h2 className="sr-only">{t("roadmapHeading")}</h2>
 
-        <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-          <a className="underline underline-offset-4" href={REPO}>
-            {t("links.source")}
-          </a>
-          <a
-            className="underline underline-offset-4"
-            href={`${REPO}/milestones`}
-          >
-            {t("links.roadmap")}
-          </a>
-          <a
-            className="underline underline-offset-4"
-            href={`${REPO}/blob/main/CONTRIBUTING.md`}
-          >
-            {t("links.contributing")}
-          </a>
-          <span dir="ltr" className="opacity-50">
-            {t("links.license")}
-          </span>
+            <ol className="space-y-2 text-sm">
+              {RELEASES.map((release) => {
+                const isCurrent = release.tag === CURRENT_RELEASE;
+                return (
+                  <li
+                    key={release.tag}
+                    className={
+                      isCurrent
+                        ? "flex items-center gap-4"
+                        : "flex items-center gap-4 text-muted"
+                    }
+                  >
+                    {/* Monospace here is not texture: these are values that
+                        should align in a column. It is scoped to the tag
+                        because no monospace face covers Arabic. */}
+                    <span
+                      dir="ltr"
+                      className="w-14 shrink-0 font-mono text-xs tabular-nums"
+                    >
+                      {release.tag}
+                    </span>
+                    <span>{releases(release.key)}</span>
+                    {isCurrent && (
+                      <LiveDot
+                        label={t("building")}
+                        className="ms-auto text-xs"
+                      />
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+
+          <nav className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            <a
+              className="underline underline-offset-4 hover:text-muted"
+              href={REPO}
+            >
+              {t("links.source")}
+            </a>
+            <a
+              className="underline underline-offset-4 hover:text-muted"
+              href={`${REPO}/milestones`}
+            >
+              {t("links.roadmap")}
+            </a>
+            <a
+              className="underline underline-offset-4 hover:text-muted"
+              href={`${REPO}/blob/main/CONTRIBUTING.md`}
+            >
+              {t("links.contributing")}
+            </a>
+            <span dir="ltr" className="text-muted">
+              {t("links.license")}
+            </span>
+          </nav>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
