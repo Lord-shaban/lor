@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import {
   useLocalParticipant,
   useParticipants,
@@ -31,15 +31,19 @@ function canShareScreen(): boolean {
  */
 export function CallControls({
   canPublish,
+  chatOpen,
+  unread,
+  onToggleChat,
   onLeave,
 }: {
   canPublish: boolean;
-  /** Kept for the caller's benefit; the live state comes from the room. */
-  startMicOff?: boolean;
-  startCameraOff?: boolean;
+  chatOpen: boolean;
+  unread: number;
+  onToggleChat: () => void;
   onLeave: () => void;
 }) {
   const t = useTranslations("call");
+  const format = useFormatter();
   const room = useRoomContext();
   const participants = useParticipants();
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled } =
@@ -110,6 +114,44 @@ export function CallControls({
         // beats showing buttons that silently do nothing.
         <p className="text-sm text-[#a1a1aa]">{t("waitingToPublish")}</p>
       )}
+
+      {/* Outside the canPublish branch on purpose: someone still waiting to be
+          admitted has no camera, but they can still type — and asking to be let
+          in is exactly what they need to do. */}
+      <button
+        type="button"
+        onClick={onToggleChat}
+        aria-pressed={chatOpen}
+        aria-label={
+          unread > 0
+            ? t("chat.openWithUnread", { count: unread })
+            : chatOpen
+              ? t("chat.close")
+              : t("chat.open")
+        }
+        className={cn(
+          "relative h-11 rounded-md px-4 text-sm font-medium transition-colors duration-150",
+          chatOpen
+            ? "bg-[#f4f4f5] text-[#0a0a0b] hover:opacity-90"
+            : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
+        )}
+      >
+        {t("chat.title")}
+
+        {unread > 0 && (
+          // aria-hidden because the count is already in the button's label;
+          // announcing it twice is how a screen reader turns one message into
+          // two.
+          <span
+            aria-hidden="true"
+            className="absolute -top-1 -end-1 min-w-5 rounded-full bg-[#f87171] px-1.5 py-0.5 text-xs font-medium text-[#0a0a0b] tabular-nums"
+          >
+            {/* Localised, so an Arabic interface gets Arabic-Indic digits, and
+                isolated so they do not reorder against the button label. */}
+            <bdi>{format.number(unread)}</bdi>
+          </span>
+        )}
+      </button>
 
       <button
         type="button"

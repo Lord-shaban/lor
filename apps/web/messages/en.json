@@ -145,6 +145,18 @@
     "you": "you",
     "sharingLabel": "<n>{name}</n>'s screen",
     "youAreSharing": "You are sharing your screen",
-    "someoneElseSharing": "Someone else is already sharing"
+    "someoneElseSharing": "Someone else is already sharing",
+    "chat": {
+      "title": "Chat",
+      "open": "Open chat",
+      "openWithUnread": "Open chat, {count} unread",
+      "close": "Close chat",
+      "closeShort": "Close",
+      "empty": "No messages yet.",
+      "noHistory": "Chat lasts as long as the call does. Anything sent before you joined is not here, and nothing said here is kept afterwards.",
+      "placeholder": "Write a message",
+      "send": "Send",
+      "sendFailed": "That message did not send. Check your connection and try again."
+    }
   }
 }
