@@ -1,0 +1,16 @@
+name: Keepalive
+
+# Supabase pauses free projects after 7 days of inactivity.
+# A weekly no-op query keeps the demo database awake.
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping database
+        if: ${{ secrets.SUPABASE_KEEPALIVE_URL != '' }}
+        run: curl -sfS "${{ secrets.SUPABASE_KEEPALIVE_URL }}" -o /dev/null && echo "database awake"

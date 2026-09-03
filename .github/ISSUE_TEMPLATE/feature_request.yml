@@ -1,0 +1,45 @@
+name: Feature request
+description: Suggest something LOR should do.
+labels: ['type:feat']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the situation you are in, not the solution you have in mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How do we know it is done?
+      value: |
+        - [ ]
+        - [ ]
+
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: Which release does this belong to?
+      description: See the roadmap in the README.
+      options:
+        - 'v0.1 — The Call'
+        - 'v0.1.5 — Captions'
+        - 'v0.1.8 — Canvas'
+        - 'v0.2 — Decisions'
+        - 'v0.3 — Action items'
+        - 'v0.4 — Meeting timeline'
+        - 'v0.5 — Meeting memory'
+        - 'v0.6 — Semantic search'
+        - 'v0.7 — Integrations'
+        - 'v1.0 — Plugin ecosystem'
+        - "Not sure"

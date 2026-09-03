@@ -1,0 +1,11 @@
+# Default owner for everything.
+*                       @Lord-shaban
+
+# Anything that handles user API keys, audio, or transcripts gets an
+# explicit review. A leak here is the worst thing that can happen to this project.
+/apps/web/lib/llm/      @Lord-shaban
+/apps/web/lib/stt/      @Lord-shaban
+/apps/web/app/api/      @Lord-shaban
+
+# Workflow and release configuration.
+/.github/               @Lord-shaban

@@ -1,0 +1,67 @@
+name: Bug report
+description: Something is broken in a meeting, the UI, or the API.
+labels: ['type:fix']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Bugs in live media are easiest to fix with exact reproduction steps.
+        (بالعربي كمان تمام — اكتب براحتك.)
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1. Open a room at ...
+        2. Join from a second browser as ...
+        3. ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Joining / room codes
+        - Audio / video / screen share
+        - Captions and transcription
+        - AI summary / decisions / action items
+        - Whiteboard / notes
+        - Recording
+        - Host controls
+        - Self-hosting / Docker
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and OS
+      placeholder: Chrome 141 on Windows 11
+    validations:
+      required: true
+
+  - type: input
+    id: network
+    attributes:
+      label: Network
+      description: Relevant for media bugs — Wi-Fi, mobile data, VPN, corporate firewall?
+      placeholder: Mobile data (4G), Egypt
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: DevTools console errors. Redact any API keys before pasting.
+      render: text
