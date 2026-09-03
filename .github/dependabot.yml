@@ -13,6 +13,15 @@ updates:
         dependency-type: development
       livekit:
         patterns: ['*livekit*']
+    ignore:
+      # ESLint 10 changed the rule context API in a way eslint-plugin-react has
+      # not caught up with, and that plugin reaches us through
+      # eslint-config-next, so we cannot drop it:
+      #   TypeError: contextOrFilename.getFilename is not a function
+      #     at eslint-plugin-react/lib/util/version.js
+      # Revisit once eslint-config-next ships an ESLint 10 compatible plugin set.
+      - dependency-name: eslint
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions
     directory: /
