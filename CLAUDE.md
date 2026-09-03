@@ -135,6 +135,20 @@ the **LiveKit data channel**. We run no WebSocket server of our own. That constr
 what lets the same code run on serverless and on a single self-hosted box; do not break
 it by introducing one.
 
+## Design skills
+
+Two skills carry the UI work. They are gitignored (third-party licences, and
+`ui-ux-pro-max` alone is 3.7 MB), so a fresh clone installs them:
+
+```bash
+npx skills add https://github.com/anthropics/skills --skill frontend-design --agent claude-code
+npx skills add https://github.com/nextlevelbuilder/ui-ux-pro-max-skill --skill ui-ux-pro-max --agent claude-code
+```
+
+`skills-lock.json` is committed and pins both by hash. Use them for anything visual:
+the design system, the call layout, the prejoin screen, the landing page. They are the
+reason the UI should not read as a shadcn default with the colours swapped.
+
 ## Verification
 
 ```bash
@@ -152,3 +166,34 @@ just the result — say what was verified and what was not, and flag anything th
 looked correct. He asked for full GitHub access, so act on the repository directly
 rather than handing back instructions, but still confirm before anything destructive
 (history rewrites, force pushes, deleting branches or issues).
+
+## Where things stand
+
+Checked into the repository, so a fresh session does not have to rediscover it. The
+authoritative state is always GitHub — issues, milestones, and the board — not this
+section; update it when a release closes.
+
+**Done — `v0.0`.** Public repository, AGPL-3.0, bilingual README, logo, CI (commitlint,
+typecheck, lint, build), protected `main`, 22 labels, 12 milestones, and a public
+[roadmap board](https://github.com/users/Lord-shaban/projects/8).
+
+**Next — `v0.1`, "The Call".** Sixteen issues, all with acceptance criteria. They have a
+dependency order; the rest of the release builds on the first three:
+
+1. **#22** next-intl with Arabic-first RTL routing — everything renders text
+2. **#8** design system: tokens, dark mode, base components
+3. **#24** database schema and Drizzle setup
+4. Then #9 room codes → #10 host cookie → #11 create room → #12 LiveKit tokens →
+   #13 prejoin → #14 grid → #15 screen share → #16 chat → #17 low bandwidth →
+   #18 waiting room → #19 moderation → #20 PWA and QR → #21 end-to-end test
+
+**Blocked on the account owner, not on code:**
+
+- Vercel is not connected, so pull requests have no preview deploy yet
+- No LiveKit, Supabase, or Groq project exists, so `.env.local` is unfilled and nothing
+  past #24 can actually run
+- The domain price for `lor.dev` has not been checked
+
+**Settled, do not revisit:** LiveKit over mediasoup or mesh; all real-time state on the
+data channel rather than our own socket; ESLint pinned to 9; operator key first with
+BYOK as the fallback; AGPL-3.0.
