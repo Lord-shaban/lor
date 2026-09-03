@@ -15,8 +15,9 @@ The roadmap is `v0.0` through `v1.0`, one GitHub milestone per release.
 ## The name has a dot
 
 The product is **LOR.** — the trailing dot is part of the wordmark, not sentence
-punctuation. It is the live indicator, which is why it carries the accent colour
-(`#6366f1`) while the letters stay neutral.
+punctuation. It is the live indicator, so it takes the red
+that recording already means — `#dc2626` on light, `#f87171` on dark — while the
+letters stay neutral.
 
 Apply it in the logo, page titles, metadata, headings, and the repository description.
 The assets are `assets/logo.svg`, `assets/logo-dark.svg`, and `apps/web/app/icon.svg`;
