@@ -149,16 +149,6 @@ npx skills add https://github.com/nextlevelbuilder/ui-ux-pro-max-skill --skill u
 the design system, the call layout, the prejoin screen, the landing page. They are the
 reason the UI should not read as a shadcn default with the colours swapped.
 
-## Verification
-
-```bash
-npm run typecheck && npm run lint && npm run build
-```
-
-For anything touching the call, open the room in two browser profiles (one normal, one
-incognito) with different names. Throttle to Slow 3G in DevTools to check the
-low-bandwidth path.
-
 ## Working with Ahmed
 
 Replies in Egyptian Arabic; technical terms stay in English. He reads the reasoning, not
@@ -167,40 +157,89 @@ looked correct. He asked for full GitHub access, so act on the repository direct
 rather than handing back instructions, but still confirm before anything destructive
 (history rewrites, force pushes, deleting branches or issues).
 
+## Verification
+
+```bash
+npm run typecheck && npm run lint && npm test && npm run build
+```
+
+All four are required checks. Beyond them, **most of this project cannot be verified by
+reading it** — see `scripts/README.md`. A grid that measures itself, a permission prompt,
+a bidi label, two people seeing each other: each looked correct in the source and was
+wrong on screen.
+
+```bash
+# one page, waiting for a real condition
+node scripts/screenshot.mjs http://localhost:3000/en/<code> out.png "Microphone"
+
+# two browsers in one room, asserting video actually flows
+node scripts/two-party-call.mjs http://localhost:3000/en/<code> ./out
+```
+
+Then look at the image. Every layout bug in this project so far was found that way and
+none of them by reading code.
+
+## Mistakes already made here
+
+Each of these cost real time. The symptom is what identifies them.
+
+**Bidi reordering — three times now.** `LOR.` rendered as `.LOR` in Arabic prose;
+`أحمد's screen` rendered as `s screen'أحمد`. A neutral character or a Latin run adjacent
+to RTL text lands on the wrong side. Any label mixing scripts needs `<bdi>` around the
+foreign run, and Arabic message files need a LEFT-TO-RIGHT MARK after a trailing dot.
+Never `dir="rtl"` on text that may contain Latin.
+
+**`setState` inside an effect — rejected twice by lint.** The theme toggle and the prejoin
+both hit it. The fix is never to silence the rule: read from the DOM with
+`useSyncExternalStore`, or disable SSR for a component that has nothing to render on a
+server and initialise state directly.
+
+**A component measuring something it also sizes.** The video grid sized tiles from its own
+measured height, so the tiles stretched it, and the layout settled one column too narrow
+with the controls off screen. `overflow-hidden` on that container is load-bearing.
+
+**`"\."` in a JavaScript string is `"."`.** The middleware matcher compiled to `.*..*` —
+"one or more characters" — so every non-empty path skipped the middleware and every room
+link 404'd while `/` kept working. `lib/middleware-matcher.test.ts` guards it.
+
+**A full-viewport element inside a page wrapper.** The call rendered inside the room
+page's centred `max-w-4xl`, so `100dvh` overflowed and the grid measured 896px instead of
+the screen. Diagnosed by reading the geometry out of the live page.
+
 ## Where things stand
 
-Checked into the repository, so a fresh session does not have to rediscover it. The
-authoritative state is always GitHub — issues, milestones, and the board — not this
-section; update it when a release closes.
+GitHub is authoritative — issues, milestones, and the
+[board](https://github.com/users/Lord-shaban/projects/8). Update this when a release
+closes.
 
-**Done — `v0.0`.** Public repository, AGPL-3.0, bilingual README, logo, CI (commitlint,
-typecheck, lint, build), protected `main`, 22 labels, 12 milestones, and a public
-[roadmap board](https://github.com/users/Lord-shaban/projects/8).
+**Live:** <https://lor-bay.vercel.app>. Creating a room, the prejoin screen, joining, the
+video grid and screen sharing all work in production today.
 
-**Next — `v0.1`, "The Call".** Sixteen issues, all with acceptance criteria. They have a
-dependency order; the rest of the release builds on the first three:
+**Done.** `v0.0` in full. In `v0.1`: #9 room codes · #10 host cookie · #11 room creation ·
+#12 LiveKit tokens · #13 prejoin · #14 video grid · #15 screen share · #22 i18n · #24
+database · #8 design system.
 
-1. ~~**#22** next-intl with Arabic-first RTL routing~~ — done
-2. ~~**#24** database schema and Drizzle setup~~ — done, applied to Supabase
-3. **#8** design system: tokens, dark mode, base components
-4. Then #9 room codes → #10 host cookie → #11 create room → #12 LiveKit tokens →
-   #13 prejoin → #14 grid → #15 screen share → #16 chat → #17 low bandwidth →
-   #18 waiting room → #19 moderation → #20 PWA and QR → #21 end-to-end test
+**Next, in order.** #16 chat, reactions and raise hand over the data channel · #17 low
+bandwidth and connection quality · #18 waiting room · #19 host moderation · #20 PWA and QR
+· #21 Playwright end-to-end.
 
-**Infrastructure that exists.** Supabase project `pvklemglnehhgwuszgyq` ("lor",
-eu-central-1, free tier), reachable through the Supabase MCP server. Schema is applied
-and verified there. The project ref is not a secret; the database password is, and it is
-not retrievable through the API — take the **transaction pooler** string (port 6543) from
-Project Settings, not the direct connection.
+#16 is the one to start with. The data channel is already the plan of record for every
+piece of real-time state; #17, #18 and #19 all build on it.
 
-**Blocked on the account owner, not on code:**
+**Infrastructure, all live and configured.** Supabase project `pvklemglnehhgwuszgyq`
+(eu-central-1), reachable through the Supabase MCP — schema applied there, migrations in
+`packages/db/migrations`. LiveKit Cloud, verified working. Vercel project `lor`, deploying
+on every push, with all secrets set. `apps/web/.env.local` holds working local values and
+is gitignored.
 
-- Vercel is not connected, so pull requests have no preview deploy yet
-- No LiveKit or Groq project exists. LiveKit blocks #12 onward: no media server means no
-  token to mint and nothing to join
-- `DATABASE_URL` is not in any `.env.local`, so nothing runs against the database locally
-- The domain price for `lor.dev` has not been checked
+The database connection string must be the **transaction pooler** on port 6543
+(`aws-0-eu-central-1.pooler.supabase.com`), not the direct connection.
 
-**Settled, do not revisit:** LiveKit over mediasoup or mesh; all real-time state on the
-data channel rather than our own socket; ESLint pinned to 9; operator key first with
-BYOK as the fallback; AGPL-3.0.
+**One thing still on the account owner:** preview deployments are behind Vercel
+Authentication, so pull request preview links ask for a login. Vercel → project `lor` →
+Settings → Deployment Protection → Vercel Authentication → Disabled.
+
+**Settled, do not reopen.** LiveKit over mediasoup or mesh. All real-time state on the
+data channel rather than our own socket. ESLint pinned to 9. Radix directly rather than
+shadcn/ui. Operator key first with BYOK as the fallback. The default locale carries no URL
+prefix. The call screen is always dark. AGPL-3.0.
