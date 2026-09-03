@@ -39,11 +39,8 @@ export default async function RoomPage({ params }: PageProps<"/[locale]/[code]">
   // — lor.dev/mza-krfq-tqn — while the English one carries /en.
   const path = getPathname({ href: `/${room.code}`, locale: locale as Locale });
 
-  return (
-    <main className="flex flex-1 justify-center px-6 py-12">
-      <div className="w-full max-w-4xl">
-        <RoomEntry code={room.code} inviteUrl={`${origin}${path}`} />
-      </div>
-    </main>
-  );
+  // No wrapper here on purpose. The call takes the whole viewport, and nesting
+  // it inside a centred max-width container would overflow and leave the grid
+  // measuring the container instead of the screen.
+  return <RoomEntry code={room.code} inviteUrl={`${origin}${path}`} />;
 }

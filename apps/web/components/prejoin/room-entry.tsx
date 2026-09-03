@@ -4,8 +4,8 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import type { JoinDetails } from "@/components/prejoin/prejoin";
+import { CallRoom, type Connection } from "@/components/call/call-room";
 import { CopyLink } from "@/components/copy-link";
-import { LiveDot } from "@/components/ui/live-dot";
 
 /**
  * The prejoin screen never renders on the server.
@@ -44,14 +44,6 @@ function sessionId(): string {
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
   }
-}
-
-interface Connection {
-  token: string;
-  serverUrl: string;
-  identity: string;
-  canPublish: boolean;
-  isHost: boolean;
 }
 
 /**
@@ -116,32 +108,36 @@ export function RoomEntry({
 
   if (connection && details) {
     return (
-      <div>
-        <LiveDot label={t("connected")} className="text-sm" />
-        <h1 className="mt-4 text-xl font-semibold tracking-tight">
-          {t("joinedAs", { name: details.name })}
-        </h1>
-        <p className="mt-2 text-base text-muted">
-          {connection.canPublish ? t("canPublish") : t("waitingForHost")}
-        </p>
-        <p className="mt-6 text-sm text-muted">{t("videoComingSoon")}</p>
-      </div>
+      <CallRoom
+        connection={connection}
+        details={details}
+        onLeave={() => {
+          // Back to the prejoin rather than to a dead end, so rejoining is one
+          // press away — which is what people do after an accidental leave or a
+          // connection that gave up.
+          setConnection(null);
+          setDetails(null);
+        }}
+      />
     );
   }
 
+  // The prejoin brings its own page chrome; the call deliberately has none.
   return (
-    <div>
-      <h1 className="text-xl font-semibold tracking-tight">{t("getReady")}</h1>
-      <p className="mt-2 text-base text-muted">{t("checkBeforeJoining")}</p>
+    <main className="flex flex-1 justify-center px-6 py-12">
+      <div className="w-full max-w-4xl">
+        <h1 className="text-xl font-semibold tracking-tight">{t("getReady")}</h1>
+        <p className="mt-2 text-base text-muted">{t("checkBeforeJoining")}</p>
 
-      <div className="mt-8">
-        <Prejoin onJoin={join} joining={joining} joinError={error} />
-      </div>
+        <div className="mt-8">
+          <Prejoin onJoin={join} joining={joining} joinError={error} />
+        </div>
 
-      <div className="mt-10 border-t border-border pt-6">
-        <p className="mb-3 text-sm text-muted">{t("shareToInvite")}</p>
-        <CopyLink url={inviteUrl} />
+        <div className="mt-10 border-t border-border pt-6">
+          <p className="mb-3 text-sm text-muted">{t("shareToInvite")}</p>
+          <CopyLink url={inviteUrl} />
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
