@@ -122,7 +122,7 @@
   },
   "call": {
     "aloneInRoom": "لسه لوحدك. ابعت اللينك لحد عشان يدخل.",
-    "youLabel": "{name} (انت)",
+    "youLabel": "<n>{name}</n> (انت)",
     "muted": "المايك مقفول",
     "pin": "تثبيت",
     "unpin": "إلغاء التثبيت",
@@ -141,6 +141,10 @@
     "reconnecting": "الاتصال اتقطع… بنحاول نرجّعه.",
     "errors": {
       "connection": "مشكلة في الاتصال: {message}"
-    }
+    },
+    "you": "انت",
+    "sharingLabel": "شاشة <n>{name}</n>",
+    "youAreSharing": "بتشارك شاشتك دلوقتي",
+    "someoneElseSharing": "فيه حد تاني بيشارك شاشته"
   }
 }
