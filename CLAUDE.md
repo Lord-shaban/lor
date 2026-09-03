@@ -180,18 +180,25 @@ typecheck, lint, build), protected `main`, 22 labels, 12 milestones, and a publi
 **Next — `v0.1`, "The Call".** Sixteen issues, all with acceptance criteria. They have a
 dependency order; the rest of the release builds on the first three:
 
-1. **#22** next-intl with Arabic-first RTL routing — everything renders text
-2. **#8** design system: tokens, dark mode, base components
-3. **#24** database schema and Drizzle setup
+1. ~~**#22** next-intl with Arabic-first RTL routing~~ — done
+2. ~~**#24** database schema and Drizzle setup~~ — done, applied to Supabase
+3. **#8** design system: tokens, dark mode, base components
 4. Then #9 room codes → #10 host cookie → #11 create room → #12 LiveKit tokens →
    #13 prejoin → #14 grid → #15 screen share → #16 chat → #17 low bandwidth →
    #18 waiting room → #19 moderation → #20 PWA and QR → #21 end-to-end test
 
+**Infrastructure that exists.** Supabase project `pvklemglnehhgwuszgyq` ("lor",
+eu-central-1, free tier), reachable through the Supabase MCP server. Schema is applied
+and verified there. The project ref is not a secret; the database password is, and it is
+not retrievable through the API — take the **transaction pooler** string (port 6543) from
+Project Settings, not the direct connection.
+
 **Blocked on the account owner, not on code:**
 
 - Vercel is not connected, so pull requests have no preview deploy yet
-- No LiveKit, Supabase, or Groq project exists, so `.env.local` is unfilled and nothing
-  past #24 can actually run
+- No LiveKit or Groq project exists. LiveKit blocks #12 onward: no media server means no
+  token to mint and nothing to join
+- `DATABASE_URL` is not in any `.env.local`, so nothing runs against the database locally
 - The domain price for `lor.dev` has not been checked
 
 **Settled, do not revisit:** LiveKit over mediasoup or mesh; all real-time state on the
