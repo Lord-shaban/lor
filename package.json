@@ -2,7 +2,7 @@
   "name": "lor",
   "version": "0.0.0",
   "private": true,
-  "description": "Open-source video meetings that remember. No account. No time limit. No download.",
+  "description": "LOR. \u2014 open-source video meetings that remember. No account, no time limit, no download.",
   "license": "AGPL-3.0-only",
   "workspaces": [
     "apps/*",

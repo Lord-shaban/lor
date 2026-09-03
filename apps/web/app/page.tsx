@@ -23,7 +23,11 @@ export default function Home() {
           Live Open Rooms
         </p>
 
-        <h1 className="mt-3 text-5xl font-semibold tracking-tight">LOR</h1>
+        {/* The dot is part of the wordmark, not punctuation: it is the live
+            indicator, so it carries the accent the logo uses. */}
+        <h1 className="mt-3 text-5xl font-semibold tracking-tight">
+          LOR<span className="text-indigo-500">.</span>
+        </h1>
 
         <p className="mt-4 text-lg text-balance opacity-80">
           Open-source video meetings that remember. No account, no time limit,
