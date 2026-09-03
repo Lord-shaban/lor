@@ -111,6 +111,16 @@ export const knocks = pgTable(
      */
     claimSecretHash: text("claim_secret_hash").notNull(),
 
+    /**
+     * The LiveKit identity this knock belongs to.
+     *
+     * Admission has to be checked per person, not per room: without this, one
+     * admitted guest would let every other waiting guest publish. The identity
+     * is derived server-side from a secret the tab keeps to itself, so it
+     * cannot be claimed by someone else.
+     */
+    participantIdentity: text("participant_identity").notNull(),
+
     status: knockStatus("status").notNull().default("pending"),
 
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -122,6 +132,12 @@ export const knocks = pgTable(
   (table) => [
     // The host's pending list, which is read on every poll.
     index("knocks_room_status_idx").on(table.roomId, table.status),
+    // One knock per person per room, and the lookup the token route makes on
+    // every request.
+    uniqueIndex("knocks_room_identity_key").on(
+      table.roomId,
+      table.participantIdentity,
+    ),
     // Reaping abandoned knocks.
     index("knocks_created_at_idx").on(table.createdAt),
   ],

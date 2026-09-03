@@ -15,6 +15,13 @@
       "when": 1788466841208,
       "tag": "0001_rate_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788468626437,
+      "tag": "0002_knock_identity",
+      "breakpoints": true
     }
   ]
 }
