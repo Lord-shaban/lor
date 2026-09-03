@@ -44,3 +44,7 @@ yarn-error.log*
 # eval artifacts (audio fixtures are large)
 eval/captions/audio/
 eval/captions/results/
+
+# Agent tooling. Third-party skills carry their own licences and weigh megabytes;
+# CLAUDE.md records how to install them instead.
+.claude/skills/
