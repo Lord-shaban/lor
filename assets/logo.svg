@@ -1,16 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 344 140" width="344" height="140" role="img" aria-label="LOR.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 140" width="360" height="140" role="img" aria-label="LOR.">
   <title>LOR.</title>
   <!--
-    The wordmark is drawn as a single uniform stroke so it holds up at small sizes.
-    The dot is not punctuation: it is the live indicator, which is why it carries
-    the accent colour while the letters stay neutral.
+    One uniform stroke across every letter, on a 100-unit cap height from y=20 to
+    y=120. The weight is 20 rather than 24: at 24 the R's counter closes up and the
+    letter reads as a blob as soon as the mark is scaled down.
+
+    The dot is not punctuation. It is the live indicator, so it takes the red that
+    recording and broadcast already mean, while the letters stay neutral.
   -->
-  <g fill="none" stroke="#0f172a" stroke-width="24" stroke-linecap="butt" stroke-linejoin="round">
-    <path d="M12 20 V108 H66" />
-    <circle cx="138" cy="70" r="38" />
+  <g fill="none" stroke="#0f172a" stroke-width="20" stroke-linecap="butt" stroke-linejoin="round">
+    <path d="M10 20 V110 H60" />
+    <circle cx="136" cy="70" r="40" />
     <path d="M222 20 V120" />
-    <path d="M222 32 H244 A22 22 0 0 1 244 76 H222" />
-    <path d="M222 76 L260 113" />
+    <path d="M222 30 H256 A25 25 0 0 1 256 80 H222" />
+    <path d="M222 80 L301 110" />
   </g>
-  <circle cx="317" cy="105" r="15" fill="#6366f1" />
+  <circle cx="332" cy="105" r="15" fill="#dc2626" />
 </svg>
