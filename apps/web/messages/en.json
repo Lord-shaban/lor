@@ -53,11 +53,76 @@
     }
   },
   "room": {
-    "title": "Your meeting is ready",
-    "ready": "Room created",
     "shareToInvite": "Send this link to anyone you want in the room.",
     "copy": "Copy link",
     "copied": "Copied",
-    "comingSoon": "Video and audio arrive in v0.1, with the prejoin screen just before them."
+    "getReady": "Get ready",
+    "checkBeforeJoining": "See and hear yourself before anyone else does.",
+    "connected": "In the room",
+    "joinedAs": "Joined as {name}",
+    "canPublish": "Your camera and microphone are live.",
+    "waitingForHost": "Waiting for the host to let you in. You can see and hear the room, but cannot turn anything on yet.",
+    "videoComingSoon": "The video grid arrives in v0.1, immediately after this.",
+    "errors": {
+      "locked": "This room is locked. The host has stopped letting people in.",
+      "notFound": "That room does not exist. Check the link.",
+      "rateLimited": "Too many attempts in a short time. Wait a little and try again.",
+      "joinFailed": "You could not be let in. Try again.",
+      "offline": "No connection. Check your network and try again."
+    }
+  },
+  "prejoin": {
+    "nameLabel": "Your name",
+    "namePlaceholder": "What others will see",
+    "camera": "Camera",
+    "microphone": "Microphone",
+    "speaker": "Speaker",
+    "noCamera": "No camera found",
+    "noMicrophone": "No microphone found",
+    "noSpeaker": "No speaker found",
+    "testSpeaker": "Test speaker",
+    "micOff": "Mute",
+    "micOn": "Unmute",
+    "cameraOff": "Turn camera off",
+    "cameraOn": "Turn camera on",
+    "cameraIsOff": "Camera is off",
+    "opening": "Opening devices…",
+    "noPreview": "No preview",
+    "levelLabel": "Your microphone level",
+    "join": "Join meeting",
+    "joining": "Joining…",
+    "tryAgain": "Try again",
+    "errors": {
+      "denied": {
+        "title": "Permission denied",
+        "fix": "{browser} is blocking camera and microphone access. Open the site permissions for this page, allow both, then press Try again."
+      },
+      "notFound": {
+        "title": "No device found",
+        "fix": "No camera or microphone is connected. Plug one in and try again — you can also join with audio only, or just listen."
+      },
+      "inUse": {
+        "title": "Device is busy",
+        "fix": "Another application is holding the camera or microphone — usually another video call. Close it, then try again."
+      },
+      "insecureContext": {
+        "title": "Connection is not secure",
+        "fix": "Browsers only grant camera and microphone access over HTTPS. Open this page on https:// or on localhost."
+      },
+      "unsupported": {
+        "title": "Browser not supported",
+        "fix": "This browser cannot do video calls. Try a current version of Chrome, Firefox, or Safari."
+      },
+      "unknown": {
+        "title": "Could not open your devices",
+        "fix": "Something unexpected went wrong opening the camera or microphone. Try again, and reload the page if it keeps happening."
+      }
+    },
+    "browsers": {
+      "chrome": "Chrome",
+      "firefox": "Firefox",
+      "safari": "Safari",
+      "other": "Your browser"
+    }
   }
 }
