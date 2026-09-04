@@ -318,7 +318,8 @@ closes.
 **Live:** <https://lor-bay.vercel.app>. Everything in `v0.1` is deployed there,
 on every push to `main`.
 
-**Done.** `v0.0` and `v0.1` in full — thirty-three issues. The call joins, shows
+**Done.** `v0.0` and `v0.1` in full — thirty-three issues, both
+[tagged and released](https://github.com/Lord-shaban/lor/releases). The call joins, shows
 people to each other, shares a screen, carries chat and reactions and a raised
 hand on the data channel, spends less bandwidth when it has to, holds people at
 a door, lets a host moderate and hand over the seat, installs on a phone, and is
@@ -350,6 +351,14 @@ transcript rendered wrongly is indistinguishable from a bad one.
 **Known and unfixed.** #67 — a tile paints black instead of the avatar while a
 video track is subscribed but not yet decoding, which is most visible on
 somebody who has just joined.
+
+**Cutting a release.** A release is a milestone closing, not a date arriving.
+The steps are in `CONTRIBUTING.md`; the one that is easy to get wrong is the
+order. **Tag before the next milestone's work lands on `main`**, or the tag
+points at a tree the release never shipped. `v0.0.0` and `v0.1.0` had to be
+tagged after the fact at `bd280ec` and `a36c5b4`, found by reading the log for
+the commit where each milestone stopped — which took longer than tagging them at
+the time would have.
 
 **Required checks on `main`.** `Typecheck, lint, test, build`, `Commit messages`, and
 `Two people in a room`. The last one starts a LiveKit and a Postgres on the
