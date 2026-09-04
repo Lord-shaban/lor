@@ -52,6 +52,13 @@ export default defineConfig({
             // Grants the permission prompt, which no test can click.
             "--use-fake-ui-for-media-stream",
             "--autoplay-policy=no-user-gesture-required",
+            // Chrome hides a machine's own addresses behind mDNS `.local`
+            // names for privacy, so a media server on the same host is offered
+            // only a STUN-discovered public address it cannot reach — every ICE
+            // pair fails and each side sees one video instead of two. Against a
+            // hosted LiveKit this never shows up, which is exactly why it cost
+            // a CI run to find.
+            "--disable-features=WebRtcHideLocalIpsWithMdns",
           ],
         },
       },
