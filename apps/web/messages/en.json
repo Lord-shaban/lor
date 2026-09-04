@@ -172,6 +172,12 @@
       "raise": "Raise hand",
       "lower": "Lower hand",
       "waiting": "{count, plural, one {# hand up} other {# hands up}}"
+    },
+    "video": {
+      "label": "Video",
+      "auto": "Auto",
+      "low": "Less data",
+      "off": "Audio only"
     }
   }
 }

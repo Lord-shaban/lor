@@ -9,6 +9,8 @@ import {
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import { REACTIONS, type Reaction } from "@/lib/data-channel";
+import type { VideoMode } from "@/lib/video-mode";
+import { VideoModeControl } from "@/components/call/video-mode-control";
 import { cn } from "@/lib/cn";
 
 /**
@@ -54,6 +56,8 @@ export function CallControls({
   handRaised,
   onToggleHand,
   onReact,
+  videoMode,
+  onChooseVideoMode,
   onLeave,
 }: {
   canPublish: boolean;
@@ -63,6 +67,8 @@ export function CallControls({
   handRaised: boolean;
   onToggleHand: () => void;
   onReact: (emoji: Reaction) => void;
+  videoMode: VideoMode;
+  onChooseVideoMode: (mode: VideoMode) => void;
   onLeave: () => void;
 }) {
   const t = useTranslations("call");
@@ -139,6 +145,10 @@ export function CallControls({
         // beats showing buttons that silently do nothing.
         <p className="text-sm text-[#a1a1aa]">{t("waitingToPublish")}</p>
       )}
+
+      {/* Outside the canPublish branch too: most of what this saves is what you
+          receive, and somebody waiting to be admitted is already receiving it. */}
+      <VideoModeControl mode={videoMode} onChoose={onChooseVideoMode} />
 
       {/* Reactions and a raised hand are how you answer without interrupting,
           which matters most to the people who are not speaking. Both stay
