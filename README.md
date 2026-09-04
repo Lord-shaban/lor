@@ -174,6 +174,10 @@ hosted demo runs the same code.
 
 See [`.env.example`](.env.example) for the full list.
 
+Participants can bring their own key instead, and `/keys` on any running
+instance says where one comes from — free tier, limits, whether a card is
+needed, and where in each provider's console the key is.
+
 Transcription quotas are counted in **seconds of audio**, not requests — a
 twenty-second utterance and a one-second one are the same request and twenty
 times the cost. All three reset at UTC midnight, and a participant using their

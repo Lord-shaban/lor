@@ -136,8 +136,11 @@ export function KeysDialog({
           >
             {t("save")}
           </button>
+          {/* The comparison, not the provider — somebody who does not have a
+              key yet needs to choose one first, and that page answers the same
+              four questions for each. */}
           <a
-            href={PROVIDERS[provider]?.keysUrl}
+            href="/keys"
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-[#a1a1aa] underline decoration-[#52525b] underline-offset-2 hover:text-[#fafafa]"
