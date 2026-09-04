@@ -128,7 +128,10 @@
     "unpin": "Unpin",
     "quality": {
       "fair": "Fair connection",
-      "poor": "Poor connection"
+      "poor": "Poor connection",
+      "reduced": "Your connection got weak, so video was turned down to keep the audio going.",
+      "restore": "Restore video",
+      "dismiss": "Dismiss"
     },
     "muteMic": "Mute",
     "unmuteMic": "Unmute",
