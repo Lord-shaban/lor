@@ -62,27 +62,36 @@ const ENV_KEY: Record<QuotaScope, string> = {
  * something about: being told the server is out when it is your own fifteen
  * minutes that ran out sends you to the wrong place.
  *
- * A value of `0` switches that ceiling off entirely — an operator who is paying
- * for the key and does not want it rationed should not have to invent a large
- * number.
+ * A value of `0` is a ceiling of nothing, not the absence of a ceiling: no free
+ * transcription at that scope, so everybody brings their own key. That is what
+ * `.env.example` has promised since `v0.0` — *"set to 0 to disable your key
+ * entirely and require BYOK"* — and the first implementation of this file did
+ * the opposite, dropping the ceiling and handing the operator's key out with no
+ * limit at all. Wrong in the worst direction, and wrong exactly when somebody
+ * set it deliberately.
+ *
+ * There is no value meaning "unlimited". An operator who does not want
+ * rationing sets a large number; a second magic number is how the first one
+ * went unnoticed.
  */
 export function quotaLimits(
   env: Record<string, string | undefined>,
 ): QuotaLimit[] {
   const scopes: QuotaScope[] = ["user", "room", "global"];
 
-  return scopes
-    .map((scope) => ({ scope, seconds: configured(env[ENV_KEY[scope]], scope) }))
-    .filter((limit) => limit.seconds > 0);
+  return scopes.map((scope) => ({
+    scope,
+    seconds: configured(env[ENV_KEY[scope]], scope),
+  }));
 }
 
 function configured(value: string | undefined, scope: QuotaScope): number {
   if (value === undefined || value.trim() === "") return DEFAULT_QUOTA[scope];
 
   const parsed = Number(value);
-  // A typo in an environment variable must not silently remove a ceiling. An
-  // unparseable value falls back to the default rather than to zero, which is
-  // the setting that means "no limit".
+  // A typo must not be read as a deliberate setting in either direction — it
+  // would either remove the ceiling or refuse everybody, and both are worse
+  // than the default.
   if (!Number.isFinite(parsed) || parsed < 0) return DEFAULT_QUOTA[scope];
 
   return Math.floor(parsed);

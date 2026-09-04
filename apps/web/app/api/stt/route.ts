@@ -164,6 +164,19 @@ export async function POST(request: Request) {
   const quotas: QuotaState[] = [];
   if (!plan.usingOwnKey) {
     for (const limit of quotaLimits(process.env)) {
+      // A ceiling of nothing. `.env.example` calls this "disable your key
+      // entirely and require BYOK", and it is answered exactly like an
+      // exhausted allowance so the client needs no second case — the way past
+      // it is the same one either way. No counter is written for a ceiling
+      // that can never be satisfied.
+      if (limit.seconds === 0) {
+        const resetAt = nextReset();
+        return NextResponse.json(
+          { error: "quota", scope: limit.scope, resetAt: resetAt.toISOString() },
+          { status: 429 },
+        );
+      }
+
       const scopeId =
         limit.scope === "user"
           ? clientAddress(request.headers)

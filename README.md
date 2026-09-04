@@ -176,9 +176,13 @@ See [`.env.example`](.env.example) for the full list.
 
 Transcription quotas are counted in **seconds of audio**, not requests — a
 twenty-second utterance and a one-second one are the same request and twenty
-times the cost. All three reset at UTC midnight, and setting any of them to `0`
-removes that ceiling entirely, for an operator who is paying for the key and
-does not want it rationed. A participant using their own key is never counted.
+times the cost. All three reset at UTC midnight, and a participant using their
+own key is never counted against any of them.
+
+Setting one to `0` means **no free transcription at that scope**: everybody
+brings their own key. That is the way to run LOR. without lending your own key
+at all. There is no setting meaning "unlimited" — an operator who does not want
+rationing sets a large number.
 
 ## Architecture
 
