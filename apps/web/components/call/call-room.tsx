@@ -14,6 +14,7 @@ import { ChatPanel } from "@/components/call/chat-panel";
 import { HandQueue } from "@/components/call/hand-queue";
 import { ReactionsOverlay } from "@/components/call/reactions-overlay";
 import { useRoomMessages } from "@/components/call/use-room-messages";
+import { useVideoMode } from "@/components/call/use-video-mode";
 import { unreadCount } from "@/lib/chat-log";
 import type { JoinDetails } from "@/components/prejoin/prejoin";
 
@@ -138,6 +139,7 @@ function CallStage({
     handRaised,
     toggleHand,
   } = useRoomMessages();
+  const { mode: videoMode, chooseMode: chooseVideoMode } = useVideoMode();
 
   const [chatOpen, setChatOpen] = useState(false);
   // How many messages had arrived the last time the panel was closed. Held here
@@ -180,6 +182,8 @@ function CallStage({
         handRaised={handRaised}
         onToggleHand={toggleHand}
         onReact={sendReaction}
+        videoMode={videoMode}
+        onChooseVideoMode={chooseVideoMode}
         onLeave={onLeave}
       />
     </>

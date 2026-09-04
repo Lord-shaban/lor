@@ -54,6 +54,14 @@ export function ParticipantTile({
   return (
     <div
       style={style}
+      // Named in the markup so a browser-driven check can tell whose tile it is
+      // without reading the label. Without this, "is video still arriving?" gets
+      // asked of every <video> on the page including your own preview, which
+      // answers a different question — the local camera is unaffected by what
+      // you choose to receive.
+      data-identity={participant.identity}
+      data-local={isLocal}
+      data-source={isScreenShare ? "screen" : "camera"}
       className={cn(
         "group relative overflow-hidden rounded-lg bg-[#141416]",
         // The highlight is a ring rather than a colour wash: it has to be
