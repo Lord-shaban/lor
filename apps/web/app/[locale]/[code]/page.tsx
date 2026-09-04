@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { eq } from "drizzle-orm";
 import { getDb, rooms } from "@lor/db";
+import { JoinQr } from "@/components/join-qr";
 import { RoomEntry } from "@/components/prejoin/room-entry";
 import { normalizeRoomCode } from "@/lib/room-code";
 import { getPathname } from "@/i18n/navigation";
@@ -42,5 +43,15 @@ export default async function RoomPage({ params }: PageProps<"/[locale]/[code]">
   // No wrapper here on purpose. The call takes the whole viewport, and nesting
   // it inside a centred max-width container would overflow and leave the grid
   // measuring the container instead of the screen.
-  return <RoomEntry code={room.code} inviteUrl={`${origin}${path}`} />;
+  const inviteUrl = `${origin}${path}`;
+
+  return (
+    <RoomEntry
+      code={room.code}
+      inviteUrl={inviteUrl}
+      // Rendered here rather than in the client component, so the QR costs no
+      // bundle and no work in the browser: the link is known at request time.
+      qr={<JoinQr url={inviteUrl} locale={locale} />}
+    />
+  );
 }
