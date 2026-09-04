@@ -179,6 +179,33 @@ node scripts/two-party-call.mjs http://localhost:3000/en/<code> ./out
 Then look at the image. Every layout bug in this project so far was found that way and
 none of them by reading code.
 
+## Working economically
+
+Context is the budget that runs out first, and in this repository it goes on three
+things that are all avoidable.
+
+**Connectors.** Only **Supabase** and **Vercel** are used here. Every other claude.ai
+connector — Gmail, Drive, Spotify, and the media ones — loads its tool roster and its
+instructions into every request whether or not it is touched. Turn the rest off in
+claude.ai → Settings → Connectors; it is an account setting, so it stays fixed once
+fixed.
+
+**Reading.** Read the range, not the file. `sed -n '40,90p'` and `grep -n` answer most
+questions; `cat` a whole component only when the whole component is the subject.
+`.claude/skills/ui-ux-pro-max/data/` is megabytes of CSV — query it, never read it.
+
+**Running.** Pipe the noisy ones: `npm run build | tail -20`, `npm test | grep -E "Test
+Files|Tests "`, `npm run typecheck | grep error`. A passing build says nothing in
+eighty lines that it does not say in five.
+
+Screenshots are the exception worth paying for. One image is worth a few thousand
+tokens and has caught every layout bug this project has had — but take one and look at
+it, rather than four and skim them.
+
+`.claude/settings.json` allowlists the verification commands and the read-only git and
+`gh` calls, so they run without a prompt. It also denies reads of `.env*`: no key
+belongs in a transcript any more than in the database.
+
 ## Mistakes already made here
 
 Each of these cost real time. The symptom is what identifies them.
