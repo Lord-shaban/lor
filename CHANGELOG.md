@@ -6,6 +6,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Work towards `v0.1.5 — Captions`. Mixed Arabic and English in one sentence is the
+hardest problem in this project, so the two things that make a caption change
+*reviewable* landed before any engine did.
+
+### Added
+
+- **An eval harness** in `eval/captions/` — its own npm workspace, so its metrics
+  are unit tested by `npm test` like anything else. It scores word error rate,
+  character error rate, and **code-switch preservation**: the share of the
+  reference's English words still in Latin script.
+
+  The third number exists because the first one is actively misleading here. A
+  hypothesis that writes every English term in Arabic script scores a *better*
+  WER (33.3%) than one that translates the sentence (100%) while preserving none
+  of the English — so optimising for WER alone would push this product toward
+  exactly the failure it exists to prevent. Neither number is sufficient alone,
+  which is why both are reported.
+
+- **`lib/bidi.ts`**, which decides a mixed line's direction by counting its
+  words. `dir="auto"` reads the first strong character, so an Arabic sentence
+  opening with an English term lays out left to right with its full stop at the
+  wrong end — and a caption arriving word by word would flip direction while
+  somebody is reading it. A link or a bracketed aside counts once, not once per
+  word inside it. Applied to chat messages; the composer keeps `dir="auto"`,
+  because measuring a draft moves the caret under the person typing.
+
+### Changed
+
+- The isolate-every-Latin-run approach was built and then removed. Rendering
+  twenty four mixed lines in a browser and reading the visual order back
+  character by character: `<bdi>` around every Latin run changed **none** of
+  them, while the paragraph direction changed four. `CLAUDE.md`,
+  `CONTRIBUTING.md` and the README now say which of the two problems wants which
+  repair.
+
 ## [0.1.0] — The Call
 
 A meeting you can actually hold. Open a link, type a name, and you are in — no

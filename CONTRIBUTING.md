@@ -58,11 +58,18 @@ npm install
 npm run dev
 ```
 
-Before pushing:
+Before pushing, run what CI runs:
 
 ```bash
-npm run typecheck && npm run lint && npm run build
+npm run typecheck && npm run lint && npm test && npm run build
+npm run test:e2e          # needs the build above
 ```
+
+The last one puts two browser contexts in one room against a LiveKit and a
+Postgres started on your machine, and asserts that video is decoding on both
+sides. It is a required check, and it is the one that has caught the bugs the
+others could not see. Most of this project cannot be verified by reading it —
+[`scripts/README.md`](scripts/README.md) has the tools for looking at it instead.
 
 ## Rules that are not negotiable
 
@@ -95,8 +102,14 @@ are not going to fix it. Good examples become eval cases.
 
 LOR. is Arabic-first and English-second, not English with a translation bolted on. If
 you change layout, check it in both. Use CSS logical properties (`margin-inline-start`,
-not `margin-left`). Never hardcode `dir="rtl"` on text that may contain Latin script —
-use `dir="auto"` and wrap Latin runs in `<bdi>`.
+not `margin-left`), and never hardcode `dir="rtl"` on text that may contain Latin.
+
+For text somebody typed or said — a chat message, a caption — take its direction from
+`lineDirection()` in `apps/web/lib/bidi.ts` rather than from `dir="auto"`, which reads
+only the first strong character and lays an Arabic sentence out backwards when it opens
+with an English term. Reserve `<bdi>` for a foreign run sitting inside interface text,
+such as a name next to a label, and isolate the run alone — never the run together with
+the words around it.
 
 ### The call works without AI
 

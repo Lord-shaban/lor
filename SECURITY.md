@@ -25,14 +25,21 @@ exposes those is treated as high severity:
 These are invariants, not preferences. A change that breaks one is a bug:
 
 1. **No API key is ever written to the database.** Not the user's, not the operator's.
-2. **User-supplied keys stay in the browser.** They are stored encrypted in
-   `localStorage` and sent directly to the provider whenever CORS allows it.
+2. **User-supplied keys stay in the browser.** They are stored encrypted there and sent
+   directly to the provider whenever CORS allows it.
 3. **The proxy routes are stateless.** When a request must pass through our server
    (because the operator's key is used, or the provider blocks browser calls), that
    route forwards and returns. It does not log, cache, or persist the audio, the
    transcript, or the key.
 4. **Transcription is opt-in and announced.** Participants are told in the room when
    transcription starts, and any room can disable it entirely.
+
+> **What is enforced today.** Numbers 1 and 3 hold in the shipped code. Numbers 2 and 4
+> describe `v0.1.5`, which is in progress — they are written here because they bind that
+> work ([#91](https://github.com/Lord-shaban/lor/issues/91),
+> [#89](https://github.com/Lord-shaban/lor/issues/89)), not because they are already
+> true. A security policy that quietly describes unbuilt features is not a policy.
+> This note goes away when the milestone closes.
 
 ## Supported versions
 

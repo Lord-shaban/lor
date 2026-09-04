@@ -21,9 +21,11 @@ No account. No time limit. No download.
 ---
 
 > [!NOTE]
-> **Status: `v0.0` — foundation.** The repository scaffold, CI, and contribution
-> workflow are in place. The meeting itself lands in `v0.1`. Every feature below is
-> tagged with the release it ships in, so nothing here claims to work before it does.
+> **Status: the call is live.** `v0.0` and `v0.1` have shipped and are deployed at
+> [lor-bay.vercel.app](https://lor-bay.vercel.app): open a link, type a name, and hold a
+> real meeting — video, screen share, chat, reactions, a waiting room, host controls.
+> `v0.1.5 — Captions` is in progress. Every feature below is tagged with the release it
+> ships in, so nothing here claims to work before it does.
 > Follow the [milestones](https://github.com/Lord-shaban/lor/milestones) to track progress.
 
 ## What LOR. is
@@ -83,8 +85,9 @@ quietly translates instead of transcribing. LOR. addresses this in layers:
 - **A code-switched prompt** that primes the model to keep Latin script for Latin words.
 - **A room glossary** — add your team's names and technical terms once and they stop
   being guessed at.
-- **Correct bidirectional rendering** with `dir="auto"` and `<bdi>` isolation, so mixed
-  text does not scramble its own word order.
+- **Correct bidirectional rendering.** A line's direction is measured from the words in
+  it, not taken from its first character — an Arabic sentence that opens with an English
+  term is still an Arabic sentence, and `dir="auto"` lays it out backwards.
 - **A measured eval set** in [`eval/captions/`](eval/captions) that scores word error
   rate *and* code-switch preservation. Every change to the transcription code has to
   show its numbers.
@@ -203,9 +206,9 @@ Drizzle · Postgres.
 
 | Release | Name | Status |
 |---|---|---|
-| `v0.0` | Foundation | in progress |
-| `v0.1` | The Call | planned |
-| `v0.1.5` | Captions | planned |
+| `v0.0` | Foundation | **shipped** |
+| `v0.1` | The Call | **shipped** — [live](https://lor-bay.vercel.app) |
+| `v0.1.5` | Captions | **in progress** — 2 of 12 |
 | `v0.1.8` | Canvas | planned |
 | `v0.2` | Decisions | planned |
 | `v0.3` | Action items | planned |
@@ -216,7 +219,11 @@ Drizzle · Postgres.
 | `v0.8` | Hardening and self-hosting | planned |
 | `v1.0` | Plugin ecosystem | planned |
 
-Tracked in [milestones](https://github.com/Lord-shaban/lor/milestones).
+Tracked in [milestones](https://github.com/Lord-shaban/lor/milestones) and on the
+[board](https://github.com/users/Lord-shaban/projects/8). Every open issue carries
+acceptance criteria, so anything on the board can be picked up without asking what
+it means. [`CHANGELOG.md`](CHANGELOG.md) records what each release actually
+contained.
 
 ## Contributing
 
