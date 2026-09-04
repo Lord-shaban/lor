@@ -8,7 +8,24 @@ import {
   useRoomContext,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
+import { REACTIONS, type Reaction } from "@/lib/data-channel";
 import { cn } from "@/lib/cn";
+
+/**
+ * What each reaction is called.
+ *
+ * Keyed by the emoji itself rather than by position, so reordering the list
+ * cannot silently relabel them. An emoji with no name is unreadable to anyone
+ * using a screen reader and ambiguous to everyone else.
+ */
+const REACTION_LABELS: Record<Reaction, string> = {
+  "\u{1F44D}": "thumbsUp",
+  "\u2764\uFE0F": "heart",
+  "\u{1F602}": "laugh",
+  "\u{1F389}": "celebrate",
+  "\u{1F44F}": "clap",
+  "\u{1F62E}": "wow",
+};
 
 /**
  * Whether this device can share a screen at all.
@@ -34,12 +51,18 @@ export function CallControls({
   chatOpen,
   unread,
   onToggleChat,
+  handRaised,
+  onToggleHand,
+  onReact,
   onLeave,
 }: {
   canPublish: boolean;
   chatOpen: boolean;
   unread: number;
   onToggleChat: () => void;
+  handRaised: boolean;
+  onToggleHand: () => void;
+  onReact: (emoji: Reaction) => void;
   onLeave: () => void;
 }) {
   const t = useTranslations("call");
@@ -52,6 +75,8 @@ export function CallControls({
   // Read at first render rather than at module load, so this is not evaluated
   // during a server render where navigator does not exist.
   const [screenShareSupported] = useState(canShareScreen);
+
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const screenShareOn = Boolean(
     localParticipant.getTrackPublication(Track.Source.ScreenShare),
@@ -66,7 +91,7 @@ export function CallControls({
   );
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2 border-t border-[#2a2a2e] px-4 py-3">
+    <div className="relative flex flex-wrap items-center justify-center gap-2 border-t border-[#2a2a2e] px-4 py-3">
       {canPublish ? (
         <>
           <ControlButton
@@ -114,6 +139,67 @@ export function CallControls({
         // beats showing buttons that silently do nothing.
         <p className="text-sm text-[#a1a1aa]">{t("waitingToPublish")}</p>
       )}
+
+      {/* Reactions and a raised hand are how you answer without interrupting,
+          which matters most to the people who are not speaking. Both stay
+          available to someone still waiting to be admitted: with no camera and
+          no microphone, they are the only way to ask. */}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setPickerOpen((open) => !open)}
+          aria-expanded={pickerOpen}
+          aria-label={t("reactions.open")}
+          className={cn(
+            "h-11 rounded-md px-4 text-base leading-none transition-colors duration-150",
+            pickerOpen
+              ? "bg-[#f4f4f5] text-[#0a0a0b]"
+              : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
+          )}
+        >
+          <span aria-hidden="true">{REACTIONS[3]}</span>
+        </button>
+
+        {pickerOpen && (
+          // Above the bar rather than inside it: a row that appeared in place
+          // would shove every other control sideways the moment it opened.
+          <div
+            role="group"
+            aria-label={t("reactions.open")}
+            className="absolute bottom-full left-1/2 z-30 mb-2 flex -translate-x-1/2 gap-1 rounded-full border border-[#2a2a2e] bg-[#141416] p-1"
+          >
+            {REACTIONS.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                aria-label={t(`reactions.${REACTION_LABELS[emoji]}`)}
+                onClick={() => {
+                  onReact(emoji);
+                  setPickerOpen(false);
+                }}
+                className="h-11 w-11 rounded-full text-2xl leading-none transition-colors duration-150 hover:bg-[#2a2a2e]"
+              >
+                <span aria-hidden="true">{emoji}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={onToggleHand}
+        aria-pressed={handRaised}
+        aria-label={handRaised ? t("hands.lower") : t("hands.raise")}
+        className={cn(
+          "h-11 rounded-md px-4 text-base leading-none transition-colors duration-150",
+          handRaised
+            ? "bg-[#f4f4f5] text-[#0a0a0b]"
+            : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
+        )}
+      >
+        <span aria-hidden="true">✋</span>
+      </button>
 
       {/* Outside the canPublish branch on purpose: someone still waiting to be
           admitted has no camera, but they can still type — and asking to be let
