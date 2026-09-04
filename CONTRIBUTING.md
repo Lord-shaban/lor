@@ -117,6 +117,24 @@ Transcription, summaries, decisions, and action items are all optional. If someo
 no API key and no quota left, the meeting itself — video, audio, screen share, chat,
 whiteboard, recording — must still work perfectly.
 
+## Cutting a release
+
+A release is a milestone closing, not a date arriving. When the last issue in a
+milestone is merged:
+
+1. Move `[Unreleased]` in [CHANGELOG.md](CHANGELOG.md) under the new version, with
+   what it contained — not a list of commits. Somebody deciding whether to upgrade
+   is the reader.
+2. Set the version in `package.json` and each workspace's `package.json`.
+3. Tag the merge commit: `git tag -a v0.1.0 -m "..." && git push origin v0.1.0`.
+4. Publish a GitHub release from the tag, using the changelog section as its notes.
+5. Close the milestone.
+
+The tag has to point at the tree that release actually shipped, so cut it before
+work on the next milestone lands on `main`. `v0.0.0` and `v0.1.0` were tagged
+after the fact for exactly that reason, and finding the right two commits took
+longer than tagging them at the time would have.
+
 ## Code of conduct
 
 By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
