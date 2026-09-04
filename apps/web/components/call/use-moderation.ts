@@ -8,6 +8,7 @@ import {
   decodeServerNotice,
   type ModerationAction,
 } from "@/lib/data-channel";
+import { sessionId } from "@/lib/session-id";
 
 /** Long enough to read, short enough not to become part of the furniture. */
 const ANNOUNCEMENT_MS = 6000;
@@ -33,9 +34,12 @@ export interface Announcement {
 export function useModeration({
   code,
   isHost,
+  onHostChanged,
 }: {
   code: string;
   isHost: boolean;
+  /** Called when this participant gains or loses the host seat mid-call. */
+  onHostChanged: (isHost: boolean) => void;
 }) {
   const room = useRoomContext();
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
@@ -59,6 +63,31 @@ export function useModeration({
       if (participant) return;
 
       const notice = decodeServerNotice(payload);
+
+      // Addressed to this participant alone: the seat has moved.
+      if (notice?.type === "host") {
+        if (!notice.granted) {
+          onHostChanged(false);
+          return;
+        }
+
+        // The notice carries no credential; this is where one is asked for,
+        // over HTTPS, by a caller who can prove which identity it is.
+        void fetch(`/api/rooms/${code}/host`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: sessionId() }),
+        })
+          .then((response) => {
+            if (response.ok) onHostChanged(true);
+          })
+          .catch(() => {
+            // No cookie, so no host rights. The room is briefly hostless and
+            // the person who handed over can hand over again.
+          });
+        return;
+      }
+
       if (notice?.type !== "moderation") return;
 
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -79,7 +108,7 @@ export function useModeration({
     return () => {
       room.off(RoomEvent.DataReceived, onData);
     };
-  }, [room]);
+  }, [room, code, onHostChanged]);
 
   /**
    * Ask the server to do it. The browser never asks a peer to mute itself: a

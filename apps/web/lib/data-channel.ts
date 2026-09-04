@@ -56,7 +56,13 @@ export const SERVER_TOPIC = "lor-server";
  */
 export type ServerNotice =
   | { type: "knock" }
-  | { type: "moderation"; action: ModerationAction; name: string };
+  | { type: "moderation"; action: ModerationAction; name: string }
+  /**
+   * Addressed to one participant: you have been made host, or you are no longer
+   * one. It carries no credential — the new host asks for theirs over HTTPS,
+   * and a room-host secret has no business travelling through a media server.
+   */
+  | { type: "host"; granted: boolean };
 
 export const MODERATION_ACTIONS = [
   "mute",
@@ -65,6 +71,7 @@ export const MODERATION_ACTIONS = [
   "remove",
   "lock",
   "unlock",
+  "handOver",
 ] as const;
 export type ModerationAction = (typeof MODERATION_ACTIONS)[number];
 
@@ -98,6 +105,12 @@ export function decodeServerNotice(payload: Uint8Array): ServerNotice | null {
       if (!isModerationAction(action)) return null;
       if (typeof name !== "string") return null;
       return { type: "moderation", action, name: name.slice(0, MAX_ANNOUNCED_NAME) };
+    }
+
+    case "host": {
+      const { granted } = envelope;
+      if (typeof granted !== "boolean") return null;
+      return { type: "host", granted };
     }
 
     default:

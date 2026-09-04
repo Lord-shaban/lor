@@ -2,6 +2,21 @@
 
 import { useTranslations } from "next-intl";
 import type { Announcement } from "@/components/call/use-moderation";
+import type { ModerationAction } from "@/lib/data-channel";
+
+/**
+ * A glyph per action, because one mute symbol over "سارة is now the host" reads
+ * as a mistake. Decorative — the sentence carries the meaning.
+ */
+const GLYPH: Record<ModerationAction, string> = {
+  mute: "🔇",
+  muteAll: "🔇",
+  stopShare: "🖥️",
+  remove: "🚪",
+  lock: "🔒",
+  unlock: "🔓",
+  handOver: "👑",
+};
 
 /**
  * What the host just did, said out loud.
@@ -29,7 +44,7 @@ export function ModerationNotice({
       className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-t border-[#2a2a2e] px-4 py-2"
     >
       <span aria-hidden="true" className="shrink-0 text-base leading-none">
-        🔇
+        {GLYPH[announcement.action]}
       </span>
 
       {/* dir="auto" and <bdi>: the name is in whichever script its owner typed,

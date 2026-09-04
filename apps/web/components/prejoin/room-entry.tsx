@@ -7,6 +7,7 @@ import type { JoinDetails } from "@/components/prejoin/prejoin";
 import { WaitingRoom } from "@/components/prejoin/waiting-room";
 import { CallRoom, type Connection } from "@/components/call/call-room";
 import { CopyLink } from "@/components/copy-link";
+import { sessionId } from "@/lib/session-id";
 import { pollDelay, waitingState, type WaitingState } from "@/lib/waiting";
 
 /**
@@ -21,32 +22,6 @@ const Prejoin = dynamic(
   () => import("@/components/prejoin/prejoin").then((m) => m.Prejoin),
   { ssr: false },
 );
-
-/** Per tab, so a reload rejoins as the same participant and a second tab does not evict the first. */
-const SESSION_KEY = "lor-session-id";
-
-function randomId(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function sessionId(): string {
-  try {
-    const existing = sessionStorage.getItem(SESSION_KEY);
-    if (existing) return existing;
-
-    const value = randomId();
-    sessionStorage.setItem(SESSION_KEY, value);
-    return value;
-  } catch {
-    // Storage can be unavailable. A fresh id still works for this page load;
-    // it just means a reload joins as a new participant.
-    return randomId();
-  }
-}
 
 interface Waiting {
   /** Null when there is nothing left to poll — a refusal, which is final. */

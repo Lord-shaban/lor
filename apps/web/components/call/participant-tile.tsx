@@ -27,6 +27,7 @@ export function ParticipantTile({
   onMute,
   onStopShare,
   onRemove,
+  onHandOver,
   source = Track.Source.Camera,
   className,
   style,
@@ -47,6 +48,8 @@ export function ParticipantTile({
   onStopShare?: () => void;
   /** Removal blocks rejoining for the rest of the meeting, so it asks twice. */
   onRemove?: () => void;
+  /** Handing over is not undoable by the person doing it, so it asks twice too. */
+  onHandOver?: () => void;
   /** Which of this participant's tracks to draw. */
   source?: Track.Source;
   className?: string;
@@ -58,6 +61,7 @@ export function ParticipantTile({
   // so it asks twice. A dialog would cover the face of whoever you are deciding
   // about, which is exactly the thing you want to still be looking at.
   const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [confirmingHandOver, setConfirmingHandOver] = useState(false);
 
   const isScreenShare = source === Track.Source.ScreenShare;
   const videoPublication = participant.getTrackPublication(source);
@@ -169,6 +173,31 @@ export function ParticipantTile({
             className="rounded-md bg-black/50 px-2 py-1 text-xs text-[#f4f4f5] hover:bg-black/70"
           >
             {t("moderation.stopShare")}
+          </button>
+        )}
+
+        {onHandOver && (
+          <button
+            type="button"
+            onClick={() => {
+              if (confirmingHandOver) {
+                onHandOver();
+                setConfirmingHandOver(false);
+              } else {
+                setConfirmingHandOver(true);
+              }
+            }}
+            onBlur={() => setConfirmingHandOver(false)}
+            className={cn(
+              "rounded-md px-2 py-1 text-xs hover:bg-black/70",
+              confirmingHandOver
+                ? "bg-[#f4f4f5] text-[#0a0a0b] hover:opacity-90"
+                : "bg-black/50 text-[#f4f4f5]",
+            )}
+          >
+            {confirmingHandOver
+              ? t("moderation.handOverConfirm")
+              : t("moderation.handOver")}
           </button>
         )}
 
