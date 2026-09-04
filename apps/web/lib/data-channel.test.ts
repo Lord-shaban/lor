@@ -2,11 +2,18 @@ import { describe, expect, it } from "vitest";
 import {
   DATA_TOPIC,
   MAX_CHAT_LENGTH,
+  MAX_HAND_AGE_MS,
   PROTOCOL_VERSION,
+  REACTIONS,
   decodeMessage,
   encodeMessage,
   messageId,
 } from "./data-channel";
+
+/** Narrow to the one variant that has a body. */
+function chatBody(message: ReturnType<typeof decodeMessage>): string | undefined {
+  return message?.type === "chat" ? message.body : undefined;
+}
 
 /** What a peer would actually put on the channel, without going through us. */
 function wire(value: unknown): Uint8Array {
@@ -106,13 +113,14 @@ describe("a chat message from a peer", () => {
 
   it("truncates a body past the limit instead of dropping it", () => {
     const long = "ا".repeat(MAX_CHAT_LENGTH + 500);
-    const decoded = decodeMessage(wire({ ...base, body: long }));
-    expect(decoded?.body).toHaveLength(MAX_CHAT_LENGTH);
+    expect(chatBody(decodeMessage(wire({ ...base, body: long })))).toHaveLength(
+      MAX_CHAT_LENGTH,
+    );
   });
 
   it("keeps emoji and mixed scripts intact", () => {
     const body = "عملت الـ deploy على الـ server 🎉";
-    expect(decodeMessage(wire({ ...base, body }))?.body).toBe(body);
+    expect(chatBody(decodeMessage(wire({ ...base, body })))).toBe(body);
   });
 
   it("ignores extra fields a newer client added", () => {
@@ -121,6 +129,85 @@ describe("a chat message from a peer", () => {
     expect(
       decodeMessage(wire({ ...base, body: "hi", replyTo: "x", edited: true })),
     ).toEqual({ type: "chat", id: "a", body: "hi" });
+  });
+});
+
+describe("a reaction from a peer", () => {
+  const base = { v: PROTOCOL_VERSION, type: "reaction", id: "r1" };
+
+  it("round-trips every reaction on the list", () => {
+    for (const emoji of REACTIONS) {
+      expect(decodeMessage(encodeMessage({ type: "reaction", id: "r1", emoji }))).toEqual({
+        type: "reaction",
+        id: "r1",
+        emoji,
+      });
+    }
+  });
+
+  it("refuses anything not on the list", () => {
+    // The overlay draws this over everybody's video. An open field would let
+    // one participant write across the meeting.
+    for (const emoji of ["\ud83d\udca3", "hello", "", "\ud83d\udc4d\ud83d\udc4d", 42, null, { emoji: "\ud83d\udc4d" }]) {
+      expect(decodeMessage(wire({ ...base, emoji }))).toBeNull();
+    }
+  });
+
+  it("refuses a missing or empty id", () => {
+    expect(decodeMessage(wire({ v: PROTOCOL_VERSION, type: "reaction", emoji: REACTIONS[0] }))).toBeNull();
+    expect(decodeMessage(wire({ ...base, id: "", emoji: REACTIONS[0] }))).toBeNull();
+  });
+});
+
+describe("a raised hand from a peer", () => {
+  const base = { v: PROTOCOL_VERSION, type: "hand" };
+
+  it("round-trips raising and lowering", () => {
+    for (const raised of [true, false]) {
+      expect(decodeMessage(encodeMessage({ type: "hand", raised, sinceMs: 0 }))).toEqual({
+        type: "hand",
+        raised,
+        sinceMs: 0,
+      });
+    }
+  });
+
+  it("carries an age, so a late joiner can reconstruct the order", () => {
+    expect(decodeMessage(wire({ ...base, raised: true, sinceMs: 45_000 }))).toEqual({
+      type: "hand",
+      raised: true,
+      sinceMs: 45_000,
+    });
+  });
+
+  it("treats a missing age as just now", () => {
+    // What a hand message meant before the field existed.
+    expect(decodeMessage(wire({ ...base, raised: true }))).toEqual({
+      type: "hand",
+      raised: true,
+      sinceMs: 0,
+    });
+  });
+
+  it("clamps an age that would sort a hand before the meeting", () => {
+    const decoded = decodeMessage(wire({ ...base, raised: true, sinceMs: 1e15 }));
+    expect(decoded).toEqual({ type: "hand", raised: true, sinceMs: MAX_HAND_AGE_MS });
+  });
+
+  it("ignores an age that is negative, infinite, or not a number", () => {
+    for (const sinceMs of [-1000, Infinity, -Infinity, NaN, "45000", null, {}]) {
+      expect(decodeMessage(wire({ ...base, raised: true, sinceMs }))).toEqual({
+        type: "hand",
+        raised: true,
+        sinceMs: 0,
+      });
+    }
+  });
+
+  it("refuses a raised flag that is not a boolean", () => {
+    for (const raised of ["true", 1, null, undefined, {}]) {
+      expect(decodeMessage(wire({ ...base, raised }))).toBeNull();
+    }
   });
 });
 

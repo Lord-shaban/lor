@@ -40,7 +40,51 @@ export const DATA_TOPIC = "lor";
  */
 export const MAX_CHAT_LENGTH = 2000;
 
-export type RoomMessage = { type: "chat"; id: string; body: string };
+/**
+ * The reactions anyone may send.
+ *
+ * A closed list, not free text. The overlay draws whatever arrives on top of
+ * everybody's video, so an open field would let one participant paint a sentence
+ * across the meeting. Six is as many as fit in a row without a scroll.
+ */
+export const REACTIONS = [
+  "\u{1F44D}",
+  "\u2764\uFE0F",
+  "\u{1F602}",
+  "\u{1F389}",
+  "\u{1F44F}",
+  "\u{1F62E}",
+] as const;
+export type Reaction = (typeof REACTIONS)[number];
+
+/**
+ * How stale a re-announced hand may claim to be.
+ *
+ * Twelve hours is far longer than any meeting and far shorter than a value that
+ * would sort a hand before the epoch.
+ */
+export const MAX_HAND_AGE_MS = 12 * 60 * 60 * 1000;
+
+export type RoomMessage =
+  | { type: "chat"; id: string; body: string }
+  | { type: "reaction"; id: string; emoji: Reaction }
+  | {
+      type: "hand";
+      raised: boolean;
+      /**
+       * How long ago the sender raised it, in milliseconds.
+       *
+       * A duration rather than a timestamp, and that is the whole point: the
+       * queue has to be in the order hands went up, and the senders' clocks
+       * disagree by minutes. A duration measured on one clock and subtracted
+       * from another stays correct — only the two clocks' *rates* would have to
+       * differ for it to drift, and they do not.
+       *
+       * Zero when a hand goes up; non-zero only when an existing hand is
+       * re-announced to somebody who has just joined.
+       */
+      sinceMs: number;
+    };
 
 /** The wire form. Short-lived, so it is versioned rather than migrated. */
 interface Envelope {
@@ -93,6 +137,29 @@ export function decodeMessage(payload: Uint8Array): RoomMessage | null {
 
       return { type: "chat", id, body: trimmed.slice(0, MAX_CHAT_LENGTH) };
     }
+    case "reaction": {
+      const { id, emoji } = envelope;
+      if (typeof id !== "string" || !id) return null;
+      // Membership, not a shape test. Anything not on the list is not drawn.
+      if (!isReaction(emoji)) return null;
+
+      return { type: "reaction", id, emoji };
+    }
+
+    case "hand": {
+      const { raised, sinceMs } = envelope;
+      if (typeof raised !== "boolean") return null;
+
+      // Absent from a client that predates re-announcing: treat it as just now,
+      // which is what a hand message meant before the field existed.
+      const age =
+        typeof sinceMs === "number" && Number.isFinite(sinceMs) && sinceMs > 0
+          ? Math.min(sinceMs, MAX_HAND_AGE_MS)
+          : 0;
+
+      return { type: "hand", raised, sinceMs: age };
+    }
+
     default:
       // A type from a client one release ahead. Ignored on purpose.
       return null;
@@ -108,4 +175,10 @@ export function decodeMessage(payload: Uint8Array): RoomMessage | null {
  */
 export function messageId(): string {
   return crypto.randomUUID();
+}
+
+function isReaction(value: unknown): value is Reaction {
+  return (
+    typeof value === "string" && (REACTIONS as readonly string[]).includes(value)
+  );
 }

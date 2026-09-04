@@ -157,6 +157,21 @@
       "placeholder": "Write a message",
       "send": "Send",
       "sendFailed": "That message did not send. Check your connection and try again."
+    },
+    "reactions": {
+      "open": "Send a reaction",
+      "sent": "{name} reacted {emoji}",
+      "thumbsUp": "Thumbs up",
+      "heart": "Heart",
+      "laugh": "Laughing",
+      "celebrate": "Celebrate",
+      "clap": "Applause",
+      "wow": "Surprised"
+    },
+    "hands": {
+      "raise": "Raise hand",
+      "lower": "Lower hand",
+      "waiting": "{count, plural, one {# hand up} other {# hands up}}"
     }
   }
 }

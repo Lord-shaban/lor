@@ -11,6 +11,8 @@ import { RoomEvent, Track, type RoomOptions } from "livekit-client";
 import { VideoGrid } from "@/components/call/video-grid";
 import { CallControls } from "@/components/call/call-controls";
 import { ChatPanel } from "@/components/call/chat-panel";
+import { HandQueue } from "@/components/call/hand-queue";
+import { ReactionsOverlay } from "@/components/call/reactions-overlay";
 import { useRoomMessages } from "@/components/call/use-room-messages";
 import { unreadCount } from "@/lib/chat-log";
 import type { JoinDetails } from "@/components/prejoin/prejoin";
@@ -125,7 +127,17 @@ function CallStage({
   canPublish: boolean;
   onLeave: () => void;
 }) {
-  const { entries, received, sendChat } = useRoomMessages();
+  const { localParticipant } = useLocalParticipant();
+  const {
+    entries,
+    received,
+    sendChat,
+    reactions,
+    sendReaction,
+    hands,
+    handRaised,
+    toggleHand,
+  } = useRoomMessages();
 
   const [chatOpen, setChatOpen] = useState(false);
   // How many messages had arrived the last time the panel was closed. Held here
@@ -149,16 +161,25 @@ function CallStage({
           <VideoGrid />
         </main>
 
+        {/* Inside this container so reactions rise over the video and stop at
+            the control bar, rather than over the whole screen. */}
+        <ReactionsOverlay reactions={reactions} />
+
         {chatOpen && (
           <ChatPanel entries={entries} onSend={sendChat} onClose={toggleChat} />
         )}
       </div>
+
+      <HandQueue hands={hands} localIdentity={localParticipant.identity} />
 
       <CallControls
         canPublish={canPublish}
         chatOpen={chatOpen}
         unread={unreadCount({ received, read, open: chatOpen })}
         onToggleChat={toggleChat}
+        handRaised={handRaised}
+        onToggleHand={toggleHand}
+        onReact={sendReaction}
         onLeave={onLeave}
       />
     </>

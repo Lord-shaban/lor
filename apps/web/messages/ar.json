@@ -157,6 +157,21 @@
       "placeholder": "اكتب رسالة",
       "send": "ابعت",
       "sendFailed": "الرسالة مبعتتش. اطمن على النت وجرّب تاني."
+    },
+    "reactions": {
+      "open": "ابعت تفاعل",
+      "sent": "{name} بعت {emoji}",
+      "thumbsUp": "تمام",
+      "heart": "قلب",
+      "laugh": "ضحك",
+      "celebrate": "احتفال",
+      "clap": "تصفيق",
+      "wow": "استغراب"
+    },
+    "hands": {
+      "raise": "ارفع إيدك",
+      "lower": "نزّل إيدك",
+      "waiting": "{count, plural, zero {مفيش إيدين مرفوعة} one {إيد واحدة مرفوعة} two {إيدين مرفوعة} few {# إيدين مرفوعة} many {# إيد مرفوعة} other {# إيد مرفوعة}}"
     }
   }
 }
