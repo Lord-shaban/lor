@@ -90,28 +90,29 @@ export async function POST(
 
   const identity = await participantIdentity(room.livekitRoom, sessionId);
 
+  // One lookup, two questions. The row is per participant, not per room:
+  // matching any admitted knock would mean the first person let in silently
+  // admitted everyone else still waiting.
+  const [knock] = await db
+    .select({ status: knocks.status })
+    .from(knocks)
+    .where(
+      and(eq(knocks.roomId, room.id), eq(knocks.participantIdentity, identity)),
+    )
+    .limit(1);
+
+  // Denied means not welcome, whether the door is on or off. It is what a
+  // removal writes, and it is why removal survives a reload: the block lives on
+  // the identity rather than in the browser that was removed.
+  if (knock?.status === "denied" && !isHost) {
+    return NextResponse.json({ error: "removed" }, { status: 403 });
+  }
+
   // With a waiting room on, a guest publishes nothing until the host says so.
   // They still get a token: they need the data channel to knock and to hear
   // that they were admitted. What they do not get is a camera or a microphone.
-  //
-  // The admission check is per participant, not per room. Matching any
-  // admitted knock would mean the first person let in silently admitted
-  // everyone else still waiting.
-  let canPublish = true;
-  if (room.waitingRoomEnabled && !isHost) {
-    const [admitted] = await db
-      .select({ id: knocks.id })
-      .from(knocks)
-      .where(
-        and(
-          eq(knocks.roomId, room.id),
-          eq(knocks.participantIdentity, identity),
-          eq(knocks.status, "admitted"),
-        ),
-      )
-      .limit(1);
-    canPublish = Boolean(admitted);
-  }
+  const canPublish =
+    !room.waitingRoomEnabled || isHost || knock?.status === "admitted";
 
   const token = await createAccessToken({
     livekitRoom: room.livekitRoom,

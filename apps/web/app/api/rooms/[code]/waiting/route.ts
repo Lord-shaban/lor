@@ -23,6 +23,7 @@ async function requireHost(code: string) {
       id: rooms.id,
       hostSecretHash: rooms.hostSecretHash,
       waitingRoomEnabled: rooms.waitingRoomEnabled,
+      locked: rooms.locked,
     })
     .from(rooms)
     .where(eq(rooms.code, code))
@@ -76,6 +77,7 @@ export async function GET(
     // Sent alongside the queue so the panel has one answer about the door
     // rather than two that can disagree.
     waitingRoom: room.waitingRoomEnabled,
+    locked: room.locked,
     waiting: waiting.map((knock) => ({
       id: knock.id,
       name: knock.displayName,

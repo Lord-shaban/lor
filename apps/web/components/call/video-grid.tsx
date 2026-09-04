@@ -24,7 +24,17 @@ const GAP = 12;
  * a wide monitor sit side by side; the same two on a phone in portrait stack.
  * A breakpoint table gets one of those wrong.
  */
-export function VideoGrid() {
+export function VideoGrid({
+  canModerate = false,
+  onModerate,
+}: {
+  /** True only for a verified host. The server checks again regardless. */
+  canModerate?: boolean;
+  onModerate?: (
+    action: "mute" | "stopShare" | "remove",
+    identity: string,
+  ) => void;
+} = {}) {
   const t = useTranslations("call");
   const room = useRoomContext();
   const participants = useParticipants();
@@ -90,6 +100,23 @@ export function VideoGrid() {
     setPinned((current) => (current === identity ? null : identity));
   }
 
+  /**
+   * The host's controls, for everybody but the host.
+   *
+   * Absent rather than disabled on your own tile: a "mute" button on your own
+   * face would read as the ordinary mute control and do something subtly
+   * different.
+   */
+  function moderation(participant: Participant) {
+    if (!canModerate || !onModerate) return {};
+    if (participant.identity === localParticipant.identity) return {};
+    return {
+      onMute: () => onModerate("mute", participant.identity),
+      onStopShare: () => onModerate("stopShare", participant.identity),
+      onRemove: () => onModerate("remove", participant.identity),
+    };
+  }
+
   return (
     // overflow-hidden is load-bearing, not cosmetic. The tiles are sized from
     // this element's measured height, so if they were allowed to stretch it the
@@ -113,6 +140,7 @@ export function VideoGrid() {
               isLocal={focused.identity === localParticipant.identity}
               isPinned={pinned === focused.identity}
               onTogglePin={() => togglePin(focused.identity)}
+              {...moderation(focused)}
               className="h-full w-full"
             />
           </div>
@@ -132,6 +160,7 @@ export function VideoGrid() {
                   isLocal={participant.identity === localParticipant.identity}
                   isPinned={false}
                   onTogglePin={() => togglePin(participant.identity)}
+                  {...moderation(participant)}
                   className="aspect-video h-full shrink-0"
                 />
               ))}
@@ -151,6 +180,7 @@ export function VideoGrid() {
               isLocal={participant.identity === localParticipant.identity}
               isPinned={false}
               onTogglePin={() => togglePin(participant.identity)}
+              {...moderation(participant)}
               style={{
                 width: layout.tileWidth,
                 height: layout.tileHeight,

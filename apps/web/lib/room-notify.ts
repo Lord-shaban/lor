@@ -68,13 +68,45 @@ export async function notifyHosts(
     // finds it in the list.
     if (hosts.length === 0) return;
 
-    await service.sendData(
-      livekitRoom,
-      encodeServerNotice(notice),
-      DataPacket_Kind.RELIABLE,
-      { destinationIdentities: hosts, topic: SERVER_TOPIC },
-    );
+    await send(service, livekitRoom, notice, hosts);
   } catch {
     // Deliberately silent. See above.
   }
+}
+
+/**
+ * Tell the whole room.
+ *
+ * Moderation is never silent. Somebody whose microphone goes off has to know it
+ * was done rather than broken, and everyone else has to see that it was done at
+ * all — a host who can quietly mute people is a different product from one who
+ * can mute them.
+ */
+export async function announceToRoom(
+  livekitRoom: string,
+  notice: ServerNotice,
+): Promise<void> {
+  const service = client();
+  if (!service) return;
+
+  try {
+    await send(service, livekitRoom, notice);
+  } catch {
+    // An action that happened but was not announced is still better than an
+    // action refused because the announcement failed.
+  }
+}
+
+function send(
+  service: RoomServiceClient,
+  livekitRoom: string,
+  notice: ServerNotice,
+  destinationIdentities?: string[],
+) {
+  return service.sendData(
+    livekitRoom,
+    encodeServerNotice(notice),
+    DataPacket_Kind.RELIABLE,
+    { destinationIdentities, topic: SERVER_TOPIC },
+  );
 }

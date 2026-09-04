@@ -63,7 +63,8 @@
       "notFound": "That room does not exist. Check the link.",
       "rateLimited": "Too many attempts in a short time. Wait a little and try again.",
       "joinFailed": "You could not be let in. Try again.",
-      "offline": "No connection. Check your network and try again."
+      "offline": "No connection. Check your network and try again.",
+      "removed": "You were removed from this meeting and cannot rejoin it."
     }
   },
   "waiting": {
@@ -209,7 +210,25 @@
       "denyIsFinal": "Turning somebody away is final for this meeting. They cannot ask again.",
       "toggle": "Ask before letting people in",
       "toggleHint": "With this off, anyone with the link joins straight away.",
-      "off": "The door is open — anyone with the link joins straight away."
+      "off": "The door is open — anyone with the link joins straight away.",
+      "lock": "Lock the room",
+      "lockHint": "Nobody new gets in at all, not even to wait.",
+      "lockedNote": "The room is locked. Nobody new can get as far as waiting."
+    },
+    "moderation": {
+      "mute": "Mute",
+      "stopShare": "Stop share",
+      "muteAll": "Mute everyone",
+      "announce": {
+        "mute": "The host muted <n>{name}</n>.",
+        "muteAll": "The host muted everyone. You can unmute yourself.",
+        "stopShare": "The host stopped <n>{name}</n>'s screen share.",
+        "remove": "The host removed <n>{name}</n> from the meeting.",
+        "lock": "The host locked the room. Nobody new can join.",
+        "unlock": "The host unlocked the room."
+      },
+      "remove": "Remove",
+      "removeConfirm": "Remove?"
     }
   }
 }

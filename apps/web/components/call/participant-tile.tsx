@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   ConnectionQuality,
@@ -24,6 +24,9 @@ export function ParticipantTile({
   isLocal,
   isPinned,
   onTogglePin,
+  onMute,
+  onStopShare,
+  onRemove,
   source = Track.Source.Camera,
   className,
   style,
@@ -33,12 +36,28 @@ export function ParticipantTile({
   isLocal: boolean;
   isPinned: boolean;
   onTogglePin: () => void;
+  /**
+   * Present only for a host looking at somebody else.
+   *
+   * There is deliberately no unmute counterpart. A host can close a microphone
+   * and never open one — being silenced is recoverable, having your microphone
+   * opened for you is not.
+   */
+  onMute?: () => void;
+  onStopShare?: () => void;
+  /** Removal blocks rejoining for the rest of the meeting, so it asks twice. */
+  onRemove?: () => void;
   /** Which of this participant's tracks to draw. */
   source?: Track.Source;
   className?: string;
   style?: React.CSSProperties;
 }) {
   const t = useTranslations("call");
+
+  // Removal is the one action here that the person cannot undo for themselves,
+  // so it asks twice. A dialog would cover the face of whoever you are deciding
+  // about, which is exactly the thing you want to still be looking at.
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
 
   const isScreenShare = source === Track.Source.ScreenShare;
   const videoPublication = participant.getTrackPublication(source);
@@ -130,16 +149,63 @@ export function ParticipantTile({
         <QualityBadge quality={participant.connectionQuality} />
       </div>
 
-      <button
-        type="button"
-        onClick={onTogglePin}
-        aria-pressed={isPinned}
-        // Hidden until hover or focus so it does not sit on every face all the
-        // time, but always reachable by keyboard.
-        className="absolute end-2 top-2 rounded-md bg-black/50 px-2 py-1 text-xs text-[#f4f4f5] opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus-visible:opacity-100"
-      >
-        {isPinned ? t("unpin") : t("pin")}
-      </button>
+      {/* Hidden until hover or focus so they do not sit on every face all the
+          time, but always reachable by keyboard. */}
+      <div className="absolute end-2 top-2 flex gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100">
+        {onMute && micOn && (
+          <button
+            type="button"
+            onClick={onMute}
+            className="rounded-md bg-black/50 px-2 py-1 text-xs text-[#f4f4f5] hover:bg-black/70"
+          >
+            {t("moderation.mute")}
+          </button>
+        )}
+
+        {onStopShare && isScreenShare && (
+          <button
+            type="button"
+            onClick={onStopShare}
+            className="rounded-md bg-black/50 px-2 py-1 text-xs text-[#f4f4f5] hover:bg-black/70"
+          >
+            {t("moderation.stopShare")}
+          </button>
+        )}
+
+        {onRemove && (
+          <button
+            type="button"
+            onClick={() => {
+              if (confirmingRemove) {
+                onRemove();
+                setConfirmingRemove(false);
+              } else {
+                setConfirmingRemove(true);
+              }
+            }}
+            onBlur={() => setConfirmingRemove(false)}
+            className={cn(
+              "rounded-md px-2 py-1 text-xs hover:bg-black/70",
+              confirmingRemove
+                ? "bg-[#f87171] text-[#0a0a0b] hover:opacity-90"
+                : "bg-black/50 text-[#f4f4f5]",
+            )}
+          >
+            {confirmingRemove
+              ? t("moderation.removeConfirm")
+              : t("moderation.remove")}
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={onTogglePin}
+          aria-pressed={isPinned}
+          className="rounded-md bg-black/50 px-2 py-1 text-xs text-[#f4f4f5] hover:bg-black/70"
+        >
+          {isPinned ? t("unpin") : t("pin")}
+        </button>
+      </div>
     </div>
   );
 }
