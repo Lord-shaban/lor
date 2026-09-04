@@ -69,7 +69,9 @@
       "joinFailed": "You could not be let in. Try again.",
       "offline": "No connection. Check your network and try again.",
       "removed": "You were removed from this meeting and cannot rejoin it."
-    }
+    },
+    "qrLabel": "QR code for this meeting's link",
+    "qrHint": "Or point a phone camera at this."
   },
   "waiting": {
     "cancel": "Cancel",
