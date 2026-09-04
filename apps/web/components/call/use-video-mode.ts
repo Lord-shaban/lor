@@ -3,12 +3,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocalParticipant, useRoomContext } from "@livekit/components-react";
 import {
+  ConnectionQuality,
   RoomEvent,
   VideoQuality,
   type RemoteParticipant,
   type RemoteTrackPublication,
   type Room,
 } from "livekit-client";
+import {
+  NO_DEGRADATION,
+  SAMPLE_INTERVAL_MS,
+  observeQuality,
+  type DegradationState,
+} from "@/lib/degradation";
 import {
   cameraForModeChange,
   effectOf,
@@ -41,10 +48,16 @@ export function useVideoMode() {
 
   const [mode, setMode] = useState<VideoMode>("auto");
 
+  // True only while the current mode is one this code chose rather than one the
+  // person did. It is what the notice is conditioned on: "we reduced this for
+  // you" must never appear over a choice somebody made themselves.
+  const [reducedForYou, setReducedForYou] = useState(false);
+
   // Whether the camera was on at the moment audio-only was entered, so leaving
   // it restores what was there rather than switching on a camera that was off.
   const cameraBeforeAudioOnlyRef = useRef(true);
   const modeRef = useRef<VideoMode>(mode);
+  const degradationRef = useRef<DegradationState>(NO_DEGRADATION);
 
   // Re-applied on every publication event, so late arrivals inherit the mode.
   useEffect(() => {
@@ -64,8 +77,45 @@ export function useVideoMode() {
     };
   }, [room, mode]);
 
+  /**
+   * Sampled rather than driven by events.
+   *
+   * `ConnectionQualityChanged` fires on a change, so a connection that goes bad
+   * and stays bad produces exactly one event — and "has it been bad for eight
+   * seconds?" cannot be answered from one event. An interval is the honest
+   * shape of the question.
+   */
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const quality = localParticipant.connectionQuality;
+      const { state, reduce } = observeQuality({
+        state: degradationRef.current,
+        poor:
+          quality === ConnectionQuality.Poor ||
+          quality === ConnectionQuality.Lost,
+        automatic: modeRef.current === "auto",
+        now: Date.now(),
+      });
+      degradationRef.current = state;
+
+      if (reduce) {
+        modeRef.current = "low";
+        setMode("low");
+        setReducedForYou(true);
+      }
+    }, SAMPLE_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, [localParticipant]);
+
   const chooseMode = useCallback(
     (next: VideoMode) => {
+      // Any deliberate choice makes the current mode theirs, including one that
+      // lands on the mode already in force. Pressing "Less data" while this code
+      // had already reduced must not leave a notice claiming it did it.
+      degradationRef.current = NO_DEGRADATION;
+      setReducedForYou(false);
+
       const previous = modeRef.current;
       if (next === previous) return;
 
@@ -89,7 +139,9 @@ export function useVideoMode() {
     [localParticipant],
   );
 
-  return { mode, chooseMode };
+  const dismissNotice = useCallback(() => setReducedForYou(false), []);
+
+  return { mode, chooseMode, reducedForYou, dismissNotice };
 }
 
 function applyMode(room: Room, mode: VideoMode) {

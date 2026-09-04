@@ -12,6 +12,7 @@ import { VideoGrid } from "@/components/call/video-grid";
 import { CallControls } from "@/components/call/call-controls";
 import { ChatPanel } from "@/components/call/chat-panel";
 import { HandQueue } from "@/components/call/hand-queue";
+import { QualityNotice } from "@/components/call/quality-notice";
 import { ReactionsOverlay } from "@/components/call/reactions-overlay";
 import { useRoomMessages } from "@/components/call/use-room-messages";
 import { useVideoMode } from "@/components/call/use-video-mode";
@@ -139,7 +140,12 @@ function CallStage({
     handRaised,
     toggleHand,
   } = useRoomMessages();
-  const { mode: videoMode, chooseMode: chooseVideoMode } = useVideoMode();
+  const {
+    mode: videoMode,
+    chooseMode: chooseVideoMode,
+    reducedForYou,
+    dismissNotice,
+  } = useVideoMode();
 
   const [chatOpen, setChatOpen] = useState(false);
   // How many messages had arrived the last time the panel was closed. Held here
@@ -171,6 +177,13 @@ function CallStage({
           <ChatPanel entries={entries} onSend={sendChat} onClose={toggleChat} />
         )}
       </div>
+
+      {reducedForYou && (
+        <QualityNotice
+          onRestore={() => chooseVideoMode("auto")}
+          onDismiss={dismissNotice}
+        />
+      )}
 
       <HandQueue hands={hands} localIdentity={localParticipant.identity} />
 
