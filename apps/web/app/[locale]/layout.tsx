@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Geist, Geist_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { ServiceWorker } from "@/components/service-worker";
 import { ThemeScript } from "@/components/theme-script";
 import { direction, routing, type Locale } from "@/i18n/routing";
 import "../globals.css";
@@ -53,6 +54,25 @@ export async function generateMetadata({
         "x-default": "/",
       },
     },
+
+    // iOS ignores the web app manifest for most of this and reads its own
+    // meta tags instead, so an installable app on an iPhone needs both.
+    appleWebApp: {
+      capable: true,
+      title: "LOR.",
+      // Matches the call, which is the screen an installed app spends its life
+      // on. A light status bar over a dark call reads as a rendering bug.
+      statusBarStyle: "black-translucent",
+    },
+
+    other: {
+      // Next emits only the unprefixed `mobile-web-app-capable` for
+      // `appleWebApp.capable`, which is the modern name — and the one Safari
+      // did not read for most of its life. Emitting both costs a line and is
+      // the difference between installable on an iPhone and not. Checked by
+      // reading the rendered head, not by trusting the option name.
+      "apple-mobile-web-app-capable": "yes",
+    },
   };
 }
 
@@ -77,6 +97,7 @@ export default async function LocaleLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <ServiceWorker />
       </body>
     </html>
   );

@@ -50,6 +50,10 @@ describe("the middleware matcher", () => {
     ["Vercel internals", "/_vercel/insights"],
     ["a file with an extension", "/icon.svg"],
     ["a favicon", "/favicon.ico"],
+    // No extension to be caught by the rule above, so it is named explicitly.
+    // Without it the manifest's icons were rewritten into a locale and 404'd.
+    ["a generated icon", "/icons/192"],
+    ["the maskable icon", "/icons/maskable"],
   ])("skips %s", (_label, path) => {
     expect(pattern.test(path)).toBe(false);
   });
