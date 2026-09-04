@@ -1,0 +1,10 @@
+{
+  "id": "005-vercel-repair",
+  "reference": "النهارده عملنا deploy على Vercel والـ build خلص",
+  "notes": "Three measured runs of one recording through whisper-large-v3, differing only in what the room had configured. All three are verbatim responses from /api/stt, not written by hand.\n\nThe prompt alone rescues 'deploy' and 'build' and leaves 'Vercel' as 'فيرسل'. Adding 'Vercel' to the room glossary changes nothing — the identical string comes back. A stored correction فيرسل -> Vercel fixes it immediately, and removing the correction brings the transliteration straight back, which is what shows the repair pass is doing the work and not something else.\n\nSo for a term the model has already committed to hearing as Arabic, the glossary is weaker than the correction. That is one term in one synthesised recording and not a study — the audio is Windows' ar-EG voice, which pronounces an English term with Arabic phonology and so gives the glossary the hardest possible version of the problem. But it is the first evidence either way, and it says the repair pass earns its place rather than being a nicety on top of the prompt.",
+  "hypotheses": {
+    "groq-prompted": "النهارده عملنا deploy على فيرسل والـ build خلصه.",
+    "groq-prompted-glossary": "النهارده عملنا deploy على فيرسل والـ build خلصه.",
+    "groq-prompted-repaired": "النهارده عملنا deploy على Vercel والـ build خلصه."
+  }
+}
