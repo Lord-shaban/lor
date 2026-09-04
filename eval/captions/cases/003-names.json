@@ -1,9 +1,11 @@
 {
   "id": "003-names",
   "reference": "أحمد هيراجع الـ pull request بتاع Supabase",
-  "notes": "A person's name in Arabic beside a product name in Latin. Proper nouns are what the room glossary exists for, and this case is what should improve when it lands.",
+  "notes": "A person's name in Arabic beside a product name in Latin. Proper nouns are what the room glossary exists for.\n\nThe two `groq-*` hypotheses are measured, not written by hand: the same audio through whisper-large-v3 with and without the code-switched prompt from lib/stt/prompt.ts. Unprompted it transliterates 'pull request' into Arabic script and scores 0% code-switch preservation; prompted it keeps both words and scores 66.7%, with word error rate halving at the same time. That is the pair the captions invariant asks for.\n\nThe audio is Windows' ar-EG voice reading the reference, not a person in a meeting — so the numbers are real but the speech is not. A synthesiser pronounces an English term inside an Arabic sentence with Arabic phonology, which is why 'Supabase' is absent from every hypothesis including the unprompted one: the model never heard a word it could have kept. The glossary therefore had nothing to act on here, and scores identically to the prompt alone. Testing the glossary needs a recording of somebody actually saying it.",
   "hypotheses": {
     "transliterating": "أحمد هيراجع الـ بول ريكوست بتاع سوبابيز",
-    "ideal": "أحمد هيراجع الـ pull request بتاع Supabase"
+    "ideal": "أحمد هيراجع الـ pull request بتاع Supabase",
+    "groq-large-v3-unprompted": "أحمده راجع البول ريكوست بتاعي",
+    "groq-large-v3-prompted": "أحمده راجع الـ pull request بتاعي."
   }
 }
