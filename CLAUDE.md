@@ -168,6 +168,11 @@ reading it** — see `scripts/README.md`. A grid that measures itself, a permiss
 a bidi label, two people seeing each other: each looked correct in the source and was
 wrong on screen.
 
+`npm run test:e2e` is the fifth, and the one that matters most: two browser
+contexts in one room, asserting decoded frames rather than tiles. It runs on
+every pull request against a LiveKit and a Postgres started on the runner, and
+it is a required check. A build is needed first.
+
 ```bash
 # one page, waiting for a real condition
 node scripts/screenshot.mjs http://localhost:3000/en/<code> out.png "Microphone"
@@ -233,6 +238,32 @@ with the controls off screen. `overflow-hidden` on that container is load-bearin
 "one or more characters" — so every non-empty path skipped the middleware and every room
 link 404'd while `/` kept working. `lib/middleware-matcher.test.ts` guards it.
 
+**A rate limit charged to the wrong thing.** Every join spent a slot from the
+knock limiter — even in a room with no waiting room — because the limiter ran
+before the room was looked up. An office behind one address filled a meeting
+halfway and then could not. Count a limit where the expensive thing happens, not
+at the top of the handler. Found by the end-to-end suite within an hour of it
+existing.
+
+**Two ways for local WebRTC to have no candidates in common.** With LiveKit on
+the same machine as the browser: `use_external_ip` is on by default, so the
+server discovers its public address over STUN and offers it to a browser that
+cannot reach it; and Chrome replaces its own host candidates with mDNS `.local`
+names, so the server sees only a STUN-discovered address in return. Both produce
+one decoding video instead of two, and neither appears against a hosted media
+server. The config sets `use_external_ip: false`; the browser needs
+`--disable-features=WebRtcHideLocalIpsWithMdns`.
+
+**A path with no extension is not excluded by the middleware.** The matcher
+skips anything containing a dot, so `/icons/192` was rewritten into a locale and
+the manifest's icons 404'd — an installable app with no icon. The second time
+that matcher has cost something; `lib/middleware-matcher.test.ts` now covers it.
+
+**`appleWebApp.capable` does not emit the apple-prefixed tag.** Next 16 renders
+only `mobile-web-app-capable`, and Safari read `apple-mobile-web-app-capable`
+for most of its life. Both are emitted now. Check the rendered `<head>` rather
+than trusting an option's name.
+
 **An unhandled rejection from `publishData`.** Raising a hand while the connection was
 down put `NegotiationError: cannot negotiate on closed engine` on screen. LiveKit rejects
 a publish whenever the engine is closed — mid-reconnect, or just after somebody leaves —
@@ -256,25 +287,29 @@ GitHub is authoritative — issues, milestones, and the
 [board](https://github.com/users/Lord-shaban/projects/8). Update this when a release
 closes.
 
-**Live:** <https://lor-bay.vercel.app>. Creating a room, the prejoin screen, joining, the
-video grid and screen sharing all work in production today.
+**Live:** <https://lor-bay.vercel.app>. Everything in `v0.1` is deployed there,
+on every push to `main`.
 
-**Done.** `v0.0` in full. In `v0.1`: #9 room codes · #10 host cookie · #11 room creation ·
-#12 LiveKit tokens · #13 prejoin · #14 video grid · #15 screen share · #22 i18n · #24
-database · #8 design system · #16 chat, reactions and raise hand.
+**Done.** `v0.0` and `v0.1` in full — thirty-three issues. The call joins, shows
+people to each other, shares a screen, carries chat and reactions and a raised
+hand on the data channel, spends less bandwidth when it has to, holds people at
+a door, lets a host moderate and hand over the seat, installs on a phone, and is
+checked end to end on every pull request.
 
-**Next, in order.** #17 low bandwidth and connection quality · #18 waiting room · #19 host
-moderation · #20 PWA and QR · #21 Playwright end-to-end.
+**Next.** `v0.1.5 — Captions`, which has no issues written yet. It is the
+hardest thing in this project: mixed Arabic and English in one sentence, where
+Whisper transliterates English into Arabic script or translates instead of
+transcribing. Read the captions invariant above before touching anything under
+`apps/web/lib/stt/` — a change there is not reviewable without WER and
+code-switch preservation numbers on both sides of it.
 
-#17 is the one to start with. The data channel now actually carries something:
-`apps/web/lib/data-channel.ts` holds a versioned envelope where an unknown type is
-dropped rather than thrown, and the sender is never on the wire — attribution comes from
-the participant LiveKit hands to the receive handler. #18 and #19 extend that union
-rather than inventing anything; adding a message type is not a version bump.
+**Known and unfixed.** #67 — a tile paints black instead of the avatar while a
+video track is subscribed but not yet decoding, which is most visible on
+somebody who has just joined.
 
-**Known and unfixed.** #67 — a tile paints black instead of the avatar while a video
-track is subscribed but not yet decoding, which is most visible on somebody who has just
-joined.
+**Required checks on `main`.** `Typecheck, lint, build`, `Commit messages`, and
+`Two people in a room`. The last one starts a LiveKit and a Postgres on the
+runner, so it needs no secrets and touches nothing in production.
 
 **Infrastructure, all live and configured.** Supabase project `pvklemglnehhgwuszgyq`
 (eu-central-1), reachable through the Supabase MCP — schema applied there, migrations in
