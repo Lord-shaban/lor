@@ -200,6 +200,19 @@ export type RoomMessage =
       on: boolean;
     }
   | {
+      /**
+       * Whether what is said is being *kept* after the meeting.
+       *
+       * A separate message from `captions`, and separate on purpose: agreeing
+       * that words may be transcribed onto a screen for the next few seconds is
+       * not agreeing that they are written down and readable next month. A room
+       * can have captions with no record, and the difference has to be
+       * announced rather than assumed from the fact that captions are on.
+       */
+      type: "keeping";
+      on: boolean;
+    }
+  | {
       type: "hand";
       raised: boolean;
       /**
@@ -300,6 +313,12 @@ export function decodeMessage(payload: Uint8Array): RoomMessage | null {
       const { on } = envelope;
       if (typeof on !== "boolean") return null;
       return { type: "captions", on };
+    }
+
+    case "keeping": {
+      const { on } = envelope;
+      if (typeof on !== "boolean") return null;
+      return { type: "keeping", on };
     }
 
     case "hand": {

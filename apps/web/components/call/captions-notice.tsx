@@ -22,12 +22,15 @@ import type { Captions } from "./use-captions";
 export function CaptionsNotice({
   captions,
   onOpenKeys,
+  onOpenTranscript,
 }: {
   captions: Captions;
   onOpenKeys: () => void;
+  onOpenTranscript: () => void;
 }) {
   const t = useTranslations("call.captions");
   const keys = useTranslations("call.keys");
+  const keeping = useTranslations("call.keeping");
 
   if (!captions.on) return null;
 
@@ -40,6 +43,29 @@ export function CaptionsNotice({
         />
         {captions.sharing ? t("noticeOn") : t("noticeNotYou")}
       </span>
+
+      {/* A second sentence, not a longer first one. Agreeing that words appear
+          on a screen is not agreeing that they are written down, so the record
+          announces itself separately or it has not been announced. */}
+      {captions.keeping && (
+        <span className="text-[#fbbf24]">{keeping("notice")}</span>
+      )}
+
+      <button
+        type="button"
+        onClick={captions.toggleKeeping}
+        className="rounded-md px-2 py-0.5 font-medium text-[#a1a1aa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:text-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
+      >
+        {captions.keeping ? keeping("off") : keeping("on")}
+      </button>
+
+      <button
+        type="button"
+        onClick={onOpenTranscript}
+        className="rounded-md px-2 py-0.5 font-medium text-[#a1a1aa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:text-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
+      >
+        {keeping("open")}
+      </button>
 
       <button
         type="button"

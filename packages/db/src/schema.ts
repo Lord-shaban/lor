@@ -175,3 +175,84 @@ export const rateLimits = pgTable("rate_limits", {
 });
 
 export type RateLimit = typeof rateLimits.$inferSelect;
+
+/**
+ * What was said, once the meeting agreed to keep it.
+ *
+ * This is the first table in the project that stores what people say, which
+ * makes it the first place retention, consent and deletion are real rather than
+ * future. Three decisions are load-bearing:
+ *
+ * **Only settled lines.** The browser's own recogniser produces a fast guess
+ * that is often wrong in the exact way this product exists to fix — it
+ * transliterates. A guess is a preview, and a preview does not become a record.
+ *
+ * **Attributed and ordered.** A transcript that cannot say who said what is a
+ * wall of text. `seq` rather than a timestamp for ordering: participants'
+ * clocks disagree by minutes and the server's arrival order is the only one
+ * everybody shares.
+ *
+ * **Deletable by the room.** Rows go when the room asks, and the summary built
+ * from them goes with them. Anything else would keep a derived copy of exactly
+ * what was deleted.
+ */
+export const transcriptLines = pgTable(
+  "transcript_lines",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    roomId: uuid("room_id")
+      .notNull()
+      .references(() => rooms.id, { onDelete: "cascade" }),
+
+    /**
+     * The media server's identity for the speaker, and the name they chose.
+     *
+     * Both, because the identity is stable and meaningless to a reader while
+     * the name is readable and can repeat. Neither is an account: `v0.1` has
+     * no accounts and this table does not introduce one.
+     */
+    speakerIdentity: text("speaker_identity").notNull(),
+    speakerName: text("speaker_name").notNull(),
+
+    text: text("text").notNull(),
+
+    /** Arrival order at the server. The only clock everybody shares. */
+    seq: integer("seq").notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // Every read is "this room, in order", and every delete is "this room".
+    index("transcript_lines_room_seq_idx").on(table.roomId, table.seq),
+  ],
+);
+
+export type TranscriptLine = typeof transcriptLines.$inferSelect;
+export type NewTranscriptLine = typeof transcriptLines.$inferInsert;
+
+/**
+ * A meeting summarised for somebody who was not there.
+ *
+ * One row per room, replaced rather than appended: a meeting has one current
+ * summary, and keeping every draft would mean keeping the transcript's contents
+ * in a second place that deletion has to remember about.
+ */
+export const summaries = pgTable("summaries", {
+  roomId: uuid("room_id")
+    .primaryKey()
+    .references(() => rooms.id, { onDelete: "cascade" }),
+
+  text: text("text").notNull(),
+
+  /** How many lines it was built from, so a stale summary can be noticed. */
+  fromLines: integer("from_lines").notNull(),
+
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type Summary = typeof summaries.$inferSelect;

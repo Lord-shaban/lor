@@ -22,6 +22,13 @@
       "when": 1788468626437,
       "tag": "0002_knock_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788562650413,
+      "tag": "0003_transcripts_and_summaries",
+      "breakpoints": true
     }
   ]
 }
