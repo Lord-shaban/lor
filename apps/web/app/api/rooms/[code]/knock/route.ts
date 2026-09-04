@@ -1,7 +1,8 @@
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { getDb, knocks, rooms } from "@lor/db";
+import { hostCookieName, verifyHostCookie } from "@/lib/host-cookie";
 import { createKnockClaim } from "@/lib/knock-claim";
 import { resolveKnock, type KnockStatus } from "@/lib/knock";
 import { participantIdentity } from "@/lib/livekit";
@@ -76,6 +77,7 @@ export async function POST(
     .select({
       id: rooms.id,
       livekitRoom: rooms.livekitRoom,
+      hostSecretHash: rooms.hostSecretHash,
       locked: rooms.locked,
       waitingRoomEnabled: rooms.waitingRoomEnabled,
     })
@@ -85,6 +87,23 @@ export async function POST(
 
   if (!room) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  // The host is never held at their own door.
+  //
+  // Found by a headless browser, not by reading: with the waiting room on, the
+  // host opened their own room and was told to wait — for themselves. Nobody
+  // else could admit them either, so the room was unenterable by the only
+  // person who could have opened it. The token route already exempted the host;
+  // this route did not, and the client now knocks before asking for a token.
+  const store = await cookies();
+  const isHost = await verifyHostCookie(
+    store.get(hostCookieName(code))?.value,
+    code,
+    room.hostSecretHash,
+  );
+  if (isHost) {
+    return NextResponse.json({ outcome: "open" });
   }
 
   // A locked room is a stronger statement than a waiting room: the host has

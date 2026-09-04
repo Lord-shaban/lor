@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { getDb, knocks, rooms } from "@lor/db";
 import { verifyKnockClaim } from "@/lib/knock-claim";
 import { participantIdentity } from "@/lib/livekit";
+import { isHostPresent } from "@/lib/room-presence";
 import { normalizeRoomCode } from "@/lib/room-code";
 
 /**
@@ -64,5 +65,10 @@ export async function POST(
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
-  return NextResponse.json({ status: knock.status });
+  // Only while the answer is still open. Once it is decided, whether a host
+  // happens to be connected changes nothing and is not worth the call.
+  const hostPresent =
+    knock.status === "pending" ? await isHostPresent(room.livekitRoom) : null;
+
+  return NextResponse.json({ status: knock.status, hostPresent });
 }

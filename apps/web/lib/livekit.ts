@@ -19,6 +19,16 @@ import { AccessToken } from "livekit-server-sdk";
  */
 const TOKEN_TTL_SECONDS = 60 * 60;
 
+/**
+ * Written into a host's access token so the media server reports it back.
+ *
+ * Public by nature — a host is visible in the room anyway — and never trusted
+ * as a permission. It exists only so "is a host connected?" can be answered:
+ * LiveKit does not report a participant's grants, so `roomAdmin`, which is what
+ * actually confers host rights, cannot be read back from the service API.
+ */
+export const HOST_METADATA = JSON.stringify({ host: true });
+
 export interface TokenGrant {
   /** LiveKit room name, which is not the public room code. */
   livekitRoom: string;
@@ -83,6 +93,13 @@ export async function createAccessToken(grant: TokenGrant): Promise<string> {
     identity: grant.identity,
     name: grant.displayName,
     ttl: TOKEN_TTL_SECONDS,
+
+    // Marks the host in a way the media server will report back. Grants are not
+    // readable through the service API, so `roomAdmin` — the thing that
+    // actually confers host rights — cannot answer "is a host in the room?".
+    // Nothing is trusted from here: this is a label for presence, never a
+    // permission. Permissions are the grants below and the checks in the routes.
+    ...(grant.isHost ? { metadata: HOST_METADATA } : {}),
   });
 
   token.addGrant({

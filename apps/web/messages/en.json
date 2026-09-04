@@ -66,6 +66,22 @@
       "offline": "No connection. Check your network and try again."
     }
   },
+  "waiting": {
+    "cancel": "Cancel",
+    "waiting": {
+      "title": "Waiting to be let in",
+      "body": "The host has been asked to let <n>{name}</n> in. This screen moves on by itself."
+    },
+    "hostGone": {
+      "title": "Nobody is in the room yet",
+      "body": "There is no host here to let <n>{name}</n> in. You can wait, or come back when the meeting starts."
+    },
+    "denied": {
+      "title": "You were not let in",
+      "body": "The host did not let <n>{name}</n> into this meeting.",
+      "back": "Back"
+    }
+  },
   "prejoin": {
     "nameLabel": "Your name",
     "namePlaceholder": "What others will see",
