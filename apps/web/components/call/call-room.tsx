@@ -10,6 +10,9 @@ import {
 import { RoomEvent, Track, type RoomOptions } from "livekit-client";
 import { VideoGrid } from "@/components/call/video-grid";
 import { CallControls } from "@/components/call/call-controls";
+import { ChatPanel } from "@/components/call/chat-panel";
+import { useRoomMessages } from "@/components/call/use-room-messages";
+import { unreadCount } from "@/lib/chat-log";
 import type { JoinDetails } from "@/components/prejoin/prejoin";
 
 export interface Connection {
@@ -93,16 +96,7 @@ export function CallRoom({
       >
         <SharingBanner />
 
-        <main className="min-h-0 flex-1 overflow-hidden p-3">
-          <VideoGrid />
-        </main>
-
-        <CallControls
-          canPublish={connection.canPublish}
-          startMicOff={details.micOff}
-          startCameraOff={details.cameraOff}
-          onLeave={onLeave}
-        />
+        <CallStage canPublish={connection.canPublish} onLeave={onLeave} />
 
         <ConnectionWatcher />
       </LiveKitRoom>
@@ -113,6 +107,61 @@ export function CallRoom({
         </p>
       )}
     </div>
+  );
+}
+
+/**
+ * Everything inside the room: the grid, the chat beside it, and the controls.
+ *
+ * It is its own component because the chat state has to be reachable from both
+ * the panel and the button that badges it, and both of those need the LiveKit
+ * room context — which only exists below `LiveKitRoom`, not in the component
+ * that renders it.
+ */
+function CallStage({
+  canPublish,
+  onLeave,
+}: {
+  canPublish: boolean;
+  onLeave: () => void;
+}) {
+  const { entries, received, sendChat } = useRoomMessages();
+
+  const [chatOpen, setChatOpen] = useState(false);
+  // How many messages had arrived the last time the panel was closed. Held here
+  // rather than cleared on every arrival, so nothing has to run in an effect to
+  // keep the badge honest.
+  const [read, setRead] = useState(0);
+
+  function toggleChat() {
+    // Closing marks what has arrived as seen. Opening does not need to: an open
+    // panel shows no badge at all.
+    if (chatOpen) setRead(received);
+    setChatOpen(!chatOpen);
+  }
+
+  return (
+    <>
+      {/* relative, because the chat covers this area on a phone rather than
+          squeezing the grid into a column too narrow to see a face in. */}
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        <main className="min-h-0 flex-1 overflow-hidden p-3">
+          <VideoGrid />
+        </main>
+
+        {chatOpen && (
+          <ChatPanel entries={entries} onSend={sendChat} onClose={toggleChat} />
+        )}
+      </div>
+
+      <CallControls
+        canPublish={canPublish}
+        chatOpen={chatOpen}
+        unread={unreadCount({ received, read, open: chatOpen })}
+        onToggleChat={toggleChat}
+        onLeave={onLeave}
+      />
+    </>
   );
 }
 
