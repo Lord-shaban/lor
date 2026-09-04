@@ -23,6 +23,7 @@ import { useRoomMessages } from "@/components/call/use-room-messages";
 import { useCaptions } from "@/components/call/use-captions";
 import { CaptionsStrip } from "@/components/call/captions-strip";
 import { CaptionsNotice } from "@/components/call/captions-notice";
+import { KeysDialog } from "@/components/call/keys-dialog";
 import { useVideoMode } from "@/components/call/use-video-mode";
 import { unreadCount } from "@/lib/chat-log";
 import type { JoinDetails } from "@/components/prejoin/prejoin";
@@ -153,6 +154,7 @@ function CallStage({
   // Held in state because the host seat can change hands mid-call. Only the
   // server's cookie check decides anything; this is what the interface shows.
   const [isHost, setIsHost] = useState(startedAsHost);
+  const [keysOpen, setKeysOpen] = useState(false);
   const { localParticipant } = useLocalParticipant();
   const {
     entries,
@@ -227,6 +229,10 @@ function CallStage({
             would be the thing hidden. */}
         <CaptionsStrip log={captions.log} />
 
+        {keysOpen && (
+          <KeysDialog onClose={() => setKeysOpen(false)} onSaved={captions.retry} />
+        )}
+
         {chatOpen && (
           <ChatPanel entries={entries} onSend={sendChat} onClose={toggleChat} />
         )}
@@ -264,7 +270,7 @@ function CallStage({
       {/* Above the controls rather than inside them: it has to stay visible
           for as long as captions are on, and a control bar is somewhere people
           stop looking. */}
-      <CaptionsNotice captions={captions} />
+      <CaptionsNotice captions={captions} onOpenKeys={() => setKeysOpen(true)} />
 
       <CallControls
         canPublish={canPublish}

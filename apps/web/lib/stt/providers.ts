@@ -26,6 +26,19 @@ export interface Provider {
   defaultModel: string;
   /** Where somebody gets their own key. Used by #92, and by the quota message. */
   keysUrl: string;
+  /**
+   * Whether a browser may call this endpoint directly with a participant's own
+   * key.
+   *
+   * When it can, that key never reaches our server at all and neither does the
+   * audio — which is the strongest form of the promise in `SECURITY.md`, not a
+   * performance choice. When it cannot, the request goes through `/api/stt`,
+   * which forwards and returns and keeps nothing.
+   *
+   * Set from a measurement, never from a guess: a real transcription request
+   * from an unrelated page origin, and whether the answer came back.
+   */
+  browserDirect: boolean;
 }
 
 export const PROVIDERS: Record<string, Provider> = {
@@ -38,6 +51,9 @@ export const PROVIDERS: Record<string, Provider> = {
     // and this milestone is about nothing else.
     defaultModel: "whisper-large-v3",
     keysUrl: "https://console.groq.com/keys",
+    // Measured: a transcription POST from http://127.0.0.1 answered 200 with
+    // the text, so the preflight and the response headers both allow it.
+    browserDirect: true,
   },
   openai: {
     id: "openai",
@@ -45,6 +61,11 @@ export const PROVIDERS: Record<string, Provider> = {
     endpoint: "https://api.openai.com/v1/audio/transcriptions",
     defaultModel: "whisper-1",
     keysUrl: "https://platform.openai.com/api-keys",
+    // Not measured — there is no OpenAI key here to try it with. `false` is
+    // the conservative answer: the proxy path works either way, and claiming
+    // a browser can reach them when it cannot would break captions for
+    // everybody who chose this provider.
+    browserDirect: false,
   },
 };
 

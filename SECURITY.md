@@ -26,7 +26,16 @@ These are invariants, not preferences. A change that breaks one is a bug:
 
 1. **No API key is ever written to the database.** Not the user's, not the operator's.
 2. **User-supplied keys stay in the browser.** They are stored encrypted there and sent
-   directly to the provider whenever CORS allows it.
+   directly to the provider whenever CORS allows it — measured per provider, not
+   assumed. On that path neither the key nor the audio reaches our server at all.
+
+   Be precise about what that encryption buys, because overstating it is its own
+   vulnerability. The key material is encrypted under a **non-extractable**
+   `CryptoKey` held in the same IndexedDB, so dumping the database — a backup, a
+   copied profile, a sync, an extension enumerating storage — yields ciphertext and a
+   key object that cannot be exported. It does **not** defend against script running
+   in the page's own origin, because nothing can: such script can ask for the key the
+   same way the captions do.
 3. **The proxy routes are stateless.** When a request must pass through our server
    (because the operator's key is used, or the provider blocks browser calls), that
    route forwards and returns. It does not log, cache, or persist the audio, the
@@ -34,12 +43,11 @@ These are invariants, not preferences. A change that breaks one is a bug:
 4. **Transcription is opt-in and announced.** Participants are told in the room when
    transcription starts, and any room can disable it entirely.
 
-> **What is enforced today.** Numbers 1 and 3 hold in the shipped code. Numbers 2 and 4
-> describe `v0.1.5`, which is in progress — they are written here because they bind that
-> work ([#91](https://github.com/Lord-shaban/lor/issues/91),
-> [#89](https://github.com/Lord-shaban/lor/issues/89)), not because they are already
-> true. A security policy that quietly describes unbuilt features is not a policy.
-> This note goes away when the milestone closes.
+> **What is enforced today.** All four hold in the shipped code as of
+> [#91](https://github.com/Lord-shaban/lor/issues/91). This note remains only to say
+> that it was once not the case: numbers 2 and 4 were written here before they were
+> built, and were labelled as such rather than left to read as fact. A security policy
+> that quietly describes unbuilt features is not a policy.
 
 ## Supported versions
 
