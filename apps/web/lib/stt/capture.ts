@@ -29,6 +29,14 @@ import { SAMPLE_RATE, encodeWav } from "./wav";
 const RING_HEADROOM_MS = 5_000;
 
 export interface Utterance {
+  /**
+   * Stable from the moment speech is detected to the moment its text arrives.
+   *
+   * The two passes in `caption-log.ts` share a line by sharing this, and the
+   * fast one starts filling it long before the slow one has anything to send —
+   * which is why `onStart` exists at all.
+   */
+  id: string;
   /** `audio/wav`, mono, at whatever rate the context actually gave us. */
   audio: Blob;
   fromMs: number;
@@ -38,6 +46,8 @@ export interface Utterance {
 }
 
 export interface Skipped {
+  /** The line that was opened for it, so the caller can take it away again. */
+  id: string;
   /** `short` was a cough or a chair. `gone` means the ring had overwritten it. */
   reason: "short" | "gone";
   fromMs: number;
@@ -46,6 +56,14 @@ export interface Skipped {
 
 export interface CaptureOptions {
   settings?: VadSettings;
+  /**
+   * Somebody has started talking.
+   *
+   * Fired at the onset, roughly a second before the utterance it belongs to is
+   * finished and sent. Nothing about the audio is known yet — this exists so a
+   * line can be opened for the fast pass to write into.
+   */
+  onStart?: (utterance: { id: string; atMs: number }) => void;
   /**
    * Told about audio that was detected and then not sent.
    *
@@ -98,14 +116,23 @@ export async function startCapture(
 
   let vad: VadState = createVadState();
 
+  // Counted rather than derived from a timestamp: two utterances cannot share a
+  // number, and a number does not depend on a clock anybody could change.
+  let utterances = 0;
+  let openId: string | null = null;
+
   const emit = (fromMs: number, toMs: number, reason: Utterance["reason"]) => {
+    const id = openId ?? `u${++utterances}`;
+    openId = null;
+
     const samples = ring.read(fromMs, toMs);
     if (!samples) {
-      options.onSkipped?.({ reason: "gone", fromMs, toMs });
+      options.onSkipped?.({ id, reason: "gone", fromMs, toMs });
       return;
     }
 
     onUtterance({
+      id,
       audio: new Blob([encodeWav(samples, context.sampleRate)], {
         type: "audio/wav",
       }),
@@ -131,10 +158,16 @@ export async function startCapture(
     const boundary = step.event;
     if (!boundary) return;
 
-    if (boundary.type === "end") {
+    if (boundary.type === "start") {
+      openId = `u${++utterances}`;
+      options.onStart?.({ id: openId, atMs: boundary.atMs });
+    } else if (boundary.type === "end") {
       emit(boundary.fromMs, boundary.toMs, boundary.reason);
     } else if (boundary.type === "drop") {
+      const id = openId ?? `u${++utterances}`;
+      openId = null;
       options.onSkipped?.({
+        id,
         reason: "short",
         fromMs: boundary.fromMs,
         toMs: boundary.toMs,
@@ -154,17 +187,29 @@ export async function startCapture(
       if (last.event?.type === "end") {
         emit(last.event.fromMs, last.event.toMs, "stop");
       } else if (last.event?.type === "drop") {
+        const id = openId ?? `u${++utterances}`;
+        openId = null;
         options.onSkipped?.({
+          id,
           reason: "short",
           fromMs: last.event.fromMs,
           toMs: last.event.toMs,
         });
       }
 
-      source.disconnect();
-      node.disconnect();
-      silence.disconnect();
-      await context.close();
+      // Each of these throws if the graph is already torn down — which happens
+      // whenever the page is navigating away, since the browser closes audio
+      // contexts on its own. Stopping is best effort by nature: there is
+      // nothing to retry and nobody to tell.
+      try {
+        source.disconnect();
+        node.disconnect();
+        silence.disconnect();
+      } catch {
+        // Already disconnected.
+      }
+
+      if (context.state !== "closed") await context.close().catch(() => {});
     },
   };
 }

@@ -4,6 +4,7 @@ import {
   SERVER_TOPIC,
   decodeServerNotice,
   encodeServerNotice,
+  MAX_CAPTION_LENGTH,
   MAX_CHAT_LENGTH,
   MAX_HAND_AGE_MS,
   PROTOCOL_VERSION,
@@ -265,5 +266,48 @@ describe("messageId", () => {
   it("does not repeat", () => {
     const ids = new Set(Array.from({ length: 1000 }, messageId));
     expect(ids.size).toBe(1000);
+  });
+});
+
+describe("captions", () => {
+  const wire = (message: Parameters<typeof encodeMessage>[0]) =>
+    decodeMessage(encodeMessage(message));
+
+  it("carries a line and whether it is the final one", () => {
+    expect(
+      wire({ type: "caption", id: "u1", text: "عملت الـ deploy", final: true }),
+    ).toEqual({ type: "caption", id: "u1", text: "عملت الـ deploy", final: true });
+  });
+
+  it("treats a missing final flag as provisional", () => {
+    // The safe direction. A line that stays grey is worse to look at; a guess
+    // shown as settled is quoted.
+    const bytes = new TextEncoder().encode(
+      JSON.stringify({ v: PROTOCOL_VERSION, type: "caption", id: "u1", text: "guess" }),
+    );
+    expect(decodeMessage(bytes)).toMatchObject({ final: false });
+  });
+
+  it("drops a line with nothing in it", () => {
+    expect(wire({ type: "caption", id: "u1", text: "   ", final: true })).toBeNull();
+    expect(wire({ type: "caption", id: "", text: "hi", final: true })).toBeNull();
+  });
+
+  it("caps a line a peer padded", () => {
+    const long = "ا".repeat(MAX_CAPTION_LENGTH + 200);
+    const decoded = wire({ type: "caption", id: "u1", text: long, final: true });
+    expect(decoded).toMatchObject({ text: "ا".repeat(MAX_CAPTION_LENGTH) });
+  });
+
+  it("carries the announcement that captions are on", () => {
+    expect(wire({ type: "captions", on: true })).toEqual({ type: "captions", on: true });
+    expect(wire({ type: "captions", on: false })).toEqual({ type: "captions", on: false });
+  });
+
+  it("refuses an announcement that does not say which", () => {
+    const bytes = new TextEncoder().encode(
+      JSON.stringify({ v: PROTOCOL_VERSION, type: "captions" }),
+    );
+    expect(decodeMessage(bytes)).toBeNull();
   });
 });

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { direction as localeDirection, type Locale } from "@/i18n/routing";
 import {
   LiveKitRoom,
   useLocalParticipant,
@@ -19,6 +20,9 @@ import { WaitingPanel } from "@/components/call/waiting-panel";
 import { useWaitingList } from "@/components/call/use-waiting-list";
 import { useModeration } from "@/components/call/use-moderation";
 import { useRoomMessages } from "@/components/call/use-room-messages";
+import { useCaptions } from "@/components/call/use-captions";
+import { CaptionsStrip } from "@/components/call/captions-strip";
+import { CaptionsNotice } from "@/components/call/captions-notice";
 import { useVideoMode } from "@/components/call/use-video-mode";
 import { unreadCount } from "@/lib/chat-log";
 import type { JoinDetails } from "@/components/prejoin/prejoin";
@@ -160,6 +164,12 @@ function CallStage({
     handRaised,
     toggleHand,
   } = useRoomMessages();
+  const locale = useLocale() as Locale;
+  const captions = useCaptions({
+    code,
+    locale: localeDirection[locale],
+    enabled: canPublish,
+  });
   const {
     mode: videoMode,
     chooseMode: chooseVideoMode,
@@ -212,6 +222,11 @@ function CallStage({
             the control bar, rather than over the whole screen. */}
         <ReactionsOverlay reactions={reactions} />
 
+        {/* Over the video and under the panels: a caption is read while looking
+            at the person saying it, and a chat panel that opened behind it
+            would be the thing hidden. */}
+        <CaptionsStrip log={captions.log} />
+
         {chatOpen && (
           <ChatPanel entries={entries} onSend={sendChat} onClose={toggleChat} />
         )}
@@ -246,6 +261,11 @@ function CallStage({
 
       <HandQueue hands={hands} localIdentity={localParticipant.identity} />
 
+      {/* Above the controls rather than inside them: it has to stay visible
+          for as long as captions are on, and a control bar is somewhere people
+          stop looking. */}
+      <CaptionsNotice captions={captions} />
+
       <CallControls
         canPublish={canPublish}
         chatOpen={chatOpen}
@@ -259,6 +279,8 @@ function CallStage({
         handRaised={handRaised}
         onToggleHand={toggleHand}
         onReact={sendReaction}
+        captionsOn={captions.on}
+        onToggleCaptions={captions.toggle}
         videoMode={videoMode}
         onChooseVideoMode={chooseVideoMode}
         onLeave={onLeave}
