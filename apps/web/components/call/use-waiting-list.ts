@@ -42,6 +42,7 @@ export function useWaitingList({
   const [waiting, setWaiting] = useState<WaitingPerson[]>([]);
   const [deciding, setDeciding] = useState<string | null>(null);
   const [doorOn, setDoorOn] = useState(false);
+  const [locked, setLocked] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!isHost) return;
@@ -51,6 +52,7 @@ export function useWaitingList({
       const body = await response.json();
       setWaiting(Array.isArray(body.waiting) ? body.waiting : []);
       setDoorOn(body.waitingRoom === true);
+      setLocked(body.locked === true);
     } catch {
       // Offline, or a request that died on the way. The next notice or the
       // safety refresh will pick it up; an empty list would be a lie.
@@ -138,5 +140,38 @@ export function useWaitingList({
     [code, refresh],
   );
 
-  return { waiting, deciding, decide, refresh, doorOn, setWaitingRoom };
+  /**
+   * Lock or unlock the room.
+   *
+   * Through the moderation route rather than settings, because locking is
+   * something done to the people who are not in the room yet, and everything
+   * done to people is announced.
+   */
+  const setRoomLocked = useCallback(
+    async (next: boolean) => {
+      setLocked(next);
+      try {
+        await fetch(`/api/rooms/${code}/mod`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: next ? "lock" : "unlock" }),
+        });
+      } catch {
+        // Corrected by the refresh below.
+      }
+      await refresh();
+    },
+    [code, refresh],
+  );
+
+  return {
+    waiting,
+    deciding,
+    decide,
+    refresh,
+    doorOn,
+    setWaitingRoom,
+    locked,
+    setRoomLocked,
+  };
 }

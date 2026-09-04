@@ -22,6 +22,8 @@ export function WaitingPanel({
   onDecide,
   doorOn,
   onSetDoor,
+  locked,
+  onSetLocked,
   onClose,
 }: {
   waiting: readonly WaitingPerson[];
@@ -31,6 +33,9 @@ export function WaitingPanel({
   /** Whether the room currently has a door at all. */
   doorOn: boolean;
   onSetDoor: (enabled: boolean) => void;
+  /** Locked means nobody new gets in at all — not even to wait. */
+  locked: boolean;
+  onSetLocked: (locked: boolean) => void;
   onClose: () => void;
 }) {
   const t = useTranslations("call");
@@ -58,29 +63,32 @@ export function WaitingPanel({
 
       {/* The switch lives above the queue it governs, so turning the door off
           and seeing the queue empty is one glance rather than two screens. */}
-      <div className="shrink-0 border-b border-[#2a2a2e] px-4 py-3">
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            checked={doorOn}
-            onChange={(event) => onSetDoor(event.target.checked)}
-            className="mt-0.5 h-5 w-5 shrink-0 accent-[#f4f4f5]"
-          />
-          <span className="min-w-0">
-            <span className="block text-sm text-[#f4f4f5]">
-              {t("door.toggle")}
-            </span>
-            <span className="mt-1 block text-xs text-[#71717a]">
-              {t("door.toggleHint")}
-            </span>
-          </span>
-        </label>
+      <div className="flex shrink-0 flex-col gap-3 border-b border-[#2a2a2e] px-4 py-3">
+        <Switch
+          checked={doorOn}
+          onChange={onSetDoor}
+          label={t("door.toggle")}
+          hint={t("door.toggleHint")}
+        />
+
+        {/* Stronger than the door and stated as such: a locked room has nobody
+            waiting, because nobody gets as far as waiting. */}
+        <Switch
+          checked={locked}
+          onChange={onSetLocked}
+          label={t("door.lock")}
+          hint={t("door.lockHint")}
+        />
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
         {waiting.length === 0 ? (
           <p className="text-sm text-[#a1a1aa]">
-            {doorOn ? t("door.empty") : t("door.off")}
+            {locked
+              ? t("door.lockedNote")
+              : doorOn
+                ? t("door.empty")
+                : t("door.off")}
           </p>
         ) : (
           <ol className="flex flex-col gap-3">
@@ -133,5 +141,32 @@ export function WaitingPanel({
         <p className="pt-4 text-xs text-[#71717a]">{t("door.denyIsFinal")}</p>
       </div>
     </aside>
+  );
+}
+
+function Switch({
+  checked,
+  onChange,
+  label,
+  hint,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="mt-0.5 h-5 w-5 shrink-0 accent-[#f4f4f5]"
+      />
+      <span className="min-w-0">
+        <span className="block text-sm text-[#f4f4f5]">{label}</span>
+        <span className="mt-1 block text-xs text-[#71717a]">{hint}</span>
+      </span>
+    </label>
   );
 }

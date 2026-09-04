@@ -99,13 +99,15 @@ export function RoomEntry({
       // Each of these has a different answer for the person reading it, so
       // they get different messages rather than one generic failure.
       setError(
-        body?.error === "room_locked"
-          ? t("errors.locked")
-          : body?.error === "rate_limited"
-            ? t("errors.rateLimited")
-            : response.status === 404
-              ? t("errors.notFound")
-              : t("errors.joinFailed"),
+        body?.error === "removed"
+          ? t("errors.removed")
+          : body?.error === "room_locked"
+            ? t("errors.locked")
+            : body?.error === "rate_limited"
+              ? t("errors.rateLimited")
+              : response.status === 404
+                ? t("errors.notFound")
+                : t("errors.joinFailed"),
       );
       return false;
     }

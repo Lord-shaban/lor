@@ -46,11 +46,30 @@ export const DATA_TOPIC = "lor";
 export const SERVER_TOPIC = "lor-server";
 
 /**
- * What the backend has to say. Never data — only "something changed, go and
- * look", so a forged one could at worst cause a fetch the sender is already
- * allowed to make.
+ * What the backend has to say.
+ *
+ * `knock` carries nothing: it means "go and look", and the looking is what
+ * checks the host cookie. `moderation` does carry a name, because an
+ * announcement nobody can read is not an announcement — and it is safe to carry
+ * for the same reason the topic exists: a peer publishing here is named by
+ * LiveKit as its sender, and a named sender is not our backend.
  */
-export type ServerNotice = { type: "knock" };
+export type ServerNotice =
+  | { type: "knock" }
+  | { type: "moderation"; action: ModerationAction; name: string };
+
+export const MODERATION_ACTIONS = [
+  "mute",
+  "muteAll",
+  "stopShare",
+  "remove",
+  "lock",
+  "unlock",
+] as const;
+export type ModerationAction = (typeof MODERATION_ACTIONS)[number];
+
+/** Long enough for a name, short enough that the packet stays small. */
+const MAX_ANNOUNCED_NAME = 60;
 
 export function encodeServerNotice(notice: ServerNotice): Uint8Array<ArrayBuffer> {
   return new TextEncoder().encode(
@@ -70,7 +89,27 @@ export function decodeServerNotice(payload: Uint8Array): ServerNotice | null {
   const envelope = parsed as Envelope;
   if (envelope.v !== PROTOCOL_VERSION) return null;
 
-  return envelope.type === "knock" ? { type: "knock" } : null;
+  switch (envelope.type) {
+    case "knock":
+      return { type: "knock" };
+
+    case "moderation": {
+      const { action, name } = envelope;
+      if (!isModerationAction(action)) return null;
+      if (typeof name !== "string") return null;
+      return { type: "moderation", action, name: name.slice(0, MAX_ANNOUNCED_NAME) };
+    }
+
+    default:
+      return null;
+  }
+}
+
+function isModerationAction(value: unknown): value is ModerationAction {
+  return (
+    typeof value === "string" &&
+    (MODERATION_ACTIONS as readonly string[]).includes(value)
+  );
 }
 
 /**

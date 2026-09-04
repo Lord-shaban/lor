@@ -14,8 +14,10 @@ import { ChatPanel } from "@/components/call/chat-panel";
 import { HandQueue } from "@/components/call/hand-queue";
 import { QualityNotice } from "@/components/call/quality-notice";
 import { ReactionsOverlay } from "@/components/call/reactions-overlay";
+import { ModerationNotice } from "@/components/call/moderation-notice";
 import { WaitingPanel } from "@/components/call/waiting-panel";
 import { useWaitingList } from "@/components/call/use-waiting-list";
+import { useModeration } from "@/components/call/use-moderation";
 import { useRoomMessages } from "@/components/call/use-room-messages";
 import { useVideoMode } from "@/components/call/use-video-mode";
 import { unreadCount } from "@/lib/chat-log";
@@ -160,10 +162,17 @@ function CallStage({
     reducedForYou,
     dismissNotice,
   } = useVideoMode();
-  const { waiting, deciding, decide, doorOn, setWaitingRoom } = useWaitingList({
-    code,
-    isHost,
-  });
+  const {
+    waiting,
+    deciding,
+    decide,
+    doorOn,
+    setWaitingRoom,
+    locked,
+    setRoomLocked,
+  } = useWaitingList({ code, isHost });
+  const { announcement, moderate, dismiss: dismissAnnouncement } =
+    useModeration({ code, isHost });
 
   // One slot, one panel. Two open at once would halve the grid on a laptop and
   // cover it entirely on a phone.
@@ -192,7 +201,7 @@ function CallStage({
           squeezing the grid into a column too narrow to see a face in. */}
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
         <main className="min-h-0 flex-1 overflow-hidden p-3">
-          <VideoGrid />
+          <VideoGrid canModerate={isHost} onModerate={moderate} />
         </main>
 
         {/* Inside this container so reactions rise over the video and stop at
@@ -210,10 +219,19 @@ function CallStage({
             onDecide={decide}
             doorOn={doorOn}
             onSetDoor={setWaitingRoom}
+            locked={locked}
+            onSetLocked={setRoomLocked}
             onClose={toggleDoor}
           />
         )}
       </div>
+
+      {announcement && (
+        <ModerationNotice
+          announcement={announcement}
+          onDismiss={dismissAnnouncement}
+        />
+      )}
 
       {reducedForYou && (
         <QualityNotice
@@ -233,6 +251,7 @@ function CallStage({
         doorOpen={panel === "door"}
         waitingCount={waiting.length}
         onToggleDoor={toggleDoor}
+        onMuteAll={() => moderate("muteAll")}
         handRaised={handRaised}
         onToggleHand={toggleHand}
         onReact={sendReaction}

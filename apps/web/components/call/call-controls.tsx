@@ -57,6 +57,7 @@ export function CallControls({
   doorOpen,
   waitingCount,
   onToggleDoor,
+  onMuteAll,
   handRaised,
   onToggleHand,
   onReact,
@@ -72,6 +73,7 @@ export function CallControls({
   doorOpen: boolean;
   waitingCount: number;
   onToggleDoor: () => void;
+  onMuteAll: () => void;
   handRaised: boolean;
   onToggleHand: () => void;
   onReact: (emoji: Reaction) => void;
@@ -256,6 +258,19 @@ export function CallControls({
           </span>
         )}
       </button>
+
+      {/* Disruptive and deliberate, so it says exactly what it does rather than
+          hiding behind an icon. Recoverable too — everyone can unmute
+          themselves, which is why it does not ask twice. */}
+      {isHost && (
+        <button
+          type="button"
+          onClick={onMuteAll}
+          className="h-11 rounded-md bg-[#1e1e21] px-4 text-sm font-medium text-[#f4f4f5] transition-colors duration-150 hover:bg-[#2a2a2e]"
+        >
+          {t("moderation.muteAll")}
+        </button>
+      )}
 
       {/* Only a host can decide, so only a host is offered the decision. It sits
           beside the chat because both are "somebody wants your attention". */}
