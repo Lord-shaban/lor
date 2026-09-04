@@ -31,7 +31,9 @@ Two browsers with separate profiles join the same room and each asserts it can s
 video tracks actually decoding frames** — not merely that two tiles appeared. Exits
 non-zero if either cannot, so it works as a check.
 
-This is the manual ancestor of the Playwright suite in #21.
+This is the manual ancestor of `apps/web/e2e/call.spec.ts`, which does the same
+thing in CI on every pull request. Keep this one for poking at a single case by
+hand; the Playwright suite is what has to stay green.
 
 ## Notes
 

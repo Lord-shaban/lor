@@ -48,3 +48,103 @@ jobs:
         env:
           # Build must succeed without real credentials.
           NEXT_PUBLIC_LIVEKIT_URL: wss://example.livekit.cloud
+
+  e2e:
+    name: Two people in a room
+    runs-on: ubuntu-latest
+
+    # A real Postgres and a real media server. A mocked one would keep passing
+    # through exactly the regression this job exists to catch, and the whole
+    # point of the check is that it fails when media stops flowing.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/lor
+      # Throwaway credentials for a server that lives and dies with the job.
+      # LiveKit refuses a secret shorter than 32 characters.
+      LIVEKIT_API_KEY: devkey
+      LIVEKIT_API_SECRET: e2e-secret-not-used-anywhere-else
+      NEXT_PUBLIC_LIVEKIT_URL: ws://127.0.0.1:7880
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3210
+      # Throwaway, and deliberately not a secret: it signs cookies for a
+      # database that is destroyed with the runner.
+      LOR_HOST_COOKIE_SECRET: e2e-not-a-secret-0000000000000000
+      E2E_PORT: 3210
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Start LiveKit
+        run: |
+          curl -sSL https://get.livekit.io | bash
+
+          # use_external_ip is the line that matters. Left on, LiveKit discovers
+          # the runner's public address over STUN and offers it as an ICE
+          # candidate to a browser sitting on the same machine, which cannot
+          # reach it — participants connect, publish, and receive nothing. The
+          # symptom is one decoding video instead of two, which is exactly what
+          # this job is supposed to catch, so it is worth being unambiguous.
+          cat > /tmp/livekit.yaml <<YAML
+          port: 7880
+          rtc:
+            tcp_port: 7881
+            port_range_start: 50000
+            port_range_end: 50200
+            use_external_ip: false
+          keys:
+            devkey: ${LIVEKIT_API_SECRET}
+          YAML
+
+          livekit-server --config /tmp/livekit.yaml --node-ip 127.0.0.1             > /tmp/livekit.log 2>&1 &
+
+          # Any answer means it is listening. `-f` would reject a 404, which is
+          # a perfectly healthy reply from a server that has no page at "/".
+          for i in $(seq 1 60); do
+            curl -s -o /dev/null http://127.0.0.1:7880 && exit 0
+            sleep 1
+          done
+          echo "LiveKit did not start" >&2
+          cat /tmp/livekit.log >&2
+          exit 1
+
+      - name: Migrate
+        run: npm run db:migrate
+
+      - name: Build
+        run: npm run build
+
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+
+      - name: Two people in a room
+        run: npm run test:e2e
+
+      # Without this, a media failure in CI is a number with no explanation.
+      - name: LiveKit log
+        if: failure()
+        run: tail -200 /tmp/livekit.log
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7

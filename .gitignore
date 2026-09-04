@@ -40,6 +40,9 @@ yarn-error.log*
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/blob-report/
 
 # eval artifacts (audio fixtures are large)
 eval/captions/audio/

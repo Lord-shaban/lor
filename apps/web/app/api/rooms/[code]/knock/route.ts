@@ -20,10 +20,20 @@ import { normalizeRoomCode } from "@/lib/room-code";
  */
 
 /**
- * Ten in five minutes. A person who reloads a few times stays under it; a script
- * that reopens the prejoin in a loop to make a host's list unusable does not.
+ * Thirty in five minutes, counted only when a knock is actually going to be
+ * written.
+ *
+ * Both halves of that were wrong at first. The limit was consumed before the
+ * room was even looked up, so once the client began knocking before every join,
+ * a room with no waiting room at all still spent a slot on each person — and an
+ * office behind one address ran out partway through filling a meeting. And ten
+ * was too few regardless: a household, a classroom and a conference room all
+ * share an address.
+ *
+ * Found by the end-to-end suite within an hour of it existing, which is what it
+ * is for.
  */
-const KNOCKS_PER_WINDOW = 10;
+const KNOCKS_PER_WINDOW = 30;
 const WINDOW_SECONDS = 5 * 60;
 
 const MAX_NAME_LENGTH = 60;
@@ -36,26 +46,6 @@ export async function POST(
   const code = normalizeRoomCode(rawCode);
   if (!code) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
-  }
-
-  const requestHeaders = await headers();
-  const limit = await consume(
-    await callerKey("knock", clientAddress(requestHeaders)),
-    KNOCKS_PER_WINDOW,
-    WINDOW_SECONDS,
-  );
-  if (!limit.allowed) {
-    return NextResponse.json(
-      { error: "rate_limited", resetAt: limit.resetAt.toISOString() },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(
-            Math.max(1, Math.ceil((limit.resetAt.getTime() - Date.now()) / 1000)),
-          ),
-        },
-      },
-    );
   }
 
   const body = await request.json().catch(() => ({}));
@@ -117,6 +107,28 @@ export async function POST(
   // caller's next step — go and get a token — is a normal one.
   if (!room.waitingRoomEnabled) {
     return NextResponse.json({ outcome: "open" });
+  }
+
+  // Counted here, where a knock is actually being made. Everything above this
+  // point is a lookup that a person joining an ordinary meeting also performs.
+  const requestHeaders = await headers();
+  const limit = await consume(
+    await callerKey("knock", clientAddress(requestHeaders)),
+    KNOCKS_PER_WINDOW,
+    WINDOW_SECONDS,
+  );
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "rate_limited", resetAt: limit.resetAt.toISOString() },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.max(1, Math.ceil((limit.resetAt.getTime() - Date.now()) / 1000)),
+          ),
+        },
+      },
+    );
   }
 
   const identity = await participantIdentity(room.livekitRoom, sessionId);
