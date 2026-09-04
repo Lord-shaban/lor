@@ -3,6 +3,10 @@
     "title": "LOR. — Live Open Rooms",
     "description": "Open-source video meetings that remember. No account, no time limit, no download."
   },
+  "offline": {
+    "title": "No connection",
+    "body": "This page needs the network. Once you are back online, open your meeting link again."
+  },
   "home": {
     "tagline": "Open-source video meetings that remember. No account, no time limit, no download.",
     "codeSwitchExample": "And it understands you when you say «عملت الـ <term>deploy</term> على الـ <term>server</term>».",
