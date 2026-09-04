@@ -49,8 +49,10 @@ eval/captions/audio/
 eval/captions/results/
 
 # Agent tooling. Third-party skills carry their own licences and weigh megabytes;
-# CLAUDE.md records how to install them instead.
+# CLAUDE.md records how to install them instead. Different agents unpack them to
+# different places; neither copy belongs in the history.
 .claude/skills/
+.agents/
 
 # Next.js regenerates these on every dev run. The working agreement lives in the
 # root CLAUDE.md, which is written by hand and committed.
