@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   DATA_TOPIC,
+  SERVER_TOPIC,
+  decodeServerNotice,
+  encodeServerNotice,
   MAX_CHAT_LENGTH,
   MAX_HAND_AGE_MS,
   PROTOCOL_VERSION,
@@ -208,6 +211,53 @@ describe("a raised hand from a peer", () => {
     for (const raised of ["true", 1, null, undefined, {}]) {
       expect(decodeMessage(wire({ ...base, raised }))).toBeNull();
     }
+  });
+});
+
+describe("a notice from our own backend", () => {
+  it("round-trips", () => {
+    expect(decodeServerNotice(encodeServerNotice({ type: "knock" }))).toEqual({
+      type: "knock",
+    });
+  });
+
+  it("travels on its own topic", () => {
+    // Peer packets and server packets are trusted differently, and the
+    // difference has to be checkable before the bytes are read.
+    expect(SERVER_TOPIC).not.toBe(DATA_TOPIC);
+  });
+
+  it("carries nothing but the fact that something changed", () => {
+    const decoded = JSON.parse(
+      new TextDecoder().decode(encodeServerNotice({ type: "knock" })),
+    );
+    // No names, no ids, no counts. A forged one can at worst cause a fetch.
+    expect(Object.keys(decoded).sort()).toEqual(["type", "v"]);
+  });
+
+  it("ignores a type it does not know", () => {
+    expect(
+      decodeServerNotice(wire({ v: PROTOCOL_VERSION, type: "shutdown" })),
+    ).toBeNull();
+  });
+
+  it("ignores another protocol version", () => {
+    expect(
+      decodeServerNotice(wire({ v: PROTOCOL_VERSION + 1, type: "knock" })),
+    ).toBeNull();
+  });
+
+  it("survives bytes that are not JSON", () => {
+    expect(decodeServerNotice(new Uint8Array([0xff, 0x00]))).toBeNull();
+    expect(decodeServerNotice(new Uint8Array())).toBeNull();
+  });
+
+  it("is not confused with a peer message of the same shape", () => {
+    // A peer publishing a chat packet must not be readable as a notice.
+    expect(
+      decodeServerNotice(encodeMessage({ type: "chat", id: "a", body: "hi" })),
+    ).toBeNull();
+    expect(decodeMessage(encodeServerNotice({ type: "knock" }))).toBeNull();
   });
 });
 

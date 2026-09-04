@@ -35,6 +35,45 @@ export const PROTOCOL_VERSION = 1;
 export const DATA_TOPIC = "lor";
 
 /**
+ * Packets our own backend puts into the room.
+ *
+ * A separate topic because they are trusted differently, and the difference has
+ * to be checkable. LiveKit reports no sending participant for a server packet
+ * and always reports one for a peer's, so the rule is exact: a notice counts
+ * only when it arrives on this topic *and* nobody is named as its sender. A
+ * participant publishing here is named, and is therefore ignored.
+ */
+export const SERVER_TOPIC = "lor-server";
+
+/**
+ * What the backend has to say. Never data — only "something changed, go and
+ * look", so a forged one could at worst cause a fetch the sender is already
+ * allowed to make.
+ */
+export type ServerNotice = { type: "knock" };
+
+export function encodeServerNotice(notice: ServerNotice): Uint8Array<ArrayBuffer> {
+  return new TextEncoder().encode(
+    JSON.stringify({ v: PROTOCOL_VERSION, ...notice }),
+  );
+}
+
+export function decodeServerNotice(payload: Uint8Array): ServerNotice | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(new TextDecoder().decode(payload));
+  } catch {
+    return null;
+  }
+
+  if (typeof parsed !== "object" || parsed === null) return null;
+  const envelope = parsed as Envelope;
+  if (envelope.v !== PROTOCOL_VERSION) return null;
+
+  return envelope.type === "knock" ? { type: "knock" } : null;
+}
+
+/**
  * Long enough for a pasted stack trace, short enough to stay well inside
  * LiveKit's ~15 KB packet limit once the text is UTF-8 encoded.
  */

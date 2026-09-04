@@ -19,7 +19,11 @@ const MAX_PENDING = 50;
 async function requireHost(code: string) {
   const db = getDb();
   const [room] = await db
-    .select({ id: rooms.id, hostSecretHash: rooms.hostSecretHash })
+    .select({
+      id: rooms.id,
+      hostSecretHash: rooms.hostSecretHash,
+      waitingRoomEnabled: rooms.waitingRoomEnabled,
+    })
     .from(rooms)
     .where(eq(rooms.code, code))
     .limit(1);
@@ -69,6 +73,9 @@ export async function GET(
     .limit(MAX_PENDING);
 
   return NextResponse.json({
+    // Sent alongside the queue so the panel has one answer about the door
+    // rather than two that can disagree.
+    waitingRoom: room.waitingRoomEnabled,
     waiting: waiting.map((knock) => ({
       id: knock.id,
       name: knock.displayName,

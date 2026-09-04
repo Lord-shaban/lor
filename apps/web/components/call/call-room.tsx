@@ -14,6 +14,8 @@ import { ChatPanel } from "@/components/call/chat-panel";
 import { HandQueue } from "@/components/call/hand-queue";
 import { QualityNotice } from "@/components/call/quality-notice";
 import { ReactionsOverlay } from "@/components/call/reactions-overlay";
+import { WaitingPanel } from "@/components/call/waiting-panel";
+import { useWaitingList } from "@/components/call/use-waiting-list";
 import { useRoomMessages } from "@/components/call/use-room-messages";
 import { useVideoMode } from "@/components/call/use-video-mode";
 import { unreadCount } from "@/lib/chat-log";
@@ -35,10 +37,13 @@ export interface Connection {
  * actually use for long calls does the same.
  */
 export function CallRoom({
+  code,
   connection,
   details,
   onLeave,
 }: {
+  /** The public room code, which the host's door routes are addressed by. */
+  code: string;
   connection: Connection;
   details: JoinDetails;
   onLeave: () => void;
@@ -100,7 +105,12 @@ export function CallRoom({
       >
         <SharingBanner />
 
-        <CallStage canPublish={connection.canPublish} onLeave={onLeave} />
+        <CallStage
+          code={code}
+          canPublish={connection.canPublish}
+          isHost={connection.isHost}
+          onLeave={onLeave}
+        />
 
         <ConnectionWatcher />
       </LiveKitRoom>
@@ -123,10 +133,14 @@ export function CallRoom({
  * that renders it.
  */
 function CallStage({
+  code,
   canPublish,
+  isHost,
   onLeave,
 }: {
+  code: string;
   canPublish: boolean;
+  isHost: boolean;
   onLeave: () => void;
 }) {
   const { localParticipant } = useLocalParticipant();
@@ -146,8 +160,15 @@ function CallStage({
     reducedForYou,
     dismissNotice,
   } = useVideoMode();
+  const { waiting, deciding, decide, doorOn, setWaitingRoom } = useWaitingList({
+    code,
+    isHost,
+  });
 
-  const [chatOpen, setChatOpen] = useState(false);
+  // One slot, one panel. Two open at once would halve the grid on a laptop and
+  // cover it entirely on a phone.
+  const [panel, setPanel] = useState<"chat" | "door" | null>(null);
+  const chatOpen = panel === "chat";
   // How many messages had arrived the last time the panel was closed. Held here
   // rather than cleared on every arrival, so nothing has to run in an effect to
   // keep the badge honest.
@@ -157,7 +178,12 @@ function CallStage({
     // Closing marks what has arrived as seen. Opening does not need to: an open
     // panel shows no badge at all.
     if (chatOpen) setRead(received);
-    setChatOpen(!chatOpen);
+    setPanel(chatOpen ? null : "chat");
+  }
+
+  function toggleDoor() {
+    if (chatOpen) setRead(received);
+    setPanel(panel === "door" ? null : "door");
   }
 
   return (
@@ -176,6 +202,17 @@ function CallStage({
         {chatOpen && (
           <ChatPanel entries={entries} onSend={sendChat} onClose={toggleChat} />
         )}
+
+        {panel === "door" && (
+          <WaitingPanel
+            waiting={waiting}
+            deciding={deciding}
+            onDecide={decide}
+            doorOn={doorOn}
+            onSetDoor={setWaitingRoom}
+            onClose={toggleDoor}
+          />
+        )}
       </div>
 
       {reducedForYou && (
@@ -192,6 +229,10 @@ function CallStage({
         chatOpen={chatOpen}
         unread={unreadCount({ received, read, open: chatOpen })}
         onToggleChat={toggleChat}
+        isHost={isHost}
+        doorOpen={panel === "door"}
+        waitingCount={waiting.length}
+        onToggleDoor={toggleDoor}
         handRaised={handRaised}
         onToggleHand={toggleHand}
         onReact={sendReaction}

@@ -53,6 +53,10 @@ export function CallControls({
   chatOpen,
   unread,
   onToggleChat,
+  isHost,
+  doorOpen,
+  waitingCount,
+  onToggleDoor,
   handRaised,
   onToggleHand,
   onReact,
@@ -64,6 +68,10 @@ export function CallControls({
   chatOpen: boolean;
   unread: number;
   onToggleChat: () => void;
+  isHost: boolean;
+  doorOpen: boolean;
+  waitingCount: number;
+  onToggleDoor: () => void;
   handRaised: boolean;
   onToggleHand: () => void;
   onReact: (emoji: Reaction) => void;
@@ -248,6 +256,40 @@ export function CallControls({
           </span>
         )}
       </button>
+
+      {/* Only a host can decide, so only a host is offered the decision. It sits
+          beside the chat because both are "somebody wants your attention". */}
+      {isHost && (
+        <button
+          type="button"
+          onClick={onToggleDoor}
+          aria-pressed={doorOpen}
+          aria-label={
+            waitingCount > 0
+              ? t("door.openWithWaiting", { count: waitingCount })
+              : t("door.open")
+          }
+          className={cn(
+            "relative h-11 rounded-md px-4 text-sm font-medium transition-colors duration-150",
+            doorOpen
+              ? "bg-[#f4f4f5] text-[#0a0a0b] hover:opacity-90"
+              : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
+          )}
+        >
+          {t("door.title")}
+
+          {waitingCount > 0 && (
+            // The count is already in the button's label; announcing it twice
+            // turns one person at the door into two.
+            <span
+              aria-hidden="true"
+              className="absolute -top-1 -end-1 min-w-5 rounded-full bg-[#f87171] px-1.5 py-0.5 text-xs font-medium text-[#0a0a0b] tabular-nums"
+            >
+              <bdi>{format.number(waitingCount)}</bdi>
+            </span>
+          )}
+        </button>
+      )}
 
       <button
         type="button"

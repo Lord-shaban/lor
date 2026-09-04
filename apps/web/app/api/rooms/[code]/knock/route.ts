@@ -6,6 +6,7 @@ import { hostCookieName, verifyHostCookie } from "@/lib/host-cookie";
 import { createKnockClaim } from "@/lib/knock-claim";
 import { resolveKnock, type KnockStatus } from "@/lib/knock";
 import { participantIdentity } from "@/lib/livekit";
+import { notifyHosts } from "@/lib/room-notify";
 import { callerKey, clientAddress, consume } from "@/lib/rate-limit";
 import { normalizeRoomCode } from "@/lib/room-code";
 
@@ -168,6 +169,14 @@ export async function POST(
     return NextResponse.json({
       outcome: resolveKnock((current?.status as KnockStatus) ?? null).outcome,
     });
+  }
+
+  // Awaited rather than fired and forgotten: a serverless function that returns
+  // may be frozen immediately, and a notification left in flight would simply
+  // never arrive. It is written not to throw, and the host's list refetches on
+  // a slow timer anyway.
+  if (resolution.notifyHost) {
+    await notifyHosts(room.livekitRoom, { type: "knock" });
   }
 
   return NextResponse.json({
