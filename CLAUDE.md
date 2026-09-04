@@ -226,6 +226,18 @@ rather than reaching for `<bdi>` freehand. Arabic message files still need a
 LEFT-TO-RIGHT MARK after a trailing dot, and `dir="rtl"` still never goes on text that
 may contain Latin.
 
+**`dir="auto"` is not the safe default it looks like.** It reads the first strong
+character, so an Arabic sentence opening with an English term — "Deploy خلص على الـ
+server." — lays out left to right and the full stop lands at the wrong end; and a caption
+that arrives word by word would flip direction under the reader. `lib/bidi.ts` counts
+words instead. The measurement that produced it also settled the other half: rendering
+twenty four mixed lines in a browser and reading the visual order back, `<bdi>` around
+every Latin run changed **none** of them, while the paragraph direction changed four.
+The Unicode algorithm already holds "npm run build" and "CI/CD" together; what it cannot
+guess is what direction a line is meant to run in. So isolate a foreign run inside
+*interface* text, and set the *direction* on a line that is only what somebody said —
+those are different problems and only one of them wants `<bdi>`.
+
 **`setState` inside an effect — rejected twice by lint.** The theme toggle and the prejoin
 both hit it. The fix is never to silence the rule: read from the DOM with
 `useSyncExternalStore`, or disable SSR for a component that has nothing to render on a

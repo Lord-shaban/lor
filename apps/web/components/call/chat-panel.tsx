@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
+import { direction as localeDirection, type Locale } from "@/i18n/routing";
 import type { ChatEntry } from "@/lib/chat-log";
+import { lineDirection } from "@/lib/bidi";
 import { MAX_CHAT_LENGTH } from "@/lib/data-channel";
 import { linkify } from "@/lib/linkify";
 import { cn } from "@/lib/cn";
@@ -149,8 +151,12 @@ export function ChatPanel({
             ref={composerRef}
             rows={1}
             value={draft}
-            // A draft can be Arabic or English and the box has to follow the
-            // first strong character, not the interface language.
+            // dir="auto" here and nowhere else in this file. A sent message is
+            // measured, because a finished sentence knows what language it is
+            // in; a draft is not, because measuring one would re-align the box
+            // and move the caret under the typist as the balance of words
+            // shifted. First strong character is the right answer for an input
+            // and the wrong one for a paragraph.
             dir="auto"
             maxLength={MAX_CHAT_LENGTH}
             placeholder={t("chat.placeholder")}
@@ -202,6 +208,13 @@ function Message({
   time: string;
 }) {
   const t = useTranslations("call");
+  const locale = useLocale() as Locale;
+
+  // Which way this message runs, decided from the words in it rather than from
+  // its first strong character. A sentence that opens with an English term is
+  // still an Arabic sentence, and dir="auto" would lay it out backwards and put
+  // the full stop on the wrong side.
+  const direction = lineDirection(entry.body, localeDirection[locale]);
 
   return (
     <li>
@@ -225,12 +238,12 @@ function Message({
         </p>
       )}
 
-      {/* dir="auto" so each message follows its own first strong character —
-          the interface language says nothing about what someone typed.
-          overflow-wrap:anywhere is what stops a pasted URL or an unbroken
-          200-character word from widening the whole panel. */}
+      {/* The interface language says nothing about what someone typed, so the
+          message carries its own direction — but a measured one, not
+          dir="auto". overflow-wrap:anywhere is what stops a pasted URL or an
+          unbroken 200-character word from widening the whole panel. */}
       <p
-        dir="auto"
+        dir={direction}
         className="whitespace-pre-wrap text-sm text-[#f4f4f5] [overflow-wrap:anywhere]"
       >
         {linkify(entry.body).map((segment, index) =>
