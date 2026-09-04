@@ -72,10 +72,10 @@ jobs:
 
     env:
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/lor
-      # LiveKit's own development credentials, which its --dev mode hardcodes.
-      # They authorise nothing outside this runner.
+      # Throwaway credentials for a server that lives and dies with the job.
+      # LiveKit refuses a secret shorter than 32 characters.
       LIVEKIT_API_KEY: devkey
-      LIVEKIT_API_SECRET: secret
+      LIVEKIT_API_SECRET: e2e-secret-not-used-anywhere-else
       NEXT_PUBLIC_LIVEKIT_URL: ws://127.0.0.1:7880
       NEXT_PUBLIC_APP_URL: http://127.0.0.1:3210
       # Throwaway, and deliberately not a secret: it signs cookies for a
@@ -94,9 +94,26 @@ jobs:
       - name: Start LiveKit
         run: |
           curl -sSL https://get.livekit.io | bash
-          # --node-ip pins what it advertises to the browser; without it the
-          # server offers a candidate address the runner cannot reach.
-          livekit-server --dev --node-ip 127.0.0.1 &
+
+          # use_external_ip is the line that matters. Left on, LiveKit discovers
+          # the runner's public address over STUN and offers it as an ICE
+          # candidate to a browser sitting on the same machine, which cannot
+          # reach it — participants connect, publish, and receive nothing. The
+          # symptom is one decoding video instead of two, which is exactly what
+          # this job is supposed to catch, so it is worth being unambiguous.
+          cat > /tmp/livekit.yaml <<YAML
+          port: 7880
+          rtc:
+            tcp_port: 7881
+            port_range_start: 50000
+            port_range_end: 50200
+            use_external_ip: false
+          keys:
+            devkey: ${LIVEKIT_API_SECRET}
+          YAML
+
+          livekit-server --config /tmp/livekit.yaml --node-ip 127.0.0.1             > /tmp/livekit.log 2>&1 &
+
           # Any answer means it is listening. `-f` would reject a 404, which is
           # a perfectly healthy reply from a server that has no page at "/".
           for i in $(seq 1 60); do
@@ -104,6 +121,7 @@ jobs:
             sleep 1
           done
           echo "LiveKit did not start" >&2
+          cat /tmp/livekit.log >&2
           exit 1
 
       - name: Migrate
@@ -118,6 +136,11 @@ jobs:
 
       - name: Two people in a room
         run: npm run test:e2e
+
+      # Without this, a media failure in CI is a number with no explanation.
+      - name: LiveKit log
+        if: failure()
+        run: tail -200 /tmp/livekit.log
 
       - uses: actions/upload-artifact@v4
         if: failure()
