@@ -256,6 +256,23 @@
         "quota": "Today's free transcription is used up. Captions stop here; the meeting does not. Add your own key to carry on."
       },
       "runningLow": "About {minutes} min of free transcription left today."
+    },
+    "keys": {
+      "title": "Your own key",
+      "close": "Close",
+      "blurb": "Stored in this browser and encrypted there — not on our server, and not in your account. It is here until you remove it or clear this site's data.",
+      "provider": "Provider",
+      "key": "API key",
+      "save": "Save",
+      "saveFailed": "This browser would not store it. Private windows often refuse.",
+      "whereFrom": "Where do I get one?",
+      "goesDirect": "Your audio goes straight from this browser to the provider. It never reaches our server, and neither does the key.",
+      "goesViaServer": "This provider refuses browser requests, so the audio passes through our server. It forwards and returns; nothing is kept.",
+      "stored": "Stored here",
+      "loading": "Looking…",
+      "none": "Nothing yet.",
+      "remove": "Remove",
+      "open": "Your own key"
     }
   }
 }

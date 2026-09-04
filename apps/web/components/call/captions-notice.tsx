@@ -19,8 +19,15 @@ import type { Captions } from "./use-captions";
  * transcribes only its own audio, so that switch is complete — nothing of
  * theirs is sent anywhere while it is off.
  */
-export function CaptionsNotice({ captions }: { captions: Captions }) {
+export function CaptionsNotice({
+  captions,
+  onOpenKeys,
+}: {
+  captions: Captions;
+  onOpenKeys: () => void;
+}) {
   const t = useTranslations("call.captions");
+  const keys = useTranslations("call.keys");
 
   if (!captions.on) return null;
 
@@ -54,6 +61,18 @@ export function CaptionsNotice({ captions }: { captions: Captions }) {
 
       {captions.error && (
         <span className="text-[#fca5a5]">{t(`error.${captions.error}`)}</span>
+      )}
+
+      {/* The way past the wall, next to the wall. A message telling somebody to
+          add a key, with nowhere to add one, is not a hand-off. */}
+      {(captions.error === "quota" || captions.error === "no_key" || captions.quota) && (
+        <button
+          type="button"
+          onClick={onOpenKeys}
+          className="rounded-md px-2 py-0.5 font-medium text-[#fafafa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:decoration-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
+        >
+          {keys("open")}
+        </button>
       )}
     </div>
   );

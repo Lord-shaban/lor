@@ -18,6 +18,11 @@ import {
   type CaptionLog,
 } from "@/lib/stt/caption-log";
 import { startCapture, type Capture } from "@/lib/stt/capture";
+import { listKeys, loadKey } from "@/lib/keys/store";
+import { chooseRoute, type Route } from "@/lib/stt/route-choice";
+import { buildPrompt } from "@/lib/stt/prompt";
+import { applyRepairs, type Repair } from "@/lib/stt/repair";
+import { transcribe } from "@/lib/stt/transcribe";
 import { speechAvailable, startSpeech, type SpeechSource } from "@/lib/stt/speech";
 
 /**
@@ -58,6 +63,14 @@ export interface Captions {
   available: boolean;
   toggle: () => void;
   setSharing: (sharing: boolean) => void;
+  /**
+   * Try again after something changed — a key was added, most likely.
+   *
+   * Needed because a refusal that will not change on its own stops the capture
+   * rather than retrying into it, so something has to say when the situation is
+   * different.
+   */
+  retry: () => void;
 }
 
 export function useCaptions({
@@ -78,6 +91,17 @@ export function useCaptions({
   const [log, setLog] = useState<CaptionLog>(createCaptionLog);
   const [error, setError] = useState<Captions["error"]>(null);
   const [quota, setQuota] = useState<Captions["quota"]>(null);
+
+  /**
+   * Set when the answer will be the same until somebody does something.
+   *
+   * An exhausted allowance lasts until midnight and a missing key lasts until
+   * one is added, so retrying every utterance is a request a second that cannot
+   * succeed — seen in a probe as fifteen consecutive 429s in seventy-five
+   * seconds. Capture stops instead; the notice already says why, and the way
+   * out is the button next to it.
+   */
+  const [blocked, setBlocked] = useState(false);
 
   const publish = useCallback(
     (message: RoomMessage, to?: string[]) => {
@@ -171,7 +195,16 @@ export function useCaptions({
     };
   }, [room, on, publish, locale]);
 
+  const retry = useCallback(() => {
+    setBlocked(false);
+    setError(null);
+  }, []);
+
   const toggle = useCallback(() => {
+    // Switching captions off and on again is the other way somebody expresses
+    // "try again", and it should not need explaining.
+    setBlocked(false);
+    setError(null);
     setOn((current) => {
       const next = !current;
       publish({ type: "captions", on: next });
@@ -182,7 +215,7 @@ export function useCaptions({
   // Capture, transcribe, publish. Only while captions are on and only while
   // this participant is willing to have their own microphone transcribed.
   useEffect(() => {
-    if (!enabled || !on || !sharing) return;
+    if (!enabled || !on || !sharing || blocked) return;
 
     const track = microphoneTrack?.track?.mediaStreamTrack;
     if (!track) return;
@@ -192,7 +225,62 @@ export function useCaptions({
     let open: { id: string; atMs: number } | null = null;
     let stopped = false;
 
+    /**
+     * Which way this participant's audio goes, decided once when captions
+     * start rather than per utterance.
+     *
+     * Their own key at a provider a browser can reach means neither the key nor
+     * the audio touches our server — and it also means the prompt and the
+     * repair pass have to be applied here, because the route that normally
+     * applies them is the one being skipped. Both are pure functions; the room
+     * supplies the words.
+     */
+    let route: Route = { kind: "proxy" };
+    let prompt = buildPrompt();
+    let repairs: Repair[] = [];
+
+    const transcribeDirect = async (audio: Blob) => {
+      if (route.kind !== "direct") return null;
+      const result = await transcribe({
+        audio,
+        provider: route.provider,
+        key: route.key,
+        prompt,
+      });
+      return result.ok ? applyRepairs(result.text, repairs) : null;
+    };
+
     void (async () => {
+      try {
+        const held = await listKeys().catch(() => []);
+        const withKeys = await Promise.all(
+          held.map(async (entry) => ({
+            provider: entry.provider,
+            key: (await loadKey(entry.provider)) ?? "",
+          })),
+        );
+        route = chooseRoute(withKeys);
+
+        if (route.kind === "direct") {
+          // Only needed on the direct path. Failing to fetch them is not worth
+          // stopping over: the prompt falls back to its shape and the repair
+          // pass to doing nothing, which is worse captions rather than none.
+          const [glossary, corrections] = await Promise.all([
+            fetch(`/api/rooms/${code}/glossary`)
+              .then((r) => (r.ok ? r.json() : { terms: [] }))
+              .catch(() => ({ terms: [] })),
+            fetch(`/api/rooms/${code}/repairs`)
+              .then((r) => (r.ok ? r.json() : { repairs: [] }))
+              .catch(() => ({ repairs: [] })),
+          ]);
+          prompt = buildPrompt(glossary.terms ?? []);
+          repairs = corrections.repairs ?? [];
+        }
+      } catch {
+        // No stored key, or storage refused. The proxy path is the default and
+        // needs nothing.
+      }
+
       try {
         capture = await startCapture(
           track,
@@ -203,11 +291,34 @@ export function useCaptions({
             form.set("room", code);
 
             try {
-              const response = await fetch("/api/stt", { method: "POST", body: form });
+              // Straight to the provider, when their key and that provider
+              // allow it. Nothing about this request exists on our side.
+              if (route.kind === "direct") {
+                const direct = await transcribeDirect(utterance.audio);
+                if (direct) {
+                  setError(null);
+                  mine(id, utterance.fromMs, direct, true);
+                } else {
+                  setError("failed");
+                  setLog((current) => abandon(current, id));
+                }
+                return;
+              }
+
+              const response = await fetch("/api/stt", {
+                method: "POST",
+                body: form,
+                // Their key, on the one request that uses it. Never a query
+                // parameter: those reach access logs, referrers and history.
+                headers: route.key ? { "x-lor-stt-key": route.key } : undefined,
+              });
               if (!response.ok) {
                 const body = (await response.json().catch(() => null)) as
                   | { error?: string }
                   | null;
+                if (body?.error === "quota" || body?.error === "no_key") {
+                  setBlocked(true);
+                }
                 setError(
                   body?.error === "no_key"
                     ? "no_key"
@@ -291,7 +402,7 @@ export function useCaptions({
     // again. Captions would simply not work, with nothing on screen to say why.
     // Muting and unmuting republishes the track, so the same gap would also
     // have ended captions for good the first time somebody muted themselves.
-  }, [enabled, on, sharing, microphoneTrack, localParticipant, code, mine, locale]);
+  }, [enabled, on, sharing, blocked, microphoneTrack, localParticipant, code, mine, locale]);
 
   return {
     on,
@@ -302,6 +413,7 @@ export function useCaptions({
     available: enabled,
     toggle,
     setSharing,
+    retry,
   };
 }
 
