@@ -126,7 +126,8 @@ apps/web/          Next.js app
   app/api/         route handlers (short-lived only — no long sockets)
   lib/{livekit,stt,llm}/
 packages/db/       Drizzle schema and migrations
-eval/captions/     transcription eval harness
+eval/captions/     transcription eval harness — its own workspace, so its
+                   metrics are unit tested by `npm test` like anything else
 docker/            self-hosting compose stack
 ```
 

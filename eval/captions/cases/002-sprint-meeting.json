@@ -1,0 +1,10 @@
+{
+  "id": "002-sprint-meeting",
+  "reference": "الـ sprint خلص والـ meeting بكرة الساعة 10",
+  "notes": "Two English nouns and a number. Numbers are here on purpose: an engine that writes ١٠ has not made a mistake, and the metric has to know that.",
+  "hypotheses": {
+    "transliterating": "الـ سبرينت خلص والـ ميتنج بكرة الساعة ١٠",
+    "partly-kept": "الـ sprint خلص والـ ميتنج بكرة الساعة ١٠",
+    "ideal": "الـ sprint خلص والـ meeting بكرة الساعة ١٠"
+  }
+}
