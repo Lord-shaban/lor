@@ -210,11 +210,15 @@ belongs in a transcript any more than in the database.
 
 Each of these cost real time. The symptom is what identifies them.
 
-**Bidi reordering — three times now.** `LOR.` rendered as `.LOR` in Arabic prose;
-`أحمد's screen` rendered as `s screen'أحمد`. A neutral character or a Latin run adjacent
-to RTL text lands on the wrong side. Any label mixing scripts needs `<bdi>` around the
-foreign run, and Arabic message files need a LEFT-TO-RIGHT MARK after a trailing dot.
-Never `dir="rtl"` on text that may contain Latin.
+**Bidi reordering — four times now.** `LOR.` rendered as `.LOR` in Arabic prose;
+`أحمد's screen` rendered as `s screen'أحمد`; and the chat put a sender's name and its
+`(you)` inside one `<bdi>`, so the whole run took the name's direction and `سارة (you)`
+came out as `(you) سارة`. That last one is the rule the first three did not state:
+**isolate the foreign run, never the foreign run together with the interface text around
+it.** `t.rich("youLabel", { n: chunks => <bdi>{chunks}</bdi> })` is the pattern; copy it
+rather than reaching for `<bdi>` freehand. Arabic message files still need a
+LEFT-TO-RIGHT MARK after a trailing dot, and `dir="rtl"` still never goes on text that
+may contain Latin.
 
 **`setState` inside an effect — rejected twice by lint.** The theme toggle and the prejoin
 both hit it. The fix is never to silence the rule: read from the DOM with
@@ -228,6 +232,19 @@ with the controls off screen. `overflow-hidden` on that container is load-bearin
 **`"\."` in a JavaScript string is `"."`.** The middleware matcher compiled to `.*..*` —
 "one or more characters" — so every non-empty path skipped the middleware and every room
 link 404'd while `/` kept working. `lib/middleware-matcher.test.ts` guards it.
+
+**An unhandled rejection from `publishData`.** Raising a hand while the connection was
+down put `NegotiationError: cannot negotiate on closed engine` on screen. LiveKit rejects
+a publish whenever the engine is closed — mid-reconnect, or just after somebody leaves —
+and `void promise` does not catch anything. Ephemeral messages (reactions, hands) publish
+through a helper that swallows it; chat deliberately does not, because a chat message
+that silently failed is a lost conversation.
+
+**`prefers-reduced-motion` versus a `forwards` animation.** The blanket rule in
+`globals.css` collapses every animation to 0.01ms, which for `animation-fill-mode:
+forwards` means jumping straight to the end state. For a reaction that fades out, the end
+state is invisible — so reduced motion did not calm the animation, it deleted the
+feature. Anything that animates *out* has to opt out of that rule explicitly.
 
 **A full-viewport element inside a page wrapper.** The call rendered inside the room
 page's centred `max-w-4xl`, so `100dvh` overflowed and the grid measured 896px instead of
@@ -244,14 +261,20 @@ video grid and screen sharing all work in production today.
 
 **Done.** `v0.0` in full. In `v0.1`: #9 room codes · #10 host cookie · #11 room creation ·
 #12 LiveKit tokens · #13 prejoin · #14 video grid · #15 screen share · #22 i18n · #24
-database · #8 design system.
+database · #8 design system · #16 chat, reactions and raise hand.
 
-**Next, in order.** #16 chat, reactions and raise hand over the data channel · #17 low
-bandwidth and connection quality · #18 waiting room · #19 host moderation · #20 PWA and QR
-· #21 Playwright end-to-end.
+**Next, in order.** #17 low bandwidth and connection quality · #18 waiting room · #19 host
+moderation · #20 PWA and QR · #21 Playwright end-to-end.
 
-#16 is the one to start with. The data channel is already the plan of record for every
-piece of real-time state; #17, #18 and #19 all build on it.
+#17 is the one to start with. The data channel now actually carries something:
+`apps/web/lib/data-channel.ts` holds a versioned envelope where an unknown type is
+dropped rather than thrown, and the sender is never on the wire — attribution comes from
+the participant LiveKit hands to the receive handler. #18 and #19 extend that union
+rather than inventing anything; adding a message type is not a version bump.
+
+**Known and unfixed.** #67 — a tile paints black instead of the avatar while a video
+track is subscribed but not yet decoding, which is most visible on somebody who has just
+joined.
 
 **Infrastructure, all live and configured.** Supabase project `pvklemglnehhgwuszgyq`
 (eu-central-1), reachable through the Supabase MCP — schema applied there, migrations in
