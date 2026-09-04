@@ -1,12 +1,13 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { RoomServiceClient, TrackSource } from "livekit-server-sdk";
 import { getDb, knocks, rooms } from "@lor/db";
 import { hashClaimSecret } from "@/lib/knock-claim";
+import { createHostCredential } from "@/lib/host-cookie";
 import { hostCookieName, verifyHostCookie } from "@/lib/host-cookie";
 import { HOST_METADATA } from "@/lib/livekit";
-import { announceToRoom } from "@/lib/room-notify";
+import { announceToRoom, notifyIdentities } from "@/lib/room-notify";
 import { normalizeRoomCode } from "@/lib/room-code";
 
 /**
@@ -214,6 +215,68 @@ export async function POST(
         name: "",
       });
       return NextResponse.json({ ok: true, locked });
+    }
+
+    case "handOver": {
+      const target = named(identity);
+      if (!target) {
+        return NextResponse.json({ error: "not_in_room" }, { status: 404 });
+      }
+
+      const name = target.name || target.identity;
+
+      // Rotated to a secret nobody holds. This is the revocation, and it is
+      // immediate: the cookie that authorised this very request stops working
+      // on the next one. The new host mints a real credential when they claim,
+      // so the room is briefly hostless — a fraction of a second, and the
+      // honest cost of not letting a departing host keep the room until
+      // somebody else's browser gets round to taking it.
+      const orphan = await createHostCredential(code);
+      await db
+        .update(rooms)
+        .set({
+          hostSecretHash: orphan.secretHash,
+          settings: sql`jsonb_set(${rooms.settings}, '{pendingHost}', ${JSON.stringify(target.identity)}::jsonb, true)`,
+        })
+        .where(eq(rooms.id, room.id));
+
+      // Metadata is what `muteAll` and the knock notice read to tell hosts
+      // apart, so it has to move with the seat. Left behind, the previous host
+      // would keep being skipped by mute-all and keep being told about knocks
+      // they can no longer act on.
+      const previous = participants
+        .filter((participant) => isHostMetadata(participant.metadata))
+        .map((participant) => participant.identity)
+        .filter((id) => id !== target.identity);
+
+      await Promise.all([
+        ...previous.map((id) =>
+          service
+            .updateParticipant(room.livekitRoom, id, { metadata: "" })
+            .catch(() => {}),
+        ),
+        service
+          .updateParticipant(room.livekitRoom, target.identity, {
+            metadata: HOST_METADATA,
+          })
+          .catch(() => {}),
+      ]);
+
+      await notifyIdentities(room.livekitRoom, previous, {
+        type: "host",
+        granted: false,
+      });
+      await notifyIdentities(room.livekitRoom, [target.identity], {
+        type: "host",
+        granted: true,
+      });
+      await announceToRoom(room.livekitRoom, {
+        type: "moderation",
+        action: "handOver",
+        name,
+      });
+
+      return NextResponse.json({ ok: true });
     }
 
     default:

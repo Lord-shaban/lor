@@ -82,6 +82,23 @@ export async function notifyHosts(
  * all — a host who can quietly mute people is a different product from one who
  * can mute them.
  */
+/** Tell exactly these participants and nobody else. */
+export async function notifyIdentities(
+  livekitRoom: string,
+  identities: string[],
+  notice: ServerNotice,
+): Promise<void> {
+  if (identities.length === 0) return;
+  const service = client();
+  if (!service) return;
+
+  try {
+    await send(service, livekitRoom, notice, identities);
+  } catch {
+    // Silent for the same reason as the rest of this file.
+  }
+}
+
 export async function announceToRoom(
   livekitRoom: string,
   notice: ServerNotice,

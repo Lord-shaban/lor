@@ -225,10 +225,13 @@
         "stopShare": "The host stopped <n>{name}</n>'s screen share.",
         "remove": "The host removed <n>{name}</n> from the meeting.",
         "lock": "The host locked the room. Nobody new can join.",
-        "unlock": "The host unlocked the room."
+        "unlock": "The host unlocked the room.",
+        "handOver": "<n>{name}</n> is now the host."
       },
       "remove": "Remove",
-      "removeConfirm": "Remove?"
+      "removeConfirm": "Remove?",
+      "handOver": "Make host",
+      "handOverConfirm": "Make host?"
     }
   }
 }

@@ -110,7 +110,7 @@ export function CallRoom({
         <CallStage
           code={code}
           canPublish={connection.canPublish}
-          isHost={connection.isHost}
+          startedAsHost={connection.isHost}
           onLeave={onLeave}
         />
 
@@ -137,14 +137,18 @@ export function CallRoom({
 function CallStage({
   code,
   canPublish,
-  isHost,
+  startedAsHost,
   onLeave,
 }: {
   code: string;
   canPublish: boolean;
-  isHost: boolean;
+  /** Whether the token minted at join said host. The seat can move afterwards. */
+  startedAsHost: boolean;
   onLeave: () => void;
 }) {
+  // Held in state because the host seat can change hands mid-call. Only the
+  // server's cookie check decides anything; this is what the interface shows.
+  const [isHost, setIsHost] = useState(startedAsHost);
   const { localParticipant } = useLocalParticipant();
   const {
     entries,
@@ -172,7 +176,7 @@ function CallStage({
     setRoomLocked,
   } = useWaitingList({ code, isHost });
   const { announcement, moderate, dismiss: dismissAnnouncement } =
-    useModeration({ code, isHost });
+    useModeration({ code, isHost, onHostChanged: setIsHost });
 
   // One slot, one panel. Two open at once would halve the grid on a laptop and
   // cover it entirely on a phone.

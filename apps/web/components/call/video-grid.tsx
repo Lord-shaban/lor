@@ -31,7 +31,7 @@ export function VideoGrid({
   /** True only for a verified host. The server checks again regardless. */
   canModerate?: boolean;
   onModerate?: (
-    action: "mute" | "stopShare" | "remove",
+    action: "mute" | "stopShare" | "remove" | "handOver",
     identity: string,
   ) => void;
 } = {}) {
@@ -114,6 +114,7 @@ export function VideoGrid({
       onMute: () => onModerate("mute", participant.identity),
       onStopShare: () => onModerate("stopShare", participant.identity),
       onRemove: () => onModerate("remove", participant.identity),
+      onHandOver: () => onModerate("handOver", participant.identity),
     };
   }
 
