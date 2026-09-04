@@ -33,26 +33,41 @@ describe("quotaLimits", () => {
     expect(limits.map((l) => l.seconds)).toEqual([60, 120, 240]);
   });
 
-  it("treats zero as no ceiling at all", () => {
-    // An operator paying for the key should not have to invent a large number
-    // to stop it being rationed.
+  it("treats zero as a ceiling of nothing, not the absence of one", () => {
+    // `.env.example` has promised since v0.0 that zero means "disable your key
+    // entirely and require BYOK". The first version of this file dropped the
+    // ceiling instead — so an operator following the documentation to *stop*
+    // giving their key away would have given it away without limit. This test
+    // exists so that cannot happen quietly again.
     const limits = quotaLimits({ LOR_FREE_STT_SECONDS_PER_USER_PER_DAY: "0" });
-    expect(limits.map((l) => l.scope)).toEqual(["room", "global"]);
+
+    expect(limits.map((l) => l.scope)).toEqual(["user", "room", "global"]);
+    expect(limits[0]).toEqual({ scope: "user", seconds: 0 });
   });
 
-  it("switches everything off when every ceiling is zero", () => {
-    expect(
-      quotaLimits({
-        LOR_FREE_STT_SECONDS_PER_USER_PER_DAY: "0",
-        LOR_FREE_STT_SECONDS_PER_ROOM_PER_DAY: "0",
-        LOR_FREE_STT_SECONDS_GLOBAL_PER_DAY: "0",
-      }),
-    ).toEqual([]);
+  it("keeps every ceiling when they are all zero", () => {
+    const limits = quotaLimits({
+      LOR_FREE_STT_SECONDS_PER_USER_PER_DAY: "0",
+      LOR_FREE_STT_SECONDS_PER_ROOM_PER_DAY: "0",
+      LOR_FREE_STT_SECONDS_GLOBAL_PER_DAY: "0",
+    });
+
+    expect(limits.every((l) => l.seconds === 0)).toBe(true);
+    expect(limits).toHaveLength(3);
+  });
+
+  it("has no value meaning unlimited", () => {
+    // Deliberate. A second magic number is how the first one went unnoticed;
+    // an operator who does not want rationing sets a large one.
+    const [user] = quotaLimits({ LOR_FREE_STT_SECONDS_PER_USER_PER_DAY: "999999" });
+    expect(user.seconds).toBe(999999);
   });
 
   it("falls back to the default rather than to no limit on a typo", () => {
     // The failure that matters: a mistyped variable must not silently remove a
     // ceiling, because zero is the setting that means "unlimited".
+    // Neither direction: a typo must not remove a ceiling and must not refuse
+    // everybody either. Both are worse than the default.
     for (const value of ["nine hundred", "", "   ", "-5", "NaN"]) {
       const [user] = quotaLimits({ LOR_FREE_STT_SECONDS_PER_USER_PER_DAY: value });
       expect(user.seconds, `for ${JSON.stringify(value)}`).toBe(DEFAULT_QUOTA.user);

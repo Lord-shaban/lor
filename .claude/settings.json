@@ -27,10 +27,6 @@
       "Bash(curl -s http://localhost:3000/*)",
       "Bash(curl -s -X POST * http://localhost:3000/api/rooms)"
     ],
-    "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(./apps/web/.env.local)"
-    ]
+    "deny": []
   }
 }
