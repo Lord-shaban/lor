@@ -351,7 +351,7 @@ transcript rendered wrongly is indistinguishable from a bad one.
 video track is subscribed but not yet decoding, which is most visible on
 somebody who has just joined.
 
-**Required checks on `main`.** `Typecheck, lint, build`, `Commit messages`, and
+**Required checks on `main`.** `Typecheck, lint, test, build`, `Commit messages`, and
 `Two people in a room`. The last one starts a LiveKit and a Postgres on the
 runner, so it needs no secrets and touches nothing in production.
 
