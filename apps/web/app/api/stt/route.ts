@@ -3,6 +3,8 @@ import { eq } from "drizzle-orm";
 import { getDb, rooms } from "@lor/db";
 import { callerKey, clientAddress, consume } from "@/lib/rate-limit";
 import { normalizeRoomCode } from "@/lib/room-code";
+import { readGlossary } from "@/lib/stt/glossary";
+import { buildPrompt } from "@/lib/stt/prompt";
 import { MAX_AUDIO_BYTES, planRequest } from "@/lib/stt/request";
 import { FAILURE_STATUS, transcribe } from "@/lib/stt/transcribe";
 
@@ -73,7 +75,7 @@ export async function POST(request: Request) {
 
   const db = getDb();
   const [room] = await db
-    .select({ id: rooms.id })
+    .select({ id: rooms.id, settings: rooms.settings })
     .from(rooms)
     .where(eq(rooms.code, code))
     .limit(1);
@@ -114,7 +116,10 @@ export async function POST(request: Request) {
     provider: plan.provider,
     model: plan.model,
     key: plan.key,
-    prompt: plan.prompt,
+    // Built here, from the room, never taken from the request: a
+    // client-supplied prompt is untrusted text sent to a metered API on the
+    // operator's key.
+    prompt: buildPrompt(readGlossary(room.settings)),
     signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
   });
 

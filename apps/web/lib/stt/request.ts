@@ -29,7 +29,12 @@ export const MAX_AUDIO_BYTES = 8 * 1024 * 1024;
  * Whisper reads roughly the last 224 tokens of it and silently drops the rest,
  * so a longer one does not prime harder — it just pushes the code-switched
  * example out of the window that is actually read, which is the opposite of
- * what #86 sends it for.
+ * what `prompt.ts` sends it for.
+ *
+ * Note that the prompt is never taken from the request. It is built on the
+ * server from the room's own glossary, because a client-supplied prompt is
+ * untrusted text going to a metered API on the operator's key — a way to steer
+ * the model, and a way to send whatever you like at somebody else's expense.
  */
 export const MAX_PROMPT_LENGTH = 900;
 
@@ -43,7 +48,6 @@ export interface SttPlan {
   provider: Provider;
   /** The provider's default unless `LOR_STT_MODEL` names another. */
   model: string;
-  prompt?: string;
   key: string;
   /**
    * Whether the key came from the participant rather than the operator.
@@ -116,19 +120,12 @@ export function planRequest(
       ? env.LOR_STT_MODEL.trim()
       : provider.defaultModel;
 
-  const rawPrompt = form.get("prompt");
-  const prompt =
-    typeof rawPrompt === "string" && rawPrompt.trim()
-      ? rawPrompt.trim().slice(0, MAX_PROMPT_LENGTH)
-      : undefined;
-
   return {
     ok: true,
     audio,
     code: code.trim(),
     provider,
     model,
-    prompt,
     key,
     usingOwnKey: Boolean(own),
   };
