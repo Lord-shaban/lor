@@ -274,5 +274,29 @@
       "remove": "Remove",
       "open": "Your own key"
     }
+  },
+  "keys": {
+    "title": "Getting a key",
+    "intro": "Captions send audio to a transcription service, and that costs somebody money. This server may offer a free allowance; when it runs out, or when there is none, you can use your own key instead. Here is where one comes from.",
+    "checked": "checked <d>{date}</d>",
+    "freeTier": "Free tier",
+    "freeYes": "Yes — about {hours} hours of audio a day.",
+    "freeNo": "No free tier for the API. Pay as you go.",
+    "limits": "Limits",
+    "limitsDetail": "About {hoursPerHour} hours of audio an hour, and {requests} requests a minute.",
+    "paidRate": "${usd} a minute of audio.",
+    "unstated": "Not stated in their documentation.",
+    "card": "Card required",
+    "card_no": "No — not to sign up and use the free tier.",
+    "card_yes": "Yes, before the API can be used.",
+    "card_unstated": "Their pricing page does not say.",
+    "audioPath": "Where your audio goes",
+    "pathDirect": "Straight from your browser to them. It never reaches this server, and neither does your key.",
+    "pathProxy": "Through this server, which forwards it and keeps nothing. Their API refuses requests made from a browser.",
+    "getKey": "Get a key",
+    "source": "Where these numbers came from",
+    "howToAdd": "To use one: turn captions on in a meeting, then open “Your own key” from the notice at the bottom of the screen. It is stored in your browser, encrypted, and you can remove it there at any time.",
+    "noAffiliates": "None of these are affiliate or referral links. Free tiers change — the date on each card is when its numbers were last read from the provider's own documentation.",
+    "pathUntested": "Through this server, which forwards it and keeps nothing. Nobody has tested whether they accept requests made directly from a browser, so LOR. takes the route that certainly works."
   }
 }
