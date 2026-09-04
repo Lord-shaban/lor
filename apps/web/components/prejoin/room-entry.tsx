@@ -234,6 +234,7 @@ export function RoomEntry({
   if (connection && details) {
     return (
       <CallRoom
+        code={code}
         connection={connection}
         details={details}
         onLeave={() => {

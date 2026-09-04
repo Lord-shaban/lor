@@ -197,6 +197,19 @@
       "auto": "Auto",
       "low": "Less data",
       "off": "Audio only"
+    },
+    "door": {
+      "title": "Waiting room",
+      "open": "Open the waiting room",
+      "openWithWaiting": "Open the waiting room, {count} waiting",
+      "close": "Close the waiting room",
+      "empty": "Nobody is waiting.",
+      "admit": "Let in",
+      "deny": "Turn away",
+      "denyIsFinal": "Turning somebody away is final for this meeting. They cannot ask again.",
+      "toggle": "Ask before letting people in",
+      "toggleHint": "With this off, anyone with the link joins straight away.",
+      "off": "The door is open — anyone with the link joins straight away."
     }
   }
 }
