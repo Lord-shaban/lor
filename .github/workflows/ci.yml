@@ -48,3 +48,80 @@ jobs:
         env:
           # Build must succeed without real credentials.
           NEXT_PUBLIC_LIVEKIT_URL: wss://example.livekit.cloud
+
+  e2e:
+    name: Two people in a room
+    runs-on: ubuntu-latest
+
+    # A real Postgres and a real media server. A mocked one would keep passing
+    # through exactly the regression this job exists to catch, and the whole
+    # point of the check is that it fails when media stops flowing.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/lor
+      # LiveKit's own development credentials, which its --dev mode hardcodes.
+      # They authorise nothing outside this runner.
+      LIVEKIT_API_KEY: devkey
+      LIVEKIT_API_SECRET: secret
+      NEXT_PUBLIC_LIVEKIT_URL: ws://127.0.0.1:7880
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3210
+      # Throwaway, and deliberately not a secret: it signs cookies for a
+      # database that is destroyed with the runner.
+      LOR_HOST_COOKIE_SECRET: e2e-not-a-secret-0000000000000000
+      E2E_PORT: 3210
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Start LiveKit
+        run: |
+          curl -sSL https://get.livekit.io | bash
+          # --node-ip pins what it advertises to the browser; without it the
+          # server offers a candidate address the runner cannot reach.
+          livekit-server --dev --node-ip 127.0.0.1 &
+          # Any answer means it is listening. `-f` would reject a 404, which is
+          # a perfectly healthy reply from a server that has no page at "/".
+          for i in $(seq 1 60); do
+            curl -s -o /dev/null http://127.0.0.1:7880 && exit 0
+            sleep 1
+          done
+          echo "LiveKit did not start" >&2
+          exit 1
+
+      - name: Migrate
+        run: npm run db:migrate
+
+      - name: Build
+        run: npm run build
+
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+
+      - name: Two people in a room
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7

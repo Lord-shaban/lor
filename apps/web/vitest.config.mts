@@ -2,9 +2,11 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    // Unit tests only for now. Browser-level behaviour is covered by the
-    // Playwright suite that arrives with #21.
+    // Unit tests only. Browser-level behaviour lives in e2e/ and is run by
+    // Playwright, which needs a media server and a database that vitest has no
+    // business starting.
     include: ["lib/**/*.test.ts"],
+    exclude: ["e2e/**"],
     environment: "node",
     alias: {
       // `server-only` throws by design when it is reached outside a server
