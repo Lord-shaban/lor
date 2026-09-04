@@ -46,7 +46,15 @@ export interface Captions {
   sharing: boolean;
   log: CaptionLog;
   /** Null until something has actually been attempted. */
-  error: "no_key" | "rate_limited" | "failed" | null;
+  error: "no_key" | "quota" | "rate_limited" | "failed" | null;
+  /**
+   * How much free allowance is left, once it is worth mentioning.
+   *
+   * Absent until the server says so — it only reports this near the end, so a
+   * room is told in time to do something about it rather than nagged from the
+   * first minute.
+   */
+  quota: { scope: "user" | "room" | "global"; remaining: number } | null;
   available: boolean;
   toggle: () => void;
   setSharing: (sharing: boolean) => void;
@@ -69,6 +77,7 @@ export function useCaptions({
   const [sharing, setSharing] = useState(true);
   const [log, setLog] = useState<CaptionLog>(createCaptionLog);
   const [error, setError] = useState<Captions["error"]>(null);
+  const [quota, setQuota] = useState<Captions["quota"]>(null);
 
   const publish = useCallback(
     (message: RoomMessage, to?: string[]) => {
@@ -202,9 +211,15 @@ export function useCaptions({
                 setError(
                   body?.error === "no_key"
                     ? "no_key"
-                    : response.status === 429
-                      ? "rate_limited"
-                      : "failed",
+                    : // The allowance ran out, which is not the same as too
+                      // many requests: one is answered by a key and the other
+                      // by waiting, and telling somebody to wait when they
+                      // need a key wastes their meeting.
+                      body?.error === "quota"
+                      ? "quota"
+                      : response.status === 429
+                        ? "rate_limited"
+                        : "failed",
                 );
                 // Nothing is coming for this line, and a guess left on screen
                 // forever is worse than a line that never appeared.
@@ -212,8 +227,13 @@ export function useCaptions({
                 return;
               }
 
-              const { text } = (await response.json()) as { text?: string };
+              const payload = (await response.json()) as {
+                text?: string;
+                quota?: { scope: "user" | "room" | "global"; remaining: number };
+              };
+              const text = payload.text;
               setError(null);
+              setQuota(payload.quota ?? null);
               if (typeof text === "string" && text.trim()) {
                 mine(id, utterance.fromMs, text, true);
               } else {
@@ -278,6 +298,7 @@ export function useCaptions({
     sharing,
     log,
     error,
+    quota,
     available: enabled,
     toggle,
     setSharing,

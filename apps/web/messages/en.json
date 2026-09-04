@@ -252,8 +252,10 @@
       "error": {
         "no_key": "No transcription key is set up on this server.",
         "rate_limited": "Too much at once — captions will catch up shortly.",
-        "failed": "Captions could not reach the transcription service."
-      }
+        "failed": "Captions could not reach the transcription service.",
+        "quota": "Today's free transcription is used up. Captions stop here; the meeting does not. Add your own key to carry on."
+      },
+      "runningLow": "About {minutes} min of free transcription left today."
     }
   }
 }

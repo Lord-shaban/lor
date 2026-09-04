@@ -6,8 +6,10 @@ import { normalizeRoomCode } from "@/lib/room-code";
 import { readGlossary } from "@/lib/stt/glossary";
 import { buildPrompt } from "@/lib/stt/prompt";
 import { applyRepairs, readRepairs } from "@/lib/stt/repair";
+import { quotaLimits, shouldWarn, tightest, type QuotaState } from "@/lib/stt/quota";
 import { MAX_AUDIO_BYTES, planRequest } from "@/lib/stt/request";
 import { FAILURE_STATUS, transcribe } from "@/lib/stt/transcribe";
+import { wavDuration } from "@/lib/stt/wav";
 
 /**
  * Audio in, text out, nothing kept.
@@ -47,6 +49,37 @@ const WINDOW_SECONDS = 5 * 60;
  * from a bug.
  */
 const PROVIDER_TIMEOUT_MS = 25_000;
+
+/** A day, so a counter cannot outlive the key it belongs to. */
+const DAY_SECONDS = 24 * 60 * 60;
+
+/**
+ * When the allowance comes back.
+ *
+ * Not the counter's own window, which runs twenty-four hours from whenever it
+ * was first touched. `callerKey` salts with the date, so at UTC midnight the
+ * key itself changes and the count starts from nothing — that is the moment
+ * somebody gets their captions back, and telling them anything else is telling
+ * them to wait longer than they have to.
+ */
+function nextReset(): Date {
+  const now = new Date();
+  return new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1),
+  );
+}
+
+/** Enough to walk past any chunk an encoder writes before the audio itself. */
+const HEADER_BYTES = 4096;
+
+/**
+ * Longer than `vad.ts` will ever emit, with room to spare.
+ *
+ * Not a size limit — `MAX_AUDIO_BYTES` is that. This is a sanity bound on what
+ * the *header* claims, so a file whose length field is wrong cannot empty an
+ * allowance in one request.
+ */
+const MAX_UTTERANCE_SECONDS = 120;
 
 export async function POST(request: Request) {
   // Before reading the body, not after. `formData()` buffers the whole thing,
@@ -112,6 +145,68 @@ export async function POST(request: Request) {
     }
   }
 
+  // Seconds of audio, read from the file's own header rather than taken from
+  // the request: this is what the quota is charged against, and the client is
+  // the party with an interest in the number being smaller. Four kilobytes is
+  // enough to walk past any chunk an encoder puts before the audio, and small
+  // enough that nothing is really buffered to ask.
+  const seconds = wavDuration(await plan.audio.slice(0, HEADER_BYTES).arrayBuffer());
+
+  // A header that cannot be read, or one claiming more audio than the detector
+  // will ever produce. Both mean the file is not what it says it is, and
+  // charging a quota against a number from a file we could not parse is how a
+  // five-second recording once cost sixty-three hours of somebody's allowance.
+  if (seconds === null || seconds > MAX_UTTERANCE_SECONDS) {
+    return NextResponse.json({ error: "rejected" }, { status: 422 });
+  }
+
+  // Nobody using their own key is rationed. They are paying.
+  const quotas: QuotaState[] = [];
+  if (!plan.usingOwnKey) {
+    for (const limit of quotaLimits(process.env)) {
+      const scopeId =
+        limit.scope === "user"
+          ? clientAddress(request.headers)
+          : limit.scope === "room"
+            ? room.id
+            : "all";
+
+      // The key carries the date, so the reset boundary is UTC midnight and is
+      // the same one for every scope — a documented instant rather than
+      // whenever each counter happened to start.
+      const used = await consume(
+        await callerKey(`sttq:${limit.scope}`, scopeId),
+        limit.seconds,
+        DAY_SECONDS,
+        seconds,
+      );
+
+      quotas.push({
+        scope: limit.scope,
+        limit: limit.seconds,
+        remaining: used.remaining,
+      });
+
+      if (!used.allowed) {
+        const resetAt = nextReset();
+
+        // Captions stop. Nothing else does — video, audio, screen share, chat
+        // and the rest of the meeting are unaffected, which is the invariant.
+        return NextResponse.json(
+          { error: "quota", scope: limit.scope, resetAt: resetAt.toISOString() },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(
+                Math.max(1, Math.ceil((resetAt.getTime() - Date.now()) / 1000)),
+              ),
+            },
+          },
+        );
+      }
+    }
+  }
+
   const result = await transcribe({
     audio: plan.audio,
     provider: plan.provider,
@@ -135,9 +230,19 @@ export async function POST(request: Request) {
   // corrected once should not come back wrong on the next line.
   const text = applyRepairs(result.text, readRepairs(room.settings));
 
+  // What is left goes back on every call, not only the last one: a room warned
+  // at eighty per cent can fetch a key, and a room told at a hundred has
+  // already lost its captions mid-sentence.
+  const worst = tightest(quotas);
+
   // The only thing that survives this request.
   return NextResponse.json(
-    { text },
+    {
+      text,
+      ...(worst && shouldWarn(worst)
+        ? { quota: { scope: worst.scope, remaining: worst.remaining, limit: worst.limit } }
+        : {}),
+    },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

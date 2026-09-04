@@ -167,11 +167,18 @@ hosted demo runs the same code.
 | `LOR_HOST_COOKIE_SECRET` | yes | Secret used to sign host cookies |
 | `LOR_STT_API_KEY` | no | Operator's speech-to-text key. Omitted means users bring their own |
 | `LOR_LLM_API_KEY` | no | Operator's LLM key. Omitted means users bring their own |
-| `LOR_FREE_STT_SECONDS_PER_USER_PER_DAY` | no | Per-user daily transcription quota |
+| `LOR_FREE_STT_SECONDS_PER_USER_PER_DAY` | no | Free transcription per person per day, in seconds of audio. Default 900 |
+| `LOR_FREE_STT_SECONDS_PER_ROOM_PER_DAY` | no | The same, per meeting. Default 3600 |
+| `LOR_FREE_STT_SECONDS_GLOBAL_PER_DAY` | no | Server-wide, so a runaway cannot spend the operator's key. Default 18000 |
 | `LOR_FREE_LLM_TOKENS_PER_USER_PER_DAY` | no | Per-user daily LLM quota |
-| `LOR_FREE_STT_SECONDS_GLOBAL_PER_DAY` | no | Server-wide safety cap |
 
 See [`.env.example`](.env.example) for the full list.
+
+Transcription quotas are counted in **seconds of audio**, not requests — a
+twenty-second utterance and a one-second one are the same request and twenty
+times the cost. All three reset at UTC midnight, and setting any of them to `0`
+removes that ceiling entirely, for an operator who is paying for the key and
+does not want it rationed. A participant using their own key is never counted.
 
 ## Architecture
 
