@@ -42,6 +42,16 @@ export function CaptionsNotice({ captions }: { captions: Captions }) {
         {captions.sharing ? t("stopMine") : t("startMine")}
       </button>
 
+      {/* The allowance, before it is gone. Shown only once the server says it
+          is worth mentioning — a room warned at eighty per cent can fetch a
+          key, and one told at a hundred has already lost its captions
+          mid-sentence. */}
+      {!captions.error && captions.quota && (
+        <span className="text-[#fbbf24]">
+          {t("runningLow", { minutes: Math.max(1, Math.round(captions.quota.remaining / 60)) })}
+        </span>
+      )}
+
       {captions.error && (
         <span className="text-[#fca5a5]">{t(`error.${captions.error}`)}</span>
       )}

@@ -49,30 +49,39 @@ export async function callerKey(
 }
 
 /**
- * Count one request against a key.
+ * Count something against a key.
  *
  * The whole thing is a single statement so that two simultaneous requests
  * cannot both read the same count and both decide they are under the limit.
  * The window resets inside the statement rather than being pruned by a job.
+ *
+ * `cost` is how much this one call is worth. One, for "how many requests"; for
+ * a quota it is seconds of audio, because a request is not a cost — a
+ * twenty-second utterance and a one-second one are the same request and twenty
+ * times the bill.
  */
 export async function consume(
   key: string,
   limit: number,
   windowSeconds: number,
+  cost = 1,
 ): Promise<RateLimitResult> {
   const db = getDb();
   const interval = sql.raw(`interval '${windowSeconds} seconds'`);
+  // Rounded up and at least one: a caller cannot make an unlimited number of
+  // free requests by keeping each one just under a second.
+  const charge = Math.max(1, Math.ceil(cost));
 
   const [row] = await db
     .insert(rateLimits)
-    .values({ key, count: 1 })
+    .values({ key, count: charge })
     .onConflictDoUpdate({
       target: rateLimits.key,
       set: {
         count: sql`case
           when ${rateLimits.windowStart} < now() - ${interval}
-          then 1
-          else ${rateLimits.count} + 1
+          then ${charge}
+          else ${rateLimits.count} + ${charge}
         end`,
         windowStart: sql`case
           when ${rateLimits.windowStart} < now() - ${interval}

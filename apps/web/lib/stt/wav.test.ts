@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SAMPLE_RATE, encodeWav } from "./wav";
+import { SAMPLE_RATE, encodeWav, wavDuration } from "./wav";
 
 const text = (bytes: Uint8Array, at: number, length: number) =>
   String.fromCharCode(...bytes.subarray(at, at + length));
@@ -77,5 +77,57 @@ describe("encodeWav", () => {
     const dv = view(encodeWav(Float32Array.from([1 / 256])));
     expect(dv.getUint8(44)).toBe(0x80);
     expect(dv.getUint8(45)).toBe(0x00);
+  });
+});
+
+describe("wavDuration", () => {
+  const header = (bytes: Uint8Array): ArrayBuffer =>
+    new Uint8Array(bytes.subarray(0, 4096)).buffer;
+
+  it("reads the length out of the header alone", () => {
+    // Forty-four bytes, not the whole utterance: this is what a quota is
+    // charged against, and buffering a megabyte to ask would defeat the point.
+    const seconds = 2.5;
+    const bytes = encodeWav(new Float32Array(SAMPLE_RATE * seconds));
+    expect(wavDuration(header(bytes))).toBeCloseTo(seconds, 5);
+  });
+
+  it("works at a rate other than the default", () => {
+    const bytes = encodeWav(new Float32Array(48_000), 48_000);
+    expect(wavDuration(header(bytes))).toBeCloseTo(1, 5);
+  });
+
+  it("is zero for an empty file, not null", () => {
+    expect(wavDuration(header(encodeWav(new Float32Array(0))))).toBe(0);
+  });
+
+  it("refuses bytes that are not a WAV", () => {
+    // A quota that silently charges nothing for whatever it cannot parse is
+    // not a quota.
+    expect(wavDuration(new ArrayBuffer(44))).toBeNull();
+    expect(wavDuration(new ArrayBuffer(10))).toBeNull();
+
+    const notWave = new Uint8Array(encodeWav(new Float32Array(100)));
+    notWave.set(new TextEncoder().encode("OGGS"), 8);
+    expect(wavDuration(header(notWave))).toBeNull();
+  });
+  it("finds the length in a file that is not the canonical forty-four bytes", () => {
+    // The case that actually happened. Windows' speech synthesiser writes an
+    // extra chunk before `data`, so the number at offset 40 belongs to
+    // something else — and reading it charged a five-second recording as
+    // 228,855 seconds of quota.
+    const canonical = encodeWav(new Float32Array(SAMPLE_RATE)); // one second
+    const extra = new TextEncoder().encode("fact");
+
+    const padded = new Uint8Array(canonical.length + 12);
+    padded.set(canonical.subarray(0, 36), 0); // through the fmt chunk
+    padded.set(extra, 36);
+    new DataView(padded.buffer).setUint32(40, 4, true); // its length
+    new DataView(padded.buffer).setUint32(44, 12345, true); // its contents
+    padded.set(canonical.subarray(36), 48); // then the real data chunk
+
+    // Reading offset 40 blind would find the `fact` chunk's length, not the
+    // audio's.
+    expect(wavDuration(header(padded))).toBeCloseTo(1, 5);
   });
 });

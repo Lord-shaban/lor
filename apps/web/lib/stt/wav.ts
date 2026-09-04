@@ -77,3 +77,65 @@ function ascii(view: DataView, offset: number, text: string): void {
     view.setUint8(offset + i, text.charCodeAt(i));
   }
 }
+
+/**
+ * How many seconds of audio a WAV header describes.
+ *
+ * Read from the file rather than taken from the request, because this is what a
+ * quota is charged against and the client is the party with an interest in it
+ * being smaller.
+ *
+ * The chunks are walked rather than read at fixed offsets, and that is not
+ * pedantry. `encodeWav` above writes the canonical forty-four byte layout, so
+ * an implementation that assumed it worked perfectly against our own files —
+ * and charged a five-second recording from Windows' own speech synthesiser as
+ * **228,855 seconds**, because SAPI writes an extra chunk before `data` and
+ * the number at offset 40 was part of something else entirely. Anything that
+ * reads a length out of a file somebody else wrote has to find the field, not
+ * assume where it is.
+ *
+ * `null` when the bytes are not a WAV, or when the header is longer than what
+ * was handed in. A quota that silently charges zero for whatever it cannot
+ * parse is not a quota, and one that charges a made-up number is worse.
+ */
+export function wavDuration(header: ArrayBuffer): number | null {
+  if (header.byteLength < 12) return null;
+
+  const view = new DataView(header);
+  const tag = (at: number) =>
+    String.fromCharCode(...new Uint8Array(header, at, 4));
+
+  if (tag(0) !== "RIFF" || tag(8) !== "WAVE") return null;
+
+  let channels = 0;
+  let sampleRate = 0;
+  let bits = 0;
+  let dataBytes: number | null = null;
+
+  // Each chunk is a four-byte tag, a four-byte length, then that many bytes,
+  // padded to an even boundary.
+  let at = 12;
+  while (at + 8 <= header.byteLength) {
+    const name = tag(at);
+    const length = view.getUint32(at + 4, true);
+    const body = at + 8;
+
+    if (name === "fmt " && body + 16 <= header.byteLength) {
+      channels = view.getUint16(body + 2, true);
+      sampleRate = view.getUint32(body + 4, true);
+      bits = view.getUint16(body + 14, true);
+    } else if (name === "data") {
+      dataBytes = length;
+      break;
+    }
+
+    at = body + length + (length % 2);
+  }
+
+  if (dataBytes === null || !channels || !sampleRate || !bits) return null;
+
+  const bytesPerSecond = sampleRate * channels * (bits / 8);
+  if (!bytesPerSecond || !Number.isFinite(bytesPerSecond)) return null;
+
+  return dataBytes / bytesPerSecond;
+}

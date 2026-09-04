@@ -159,9 +159,10 @@ docker compose -f docker/docker-compose.yml up -d
 | `LOR_HOST_COOKIE_SECRET` | أيوه | السر المستخدم في توقيع كوكي المضيف |
 | `LOR_STT_API_KEY` | لأ | مفتاح التفريغ الصوتي للمشغّل. لو فاضي، المستخدمين بيحطوا مفاتيحهم |
 | `LOR_LLM_API_KEY` | لأ | مفتاح الـ LLM للمشغّل. لو فاضي، المستخدمين بيحطوا مفاتيحهم |
-| `LOR_FREE_STT_SECONDS_PER_USER_PER_DAY` | لأ | حصة التفريغ اليومية لكل مستخدم |
+| `LOR_FREE_STT_SECONDS_PER_USER_PER_DAY` | لأ | تفريغ مجاني لكل شخص في اليوم، بثواني الصوت. الافتراضي 900 |
+| `LOR_FREE_STT_SECONDS_PER_ROOM_PER_DAY` | لأ | نفس الحاجة، لكل اجتماع. الافتراضي 3600 |
+| `LOR_FREE_STT_SECONDS_GLOBAL_PER_DAY` | لأ | على مستوى السيرفر كله، عشان حاجة سايبة ما تصرفش مفتاح المشغّل. الافتراضي 18000 |
 | `LOR_FREE_LLM_TOKENS_PER_USER_PER_DAY` | لأ | حصة الـ LLM اليومية لكل مستخدم |
-| `LOR_FREE_STT_SECONDS_GLOBAL_PER_DAY` | لأ | سقف حماية على مستوى السيرفر كله |
 
 القايمة الكاملة في [`.env.example`](.env.example).
 
