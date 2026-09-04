@@ -1,0 +1,9 @@
+{
+  "id": "004-pure-arabic",
+  "reference": "إزيك عامل إيه النهاردة",
+  "notes": "No English at all. Code-switch preservation is undefined here rather than perfect — a corpus of only these would otherwise hide a model that transliterates everything.",
+  "hypotheses": {
+    "ideal": "إزيك عامل إيه النهاردة",
+    "misheard": "إزيك عامل إيه امبارح"
+  }
+}

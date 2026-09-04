@@ -1,0 +1,10 @@
+{
+  "id": "001-deploy-logs",
+  "reference": "عملت الـ deploy على الـ server وشوفت الـ logs",
+  "notes": "The sentence this milestone is named after. Three English terms inside an Egyptian Arabic sentence, all of them ordinary in a technical meeting.",
+  "hypotheses": {
+    "transliterating": "عملت الـ ديبلوي على الـ سيرفر وشوفت الـ لوجز",
+    "translating": "I did the deployment on the server and saw the logs",
+    "ideal": "عملت الـ deploy على الـ server وشوفت الـ logs"
+  }
+}

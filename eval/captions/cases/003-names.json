@@ -1,0 +1,9 @@
+{
+  "id": "003-names",
+  "reference": "أحمد هيراجع الـ pull request بتاع Supabase",
+  "notes": "A person's name in Arabic beside a product name in Latin. Proper nouns are what the room glossary exists for, and this case is what should improve when it lands.",
+  "hypotheses": {
+    "transliterating": "أحمد هيراجع الـ بول ريكوست بتاع سوبابيز",
+    "ideal": "أحمد هيراجع الـ pull request بتاع Supabase"
+  }
+}

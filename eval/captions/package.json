@@ -1,0 +1,15 @@
+{
+  "name": "@lor/captions-eval",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Scores caption engines on mixed Arabic/English speech.",
+  "scripts": {
+    "eval": "node --experimental-strip-types run.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.0"
+  }
+}
