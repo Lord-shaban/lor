@@ -238,6 +238,22 @@
       "removeConfirm": "Remove?",
       "handOver": "Make host",
       "handOverConfirm": "Make host?"
+    },
+    "captions": {
+      "short": "CC",
+      "turnOn": "Turn on captions",
+      "turnOff": "Turn off captions",
+      "region": "Captions",
+      "stillListening": "still listening",
+      "noticeOn": "Captions are on. What you say is transcribed and sent to a transcription service.",
+      "noticeNotYou": "Captions are on. Your microphone is not being transcribed.",
+      "stopMine": "Stop transcribing me",
+      "startMine": "Transcribe me too",
+      "error": {
+        "no_key": "No transcription key is set up on this server.",
+        "rate_limited": "Too much at once — captions will catch up shortly.",
+        "failed": "Captions could not reach the transcription service."
+      }
     }
   }
 }

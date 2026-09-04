@@ -156,9 +156,49 @@ export type Reaction = (typeof REACTIONS)[number];
  */
 export const MAX_HAND_AGE_MS = 12 * 60 * 60 * 1000;
 
+/**
+ * A caption line is short by construction.
+ *
+ * `vad.ts` caps an utterance at twenty seconds, and twenty seconds of speech is
+ * nowhere near this. The limit is here because a peer is free to send whatever
+ * it likes, and a caption strip is not a place anyone should be able to put a
+ * kilobyte.
+ */
+export const MAX_CAPTION_LENGTH = 500;
+
 export type RoomMessage =
   | { type: "chat"; id: string; body: string }
   | { type: "reaction"; id: string; emoji: Reaction }
+  | {
+      /**
+       * One line of what somebody said.
+       *
+       * Sent twice for the same `id`: once provisional from the browser's own
+       * recogniser, once final from the accurate pass. The receiver keys on
+       * `id` and replaces in place — see `caption-log.ts`, which owns the rule
+       * that the final one wins even when it arrives first.
+       *
+       * The utterance id is per-sender, so the receiver combines it with the
+       * identity LiveKit reports. Two people cannot collide, and neither can
+       * one person forge the other's line.
+       */
+      type: "caption";
+      id: string;
+      text: string;
+      final: boolean;
+    }
+  | {
+      /**
+       * Captions were switched on or off for the room.
+       *
+       * Announced rather than inferred: transcription sends what people say to
+       * a third party, and somebody who joined a meeting did not agree to that
+       * by joining. Re-sent to a new arrival for the same reason a raised hand
+       * is — a notice nobody saw is not a notice.
+       */
+      type: "captions";
+      on: boolean;
+    }
   | {
       type: "hand";
       raised: boolean;
@@ -235,6 +275,31 @@ export function decodeMessage(payload: Uint8Array): RoomMessage | null {
       if (!isReaction(emoji)) return null;
 
       return { type: "reaction", id, emoji };
+    }
+
+    case "caption": {
+      const { id, text, final } = envelope;
+      if (typeof id !== "string" || !id) return null;
+      if (typeof text !== "string") return null;
+
+      const trimmed = text.trim();
+      if (!trimmed) return null;
+
+      return {
+        type: "caption",
+        id,
+        text: trimmed.slice(0, MAX_CAPTION_LENGTH),
+        // Absent means provisional. A client that only ever sends finals would
+        // have them all treated as guesses, which is the safe direction: a line
+        // that stays grey is worse to look at, not wrong.
+        final: final === true,
+      };
+    }
+
+    case "captions": {
+      const { on } = envelope;
+      if (typeof on !== "boolean") return null;
+      return { type: "captions", on };
     }
 
     case "hand": {

@@ -61,6 +61,8 @@ export function CallControls({
   handRaised,
   onToggleHand,
   onReact,
+  captionsOn,
+  onToggleCaptions,
   videoMode,
   onChooseVideoMode,
   onLeave,
@@ -77,6 +79,8 @@ export function CallControls({
   handRaised: boolean;
   onToggleHand: () => void;
   onReact: (emoji: Reaction) => void;
+  captionsOn: boolean;
+  onToggleCaptions: () => void;
   videoMode: VideoMode;
   onChooseVideoMode: (mode: VideoMode) => void;
   onLeave: () => void;
@@ -219,6 +223,24 @@ export function CallControls({
         )}
       >
         <span aria-hidden="true">✋</span>
+      </button>
+
+      {/* Not behind `canPublish`: somebody still at the door has nothing to
+          transcribe, but reading what the room is saying is exactly what would
+          tell them whether it is worth waiting. */}
+      <button
+        type="button"
+        onClick={onToggleCaptions}
+        aria-pressed={captionsOn}
+        aria-label={captionsOn ? t("captions.turnOff") : t("captions.turnOn")}
+        className={cn(
+          "h-11 rounded-md px-4 text-sm font-medium leading-none transition-colors duration-150",
+          captionsOn
+            ? "bg-[#f4f4f5] text-[#0a0a0b]"
+            : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
+        )}
+      >
+        {t("captions.short")}
       </button>
 
       {/* Outside the canPublish branch on purpose: someone still waiting to be
