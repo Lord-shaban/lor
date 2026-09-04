@@ -5,6 +5,7 @@ import { callerKey, clientAddress, consume } from "@/lib/rate-limit";
 import { normalizeRoomCode } from "@/lib/room-code";
 import { readGlossary } from "@/lib/stt/glossary";
 import { buildPrompt } from "@/lib/stt/prompt";
+import { applyRepairs, readRepairs } from "@/lib/stt/repair";
 import { MAX_AUDIO_BYTES, planRequest } from "@/lib/stt/request";
 import { FAILURE_STATUS, transcribe } from "@/lib/stt/transcribe";
 
@@ -130,9 +131,13 @@ export async function POST(request: Request) {
     );
   }
 
+  // After the engine and before anybody reads it. A term this room has already
+  // corrected once should not come back wrong on the next line.
+  const text = applyRepairs(result.text, readRepairs(room.settings));
+
   // The only thing that survives this request.
   return NextResponse.json(
-    { text: result.text },
+    { text },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
