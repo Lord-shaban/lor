@@ -1,6 +1,6 @@
 {
   "name": "@lor/captions-eval",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "Scores caption engines on mixed Arabic/English speech.",
