@@ -43,9 +43,12 @@ interface Waiting {
 export function RoomEntry({
   code,
   inviteUrl,
+  qr,
 }: {
   code: string;
   inviteUrl: string;
+  /** Rendered on the server and passed through, so it costs no client bundle. */
+  qr?: React.ReactNode;
 }) {
   const t = useTranslations("room");
 
@@ -247,6 +250,7 @@ export function RoomEntry({
         <div className="mt-10 border-t border-border pt-6">
           <p className="mb-3 text-sm text-muted">{t("shareToInvite")}</p>
           <CopyLink url={inviteUrl} />
+          {qr && <div className="mt-6">{qr}</div>}
         </div>
       </div>
     </main>
