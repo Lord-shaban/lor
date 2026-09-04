@@ -49,6 +49,14 @@ export interface Captions {
   on: boolean;
   /** Whether this participant's own microphone is being transcribed. */
   sharing: boolean;
+  /**
+   * Whether the room is keeping what is said after the meeting.
+   *
+   * Separate from `on`, and announced separately: agreeing that words may be
+   * on a screen for a few seconds is not agreeing that they are written down.
+   */
+  keeping: boolean;
+  toggleKeeping: () => void;
   log: CaptionLog;
   /** Null until something has actually been attempted. */
   error: "no_key" | "quota" | "rate_limited" | "failed" | null;
@@ -88,6 +96,7 @@ export function useCaptions({
 
   const [on, setOn] = useState(false);
   const [sharing, setSharing] = useState(true);
+  const [keeping, setKeeping] = useState(false);
   const [log, setLog] = useState<CaptionLog>(createCaptionLog);
   const [error, setError] = useState<Captions["error"]>(null);
   const [quota, setQuota] = useState<Captions["quota"]>(null);
@@ -158,6 +167,11 @@ export function useCaptions({
         return;
       }
 
+      if (message.type === "keeping") {
+        setKeeping(message.on);
+        return;
+      }
+
       if (message.type !== "caption") return;
 
       const utterance = {
@@ -185,6 +199,9 @@ export function useCaptions({
      */
     function onJoin(participant: RemoteParticipant) {
       if (on) publish({ type: "captions", on: true }, [participant.identity]);
+      // Both, and separately. Somebody arriving into a room that is keeping a
+      // record has to be told that, not left to infer it from captions being on.
+      if (keeping) publish({ type: "keeping", on: true }, [participant.identity]);
     }
 
     room.on(RoomEvent.DataReceived, onData);
@@ -193,12 +210,20 @@ export function useCaptions({
       room.off(RoomEvent.DataReceived, onData);
       room.off(RoomEvent.ParticipantConnected, onJoin);
     };
-  }, [room, on, publish, locale]);
+  }, [room, on, keeping, publish, locale]);
 
   const retry = useCallback(() => {
     setBlocked(false);
     setError(null);
   }, []);
+
+  const toggleKeeping = useCallback(() => {
+    setKeeping((current) => {
+      const next = !current;
+      publish({ type: "keeping", on: next });
+      return next;
+    });
+  }, [publish]);
 
   const toggle = useCallback(() => {
     // Switching captions off and on again is the other way somebody expresses
@@ -345,6 +370,24 @@ export function useCaptions({
               const text = payload.text;
               setError(null);
               setQuota(payload.quota ?? null);
+
+              // Only what settled, and only once the room said to keep it. The
+              // fast pass never reaches here — a guess is a preview, and a
+              // preview does not become a record.
+              if (keeping && typeof text === "string" && text.trim()) {
+                void fetch(`/api/rooms/${code}/transcript`, {
+                  method: "POST",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({
+                    text,
+                    speaker: localParticipant.name || localParticipant.identity,
+                    identity: localParticipant.identity,
+                  }),
+                }).catch(() => {
+                  // A line that failed to store is a gap in the record, not a
+                  // reason to interrupt the meeting. The caption still showed.
+                });
+              }
               if (typeof text === "string" && text.trim()) {
                 mine(id, utterance.fromMs, text, true);
               } else {
@@ -402,7 +445,7 @@ export function useCaptions({
     // again. Captions would simply not work, with nothing on screen to say why.
     // Muting and unmuting republishes the track, so the same gap would also
     // have ended captions for good the first time somebody muted themselves.
-  }, [enabled, on, sharing, blocked, microphoneTrack, localParticipant, code, mine, locale]);
+  }, [enabled, on, sharing, blocked, keeping, microphoneTrack, localParticipant, code, mine, locale]);
 
   return {
     on,
@@ -411,6 +454,8 @@ export function useCaptions({
     error,
     quota,
     available: enabled,
+    keeping,
+    toggleKeeping,
     toggle,
     setSharing,
     retry,

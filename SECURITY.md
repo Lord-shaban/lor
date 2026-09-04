@@ -42,6 +42,17 @@ These are invariants, not preferences. A change that breaks one is a bug:
    transcript, or the key.
 4. **Transcription is opt-in and announced.** Participants are told in the room when
    transcription starts, and any room can disable it entirely.
+5. **Keeping a record is a second decision, announced separately.** Agreeing that words
+   may appear on a screen for a few seconds is not agreeing that they are written down
+   and readable next month, so the record announces itself with its own message and can
+   be off while captions are on. Only the accurate pass is stored — never the browser's
+   provisional guess.
+6. **A transcript is kept for 30 days and then removed**, and anybody in the meeting can
+   delete it sooner. Deleting takes the summary with it, because a summary is a copy of
+   what was deleted. The period is stated in the room itself, not only here; the number
+   lives in one place in the code, so this file and the interface cannot drift apart.
+   An operator may shorten it and deliberately cannot lengthen it — that would quietly
+   break a promise made to people in the room.
 
 > **What is enforced today.** All four hold in the shipped code as of
 > [#91](https://github.com/Lord-shaban/lor/issues/91). This note remains only to say

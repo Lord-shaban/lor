@@ -24,6 +24,7 @@ import { useCaptions } from "@/components/call/use-captions";
 import { CaptionsStrip } from "@/components/call/captions-strip";
 import { CaptionsNotice } from "@/components/call/captions-notice";
 import { KeysDialog } from "@/components/call/keys-dialog";
+import { TranscriptPanel } from "@/components/call/transcript-panel";
 import { useVideoMode } from "@/components/call/use-video-mode";
 import { unreadCount } from "@/lib/chat-log";
 import type { JoinDetails } from "@/components/prejoin/prejoin";
@@ -155,6 +156,7 @@ function CallStage({
   // server's cookie check decides anything; this is what the interface shows.
   const [isHost, setIsHost] = useState(startedAsHost);
   const [keysOpen, setKeysOpen] = useState(false);
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
   const { localParticipant } = useLocalParticipant();
   const {
     entries,
@@ -233,6 +235,10 @@ function CallStage({
           <KeysDialog onClose={() => setKeysOpen(false)} onSaved={captions.retry} />
         )}
 
+        {transcriptOpen && (
+          <TranscriptPanel code={code} onClose={() => setTranscriptOpen(false)} />
+        )}
+
         {chatOpen && (
           <ChatPanel entries={entries} onSend={sendChat} onClose={toggleChat} />
         )}
@@ -270,7 +276,11 @@ function CallStage({
       {/* Above the controls rather than inside them: it has to stay visible
           for as long as captions are on, and a control bar is somewhere people
           stop looking. */}
-      <CaptionsNotice captions={captions} onOpenKeys={() => setKeysOpen(true)} />
+      <CaptionsNotice
+        captions={captions}
+        onOpenKeys={() => setKeysOpen(true)}
+        onOpenTranscript={() => setTranscriptOpen(true)}
+      />
 
       <CallControls
         canPublish={canPublish}

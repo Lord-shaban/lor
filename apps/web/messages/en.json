@@ -273,6 +273,33 @@
       "none": "Nothing yet.",
       "remove": "Remove",
       "open": "Your own key"
+    },
+    "transcript": {
+      "title": "What was said",
+      "close": "Close",
+      "loading": "Looking…",
+      "empty": "Nothing kept yet. Turn on “Keep a record” while captions are running and settled lines are stored here.",
+      "summary": "Summary",
+      "generated": "written by a model — check it against the transcript",
+      "stale": "More has been said since this was written.",
+      "showTranscript": "Show what was said",
+      "summarise": "Summarise",
+      "summarising": "Summarising…",
+      "delete": "Delete everything",
+      "retention": "Kept for {days} days, then removed. Anybody in this meeting can delete it now.",
+      "error": {
+        "no_key": "No summary key is set up on this server. The transcript is still kept.",
+        "quota": "That is enough summaries of this meeting for today.",
+        "too_short": "Not enough was said to summarise.",
+        "nothing_to_summarise": "There is nothing stored to summarise.",
+        "unavailable": "The summary service could not be reached. The transcript is untouched."
+      }
+    },
+    "keeping": {
+      "on": "Keep a record",
+      "off": "Stop keeping a record",
+      "notice": "What is said is being kept after this meeting.",
+      "open": "What was said"
     }
   },
   "keys": {

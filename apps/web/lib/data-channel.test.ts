@@ -299,6 +299,19 @@ describe("captions", () => {
     expect(decoded).toMatchObject({ text: "ا".repeat(MAX_CAPTION_LENGTH) });
   });
 
+  it("keeps the record announcement separate from the caption one", () => {
+    // Agreeing that words may appear on a screen for a few seconds is not
+    // agreeing that they are written down and readable next month. One message
+    // cannot carry both consents.
+    expect(wire({ type: "keeping", on: true })).toEqual({ type: "keeping", on: true });
+    expect(wire({ type: "keeping", on: false })).toEqual({ type: "keeping", on: false });
+
+    const vague = new TextEncoder().encode(
+      JSON.stringify({ v: PROTOCOL_VERSION, type: "keeping" }),
+    );
+    expect(decodeMessage(vague)).toBeNull();
+  });
+
   it("carries the announcement that captions are on", () => {
     expect(wire({ type: "captions", on: true })).toEqual({ type: "captions", on: true });
     expect(wire({ type: "captions", on: false })).toEqual({ type: "captions", on: false });
