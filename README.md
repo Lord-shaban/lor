@@ -21,11 +21,11 @@ No account. No time limit. No download.
 ---
 
 > [!NOTE]
-> **Status: the call is live.** `v0.0` and `v0.1` have shipped and are deployed at
-> [lor-bay.vercel.app](https://lor-bay.vercel.app): open a link, type a name, and hold a
-> real meeting — video, screen share, chat, reactions, a waiting room, host controls.
-> `v0.1.5 — Captions` is in progress. Every feature below is tagged with the release it
-> ships in, so nothing here claims to work before it does.
+> **Status: captions are live.** `v0.0`, `v0.1`, and `v0.1.5` have shipped and are
+> deployed at [lor-bay.vercel.app](https://lor-bay.vercel.app): open a link, type a name,
+> and hold a real meeting with mixed Arabic/English captions and optional transcripts.
+> `v0.1.8 — Canvas` is next. Every feature below is tagged with the release it ships in,
+> so nothing here claims to work before it does.
 > Follow the [milestones](https://github.com/Lord-shaban/lor/milestones) to track progress.
 
 ## What LOR. is
@@ -223,8 +223,8 @@ Drizzle · Postgres.
 |---|---|---|
 | `v0.0` | Foundation | **shipped** |
 | `v0.1` | The Call | **shipped** — [live](https://lor-bay.vercel.app) |
-| `v0.1.5` | Captions | **in progress** — 2 of 12 |
-| `v0.1.8` | Canvas | planned |
+| `v0.1.5` | Captions | **shipped** — [live](https://lor-bay.vercel.app) |
+| `v0.1.8` | Canvas | **next** |
 | `v0.2` | Decisions | planned |
 | `v0.3` | Action items | planned |
 | `v0.4` | Meeting timeline | planned |

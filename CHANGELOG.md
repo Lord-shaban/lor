@@ -6,40 +6,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Work towards `v0.1.5 — Captions`. Mixed Arabic and English in one sentence is the
-hardest problem in this project, so the two things that make a caption change
-*reviewable* landed before any engine did.
+## [0.1.5] — Captions
+
+Mixed Arabic/English meetings can now become a readable record without making
+AI a requirement for the call.
 
 ### Added
 
-- **An eval harness** in `eval/captions/` — its own npm workspace, so its metrics
-  are unit tested by `npm test` like anything else. It scores word error rate,
-  character error rate, and **code-switch preservation**: the share of the
-  reference's English words still in Latin script.
+- Live captions cut speech at utterance boundaries, show a fast provisional
+  line, then replace it in place with the accurate result. A code-switched
+  prompt, room glossary, reusable corrections, and word-count direction
+  preserve English technical terms inside Arabic speech; the eval workspace
+  reports WER, CER, and code-switch preservation.
+- Captions are announced room-wide before transcription starts. Each
+  participant sends only their own microphone and can keep it out of
+  transcription; joining late still shows the persistent notice.
+- Optional transcript keeping is a separate, separately announced choice. Only
+  settled, attributed results are stored — never the provisional preview — and
+  remain readable and downloadable for up to 30 days, even without a summary
+  key or quota. Downloads preserve speaker, UTC time, order, and mixed-language
+  text. Any participant can delete the record early, including its summary.
+  Expired rows and derived summaries are cleaned up when the record is read;
+  physical cleanup is not scheduled for unopened rooms.
+- Summaries surface decisions, owners, and open questions while preserving
+  code-switching. They are always labelled as model-generated, stay one click
+  from their source transcript, and warn when newer lines make them stale.
+- Operator-funded transcription has daily per-person, per-room, and server-wide
+  limits measured in audio seconds, with advance warning and reset at UTC
+  midnight. Exhaustion stops captions only; the meeting continues. `0`
+  deliberately disables the free allowance.
+- BYOK for Groq and OpenAI, plus a `/keys` guide linking only to official
+  provider sources with checked dates and no affiliate links. Keys are
+  ciphertext in IndexedDB under a non-extractable browser key; Groq audio goes
+  directly from browser to provider, while unsupported or unmeasured direct
+  paths use a stateless proxy that does not log, cache, persist, or echo the key
+  or audio. BYOK bypasses operator quotas.
 
-  The third number exists because the first one is actively misleading here. A
-  hypothesis that writes every English term in Arabic script scores a *better*
-  WER (33.3%) than one that translates the sentence (100%) while preserving none
-  of the English — so optimising for WER alone would push this product toward
-  exactly the failure it exists to prevent. Neither number is sufficient alone,
-  which is why both are reported.
+### Fixed
 
-- **`lib/bidi.ts`**, which decides a mixed line's direction by counting its
-  words. `dir="auto"` reads the first strong character, so an Arabic sentence
-  opening with an English term lays out left to right with its full stop at the
-  wrong end — and a caption arriving word by word would flip direction while
-  somebody is reading it. A link or a bracketed aside counts once, not once per
-  word inside it. Applied to chat messages; the composer keeps `dir="auto"`,
-  because measuring a draft moves the caret under the person typing.
-
-### Changed
-
-- The isolate-every-Latin-run approach was built and then removed. Rendering
-  twenty four mixed lines in a browser and reading the visual order back
-  character by character: `<bdi>` around every Latin run changed **none** of
-  them, while the paragraph direction changed four. `CLAUDE.md`,
-  `CONTRIBUTING.md` and the README now say which of the two problems wants which
-  repair.
+- Participant tiles keep the avatar visible until video has actually decoded a
+  frame, and restore it when frames stall, instead of painting a black tile
+  after join.
+- Expired transcript lines no longer leave their derived summary readable.
+  Transcript speaker names are separated from mixed-language speech so each
+  line can keep its own direction.
 
 ## [0.1.0] — The Call
 
