@@ -315,42 +315,24 @@ GitHub is authoritative — issues, milestones, and the
 [board](https://github.com/users/Lord-shaban/projects/8). Update this when a release
 closes.
 
-**Live:** <https://lor-bay.vercel.app>. Everything in `v0.1` is deployed there,
-on every push to `main`.
+**Live:** <https://lor-bay.vercel.app>. Everything through `v0.1.5`, including
+the #67 participant-tile fix, is deployed there on every push to `main`.
 
-**Done.** `v0.0` and `v0.1` in full — thirty-three issues, both
-[tagged and released](https://github.com/Lord-shaban/lor/releases). The call joins, shows
-people to each other, shares a screen, carries chat and reactions and a raised
-hand on the data channel, spends less bandwidth when it has to, holds people at
-a door, lets a host moderate and hand over the seat, installs on a phone, and is
-checked end to end on every pull request.
+**Done.** `v0.0`, `v0.1`, and `v0.1.5` in full, all
+[tagged and released](https://github.com/Lord-shaban/lor/releases). The call is
+checked end to end on every pull request. Captions split speech at utterance
+boundaries, preserve mixed Arabic/English terms, require explicit consent, and
+can keep accurate-only transcripts and generated summaries. Operator quotas
+stop captions rather than the meeting; BYOK remains available without charging
+those quotas.
 
-**In progress.** `v0.1.5 — Captions`, twelve issues, two of them merged. It is
-the hardest thing in this project: mixed Arabic and English in one sentence,
-where Whisper transliterates English into Arabic script or translates instead of
-transcribing. Read the captions invariant above before touching anything under
+Read the captions invariant above before touching anything under
 `apps/web/lib/stt/` — a change there is not reviewable without WER and
 code-switch preservation numbers on both sides of it.
 
-```
-#82  eval harness                 merged — WER, CER, code-switch preservation
-#83  bidi caption rendering       merged — became lib/bidi.ts; see the note below
-#84  VAD chunking                 in progress
-#85  STT proxy                    #86  code-switched prompt + glossary
-#87  repair pass                  #88  instant then accurate
-#89  captions UI + consent        #90  quotas
-#91  bring your own key           #92  /keys
-#93  transcript storage + summary
-```
-
-Each carries acceptance criteria and sits on the board with a status. The order
-is deliberate: the eval came first because a caption change without numbers is
-not reviewable, and the rendering came before the engines because a perfect
-transcript rendered wrongly is indistinguishable from a bad one.
-
-**Known and unfixed.** #67 — a tile paints black instead of the avatar while a
-video track is subscribed but not yet decoding, which is most visible on
-somebody who has just joined.
+**Next.** `v0.1.8 — Canvas`: local recording, a shared whiteboard, and
+collaborative notes over the LiveKit data channel. The milestone exists but has
+not yet been decomposed into issues; do that before implementation begins.
 
 **Cutting a release.** A release is a milestone closing, not a date arriving.
 The steps are in `CONTRIBUTING.md`; the one that is easy to get wrong is the
