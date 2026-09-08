@@ -68,9 +68,12 @@
   --color-on-live: var(--on-live);
   --color-on-foreground: var(--on-foreground);
 
-  /* Latin first, Arabic second: the browser picks the first face in the stack
-     that covers the character, so each script gets the one drawn for it. */
-  --font-sans: var(--font-latin), var(--font-arabic), system-ui, sans-serif;
+  /* Use Geist's actual family name rather than `--font-latin`: next/font's
+     variable includes its Arial-based metric fallback, and some desktop font
+     engines select that fallback for Arabic before reaching IBM Plex. Geist
+     itself has no Arabic glyphs, so every Arabic character continues directly
+     to the self-hosted IBM Plex Sans Arabic face while Latin stays Geist. */
+  --font-sans: Geist, var(--font-arabic), system-ui, sans-serif;
   --font-mono: var(--font-mono-latin), ui-monospace, monospace;
 
   --text-xs: 0.75rem;
