@@ -53,6 +53,8 @@ export function CallControls({
   chatOpen,
   unread,
   onToggleChat,
+  whiteboardOpen,
+  onToggleWhiteboard,
   isHost,
   doorOpen,
   waitingCount,
@@ -71,6 +73,8 @@ export function CallControls({
   chatOpen: boolean;
   unread: number;
   onToggleChat: () => void;
+  whiteboardOpen: boolean;
+  onToggleWhiteboard: () => void;
   isHost: boolean;
   doorOpen: boolean;
   waitingCount: number;
@@ -153,6 +157,21 @@ export function CallControls({
               }
             />
           )}
+
+          <button
+            type="button"
+            onClick={onToggleWhiteboard}
+            aria-pressed={whiteboardOpen}
+            aria-label={whiteboardOpen ? t("whiteboard.close") : t("whiteboard.open")}
+            className={cn(
+              "h-11 rounded-md px-4 text-sm font-medium transition-colors duration-150",
+              whiteboardOpen
+                ? "bg-[#f4f4f5] text-[#0a0a0b] hover:opacity-90"
+                : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
+            )}
+          >
+            {t("whiteboard.title")}
+          </button>
         </>
       ) : (
         // Someone still in the waiting room. Saying why the controls are absent

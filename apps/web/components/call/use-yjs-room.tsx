@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useTranslations } from "next-intl";
 import { useRoomContext } from "@livekit/components-react";
 import * as Y from "yjs";
@@ -13,6 +20,13 @@ import {
   YjsLiveKitProvider,
   type YjsLiveKitRoom,
 } from "@/lib/yjs-livekit";
+
+const CanvasDocumentContext = createContext<Y.Doc | null>(null);
+
+/** The hydrated call document, shared by the board without another transport. */
+export function useCanvasDocument() {
+  return useContext(CanvasDocumentContext);
+}
 
 function CanvasPersistenceNotice({
   status,
@@ -93,7 +107,13 @@ function CanvasPersistenceNotice({
  * can then contribute newer operations normally; Yjs merges them rather than
  * treating storage as an authority over the live call.
  */
-export function YjsRoomLifecycle({ roomKey }: { roomKey: string }) {
+export function YjsRoomLifecycle({
+  roomKey,
+  children,
+}: {
+  roomKey: string;
+  children: ReactNode;
+}) {
   const room = useRoomContext();
   const [status, setStatus] = useState<CanvasSnapshotStatus>({
     kind: "loading",
@@ -101,6 +121,7 @@ export function YjsRoomLifecycle({ roomKey }: { roomKey: string }) {
     version: 0,
   });
   const [deleting, setDeleting] = useState(false);
+  const [canvasDocument, setCanvasDocument] = useState<Y.Doc | null>(null);
   const writerRef = useRef<CanvasSnapshotWriter | null>(null);
   const endpoint = `/api/rooms/${roomKey}/canvas`;
 
@@ -119,6 +140,7 @@ export function YjsRoomLifecycle({ roomKey }: { roomKey: string }) {
         if (cancelled) return;
 
         setStatus(initial);
+        setCanvasDocument(document);
         provider = new YjsLiveKitProvider({
           room: room as unknown as YjsLiveKitRoom,
           document: document!,
@@ -175,10 +197,13 @@ export function YjsRoomLifecycle({ roomKey }: { roomKey: string }) {
   }
 
   return (
-    <CanvasPersistenceNotice
-      status={status}
-      deleting={deleting}
-      onDelete={deleteSnapshot}
-    />
+    <CanvasDocumentContext.Provider value={canvasDocument}>
+      <CanvasPersistenceNotice
+        status={status}
+        deleting={deleting}
+        onDelete={deleteSnapshot}
+      />
+      {children}
+    </CanvasDocumentContext.Provider>
   );
 }
