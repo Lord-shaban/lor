@@ -11,6 +11,7 @@ import {
 import { RoomEvent, Track, type RoomOptions } from "livekit-client";
 import { VideoGrid } from "@/components/call/video-grid";
 import { CallControls } from "@/components/call/call-controls";
+import { WhiteboardPanel } from "@/components/call/whiteboard-panel";
 import { ChatPanel } from "@/components/call/chat-panel";
 import { HandQueue } from "@/components/call/hand-queue";
 import { QualityNotice } from "@/components/call/quality-notice";
@@ -153,6 +154,29 @@ function CallStage({
   startedAsHost: boolean;
   onLeave: () => void;
 }) {
+  return (
+    <YjsRoomLifecycle roomKey={code}>
+      <CallStageContent
+        code={code}
+        canPublish={canPublish}
+        startedAsHost={startedAsHost}
+        onLeave={onLeave}
+      />
+    </YjsRoomLifecycle>
+  );
+}
+
+function CallStageContent({
+  code,
+  canPublish,
+  startedAsHost,
+  onLeave,
+}: {
+  code: string;
+  canPublish: boolean;
+  startedAsHost: boolean;
+  onLeave: () => void;
+}) {
   // Held in state because the host seat can change hands mid-call. Only the
   // server's cookie check decides anything; this is what the interface shows.
   const [isHost, setIsHost] = useState(startedAsHost);
@@ -195,8 +219,9 @@ function CallStage({
 
   // One slot, one panel. Two open at once would halve the grid on a laptop and
   // cover it entirely on a phone.
-  const [panel, setPanel] = useState<"chat" | "door" | null>(null);
+  const [panel, setPanel] = useState<"chat" | "door" | "whiteboard" | null>(null);
   const chatOpen = panel === "chat";
+  const whiteboardOpen = panel === "whiteboard";
   // How many messages had arrived the last time the panel was closed. Held here
   // rather than cleared on every arrival, so nothing has to run in an effect to
   // keep the badge honest.
@@ -214,12 +239,13 @@ function CallStage({
     setPanel(panel === "door" ? null : "door");
   }
 
+  function toggleWhiteboard() {
+    if (chatOpen) setRead(received);
+    setPanel(whiteboardOpen ? null : "whiteboard");
+  }
+
   return (
     <>
-      {/* Canvas has no visible editor yet, but its shared document belongs to
-          this call lifecycle rather than to either future panel. */}
-      <YjsRoomLifecycle roomKey={code} />
-
       {/* relative, because the chat covers this area on a phone rather than
           squeezing the grid into a column too narrow to see a face in. */}
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
@@ -260,6 +286,8 @@ function CallStage({
             onClose={toggleDoor}
           />
         )}
+
+        {whiteboardOpen && <WhiteboardPanel onClose={toggleWhiteboard} />}
       </div>
 
       {announcement && (
@@ -292,6 +320,8 @@ function CallStage({
         chatOpen={chatOpen}
         unread={unreadCount({ received, read, open: chatOpen })}
         onToggleChat={toggleChat}
+        whiteboardOpen={whiteboardOpen}
+        onToggleWhiteboard={toggleWhiteboard}
         isHost={isHost}
         doorOpen={panel === "door"}
         waitingCount={waiting.length}

@@ -184,6 +184,13 @@
       "send": "Send",
       "sendFailed": "That message did not send. Check your connection and try again."
     },
+    "whiteboard": {
+      "title": "Board",
+      "open": "Open shared whiteboard",
+      "close": "Close shared whiteboard",
+      "loading": "Getting the shared board ready…",
+      "live": "Changes appear for everyone in this call."
+    },
     "reactions": {
       "open": "Send a reaction",
       "sent": "{name} reacted {emoji}",

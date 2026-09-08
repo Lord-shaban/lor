@@ -159,6 +159,92 @@ test.describe("a call between two people", () => {
       .toBeGreaterThanOrEqual(2);
   });
 
+  test("a shared whiteboard carries drawing and bilingual text to another participant", async () => {
+    const first = await alice.newPage();
+    const second = await bob.newPage();
+    const code = await createRoom(first);
+
+    await join(first, code, "Ahmed");
+    await join(second, code, "سارة");
+
+    await first.getByRole("button", { name: "Open shared whiteboard" }).click();
+    await expect(first.getByRole("heading", { name: "Board" })).toBeVisible();
+    const firstCanvas = first.locator(".tl-canvas").first();
+    await expect(firstCanvas).toBeVisible();
+
+    // The drawing shortcut is a deliberate stroke, not a synthetic store
+    // update: this covers the tldraw UI, its record listener, Yjs, and the
+    // existing LiveKit data channel together.
+    const canvasBox = await firstCanvas.boundingBox();
+    expect(canvasBox).not.toBeNull();
+    if (!canvasBox) throw new Error("The whiteboard canvas has no visible box");
+    await first.keyboard.press("d");
+    await first.mouse.move(canvasBox.x + 120, canvasBox.y + 120);
+    await first.mouse.down();
+    await first.mouse.move(canvasBox.x + 260, canvasBox.y + 180, { steps: 8 });
+    await first.mouse.up();
+    await expect(first.locator(".tl-shape")).not.toHaveCount(0);
+
+    // Open after the stroke. This is the practical late-open path: the second
+    // tldraw store is built from the shared Yjs document it already received.
+    await second.getByRole("button", { name: "Open shared whiteboard" }).click();
+    await expect(second.getByRole("heading", { name: "Board" })).toBeVisible();
+    await expect(second.locator(".tl-shape")).not.toHaveCount(0);
+
+    // Undo/redo and an ordinary selection-delete all become document records;
+    // checking them across pages prevents the board from being "shared" only
+    // for newly-created strokes.
+    await first.keyboard.press("Control+z");
+    await expect(first.locator(".tl-shape")).toHaveCount(0);
+    await expect(second.locator(".tl-shape")).toHaveCount(0);
+    await first.keyboard.press("Control+Shift+z");
+    await expect(second.locator(".tl-shape")).not.toHaveCount(0);
+    await first.getByRole("button", { name: "Select — V" }).click();
+    const shapeBox = await first.locator(".tl-shape").boundingBox();
+    expect(shapeBox).not.toBeNull();
+    if (!shapeBox) throw new Error("The shared drawing has no visible box");
+    await first.mouse.click(
+      shapeBox.x + shapeBox.width / 2,
+      shapeBox.y + shapeBox.height / 2,
+    );
+    await first.keyboard.press("Delete");
+    await expect(first.locator(".tl-shape")).toHaveCount(0);
+    await expect(second.locator(".tl-shape")).toHaveCount(0);
+
+    const sharedText = "قرار: deploy الخميس";
+    await first.keyboard.press("t");
+    await first.mouse.click(canvasBox.x + 300, canvasBox.y + 220);
+    await first.keyboard.type(sharedText);
+    await first.keyboard.press("Escape");
+    // tldraw mirrors selected text into its accessibility status, so scope to
+    // the actual canvas rather than asking Playwright to choose between the
+    // visible shape and that announcement.
+    await expect(second.getByTestId("canvas").getByText(sharedText)).toBeVisible();
+  });
+
+  test("the shared whiteboard stays usable on a phone and in landscape", async () => {
+    const first = await alice.newPage();
+    await first.setViewportSize({ width: 375, height: 667 });
+    const code = await createRoom(first);
+
+    await join(first, code, "Ahmed");
+    await first.getByRole("button", { name: "Open shared whiteboard" }).click();
+    const board = first.getByRole("region", { name: "Board" });
+    await expect(board.getByRole("application", { name: "tldraw" })).toBeVisible();
+    const close = board.getByRole("button", { name: "Close shared whiteboard" });
+    await expect(close).toBeVisible();
+
+    const closeBox = await close.boundingBox();
+    expect(closeBox?.width).toBeGreaterThanOrEqual(44);
+    expect(closeBox?.height).toBeGreaterThanOrEqual(44);
+
+    // The same call bar and board have to remain reachable when a phone turns,
+    // rather than leaving the close control beyond the short viewport.
+    await first.setViewportSize({ width: 667, height: 375 });
+    await expect(close).toBeVisible();
+    await expect(first.getByRole("toolbar", { name: "Tools" })).toBeVisible();
+  });
+
   test("a Canvas snapshot restores from Postgres and deletes board and notes together", async () => {
     const first = await alice.newPage();
     const code = await createRoom(first);
