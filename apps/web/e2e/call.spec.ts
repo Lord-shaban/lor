@@ -146,4 +146,82 @@ test.describe("a call between two people", () => {
       .poll(() => playingVideos(first), { timeout: MEDIA_TIMEOUT })
       .toBeGreaterThanOrEqual(2);
   });
+
+  test("a tile that is not painting yet shows the avatar, not a black rectangle", async () => {
+    // #67 is normally a moment, so hold it open instead of trusting timing.
+    const first = await alice.newPage();
+    const second = await bob.newPage();
+
+    const code = await createRoom(first);
+    await join(first, code, "Ahmed");
+
+    // Install before arrival: subscribed, but deterministically undecoded.
+    await first.evaluate(() => {
+      const holdUndecoded = () => {
+        const video = document.querySelector<HTMLVideoElement>(
+          '[data-identity][data-local="false"] video',
+        );
+        if (!video || video.dataset.heldUndecoded) return;
+
+        video.dataset.heldUndecoded = "true";
+        Object.defineProperties(video, {
+          videoWidth: { configurable: true, get: () => 0 },
+          readyState: { configurable: true, get: () => 0 },
+        });
+      };
+
+      const observer = new MutationObserver(holdUndecoded);
+      observer.observe(document.body, { childList: true, subtree: true });
+      (
+        window as unknown as { heldUndecodedObserver?: MutationObserver }
+      ).heldUndecodedObserver = observer;
+      holdUndecoded();
+    });
+
+    await join(second, code, "سارة");
+    const remoteTile = first.locator('[data-identity][data-local="false"]');
+    const remoteVideo = remoteTile.locator("video");
+    const remoteAvatar = remoteTile.locator("[data-avatar]");
+
+    await expect(remoteTile).toBeVisible();
+    await expect(remoteAvatar).toBeVisible();
+    // A stale frame must not remain visible behind the avatar.
+    await expect(remoteAvatar).toHaveCSS("background-color", "rgb(20, 20, 22)");
+
+    // Release the frame and move straight from fallback to picture.
+    await remoteVideo.evaluate((node) => {
+      const video = node as HTMLVideoElement;
+      (
+        window as unknown as { heldUndecodedObserver?: MutationObserver }
+      ).heldUndecodedObserver?.disconnect();
+      Reflect.deleteProperty(video, "videoWidth");
+      Reflect.deleteProperty(video, "readyState");
+      video.dispatchEvent(new Event("loadeddata"));
+    });
+
+    await expect
+      .poll(() => playingVideos(first), { timeout: MEDIA_TIMEOUT })
+      .toBeGreaterThanOrEqual(2);
+    await expect(remoteAvatar).toHaveCount(0);
+
+    // Freeze presented frames while the MediaStream timeline keeps advancing.
+    // This is the observable shape of an RTP stall at the video element.
+    const timeBeforeStall = await remoteVideo.evaluate(
+      (node) => (node as HTMLVideoElement).currentTime,
+    );
+    await remoteVideo.evaluate((node) => {
+      const video = node as HTMLVideoElement;
+      const frozenFrames = video.getVideoPlaybackQuality().totalVideoFrames;
+      Object.defineProperty(video, "getVideoPlaybackQuality", {
+        configurable: true,
+        value: () => ({ totalVideoFrames: frozenFrames }),
+      });
+    });
+
+    await expect(remoteAvatar).toBeVisible({ timeout: 15_000 });
+    expect(
+      await remoteVideo.evaluate((node) => (node as HTMLVideoElement).currentTime),
+    ).toBeGreaterThan(timeBeforeStall);
+    await expect(remoteAvatar).toHaveCSS("background-color", "rgb(20, 20, 22)");
+  });
 });
