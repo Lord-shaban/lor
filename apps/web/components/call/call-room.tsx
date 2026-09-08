@@ -26,6 +26,7 @@ import { CaptionsNotice } from "@/components/call/captions-notice";
 import { KeysDialog } from "@/components/call/keys-dialog";
 import { TranscriptPanel } from "@/components/call/transcript-panel";
 import { useVideoMode } from "@/components/call/use-video-mode";
+import { YjsRoomLifecycle } from "@/components/call/use-yjs-room";
 import { unreadCount } from "@/lib/chat-log";
 import type { JoinDetails } from "@/components/prejoin/prejoin";
 
@@ -215,6 +216,10 @@ function CallStage({
 
   return (
     <>
+      {/* Canvas has no visible editor yet, but its shared document belongs to
+          this call lifecycle rather than to either future panel. */}
+      <YjsRoomLifecycle roomKey={code} />
+
       {/* relative, because the chat covers this area on a phone rather than
           squeezing the grid into a column too narrow to see a face in. */}
       <div className="relative flex min-h-0 flex-1 overflow-hidden">

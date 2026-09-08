@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { expect, test, type Page, type BrowserContext } from "@playwright/test";
 
 /**
@@ -25,6 +26,11 @@ import { expect, test, type Page, type BrowserContext } from "@playwright/test";
  */
 const MEDIA_TIMEOUT = 45_000;
 
+// The production proxy rewrites this header with the actual caller address.
+// Playwright talks to Next directly, so repeated local runs would otherwise
+// share `127.0.0.1` and consume the real ten-rooms-per-hour test bucket.
+const E2E_CALLER_ADDRESS = `playwright-${randomUUID()}`;
+
 /** Videos on this page that are decoding frames, not merely present. */
 async function playingVideos(page: Page): Promise<number> {
   return page.evaluate(
@@ -40,7 +46,10 @@ async function playingVideos(page: Page): Promise<number> {
 }
 
 async function createRoom(page: Page): Promise<string> {
-  const response = await page.request.post("/api/rooms", { data: {} });
+  const response = await page.request.post("/api/rooms", {
+    data: {},
+    headers: { "x-forwarded-for": E2E_CALLER_ADDRESS },
+  });
   expect(response.ok()).toBe(true);
   const { code } = await response.json();
   expect(typeof code).toBe("string");
