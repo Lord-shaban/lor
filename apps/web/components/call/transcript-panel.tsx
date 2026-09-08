@@ -151,8 +151,8 @@ export function TranscriptPanel({
 
         <ul className="flex flex-col gap-2">
           {lines.map((line) => (
-            <li key={line.seq} className="text-sm leading-relaxed">
-              <bdi className="me-2 text-xs font-medium text-[#a1a1aa]">{line.speaker}</bdi>
+            <li key={line.seq} className="flex flex-col gap-0.5 text-sm leading-relaxed">
+              <bdi className="text-xs font-medium text-[#a1a1aa]">{line.speaker}</bdi>
               <span dir={lineDirection(line.text, fallback)} className="text-[#f4f4f5]">
                 {line.text}
               </span>
