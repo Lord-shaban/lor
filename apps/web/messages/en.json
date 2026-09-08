@@ -283,10 +283,11 @@
       "generated": "written by a model — check it against the transcript",
       "stale": "More has been said since this was written.",
       "showTranscript": "Show what was said",
+      "download": "Download text",
       "summarise": "Summarise",
       "summarising": "Summarising…",
       "delete": "Delete everything",
-      "retention": "Kept for {days} days, then removed. Anybody in this meeting can delete it now.",
+      "retention": "Available for {days} days. Expired text and its summary are removed when the record is opened. Anybody in this meeting can delete it now.",
       "error": {
         "no_key": "No summary key is set up on this server. The transcript is still kept.",
         "quota": "That is enough summaries of this meeting for today.",

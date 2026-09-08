@@ -165,6 +165,15 @@ export function TranscriptPanel({
         {failed && <p className="text-xs text-[#fca5a5]">{t(`error.${failed}`)}</p>}
 
         <div className="flex flex-wrap items-center gap-2">
+          {lines.length > 0 && (
+            <a
+              href={`/api/rooms/${code}/transcript?download=1`}
+              download
+              className="rounded-md px-3 py-1.5 text-sm text-[#a1a1aa] hover:text-[#fafafa]"
+            >
+              {t("download")}
+            </a>
+          )}
           <button
             type="button"
             onClick={makeSummary}

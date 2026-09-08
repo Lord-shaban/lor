@@ -47,12 +47,11 @@ These are invariants, not preferences. A change that breaks one is a bug:
    and readable next month, so the record announces itself with its own message and can
    be off while captions are on. Only the accurate pass is stored — never the browser's
    provisional guess.
-6. **A transcript is kept for 30 days and then removed**, and anybody in the meeting can
-   delete it sooner. Deleting takes the summary with it, because a summary is a copy of
-   what was deleted. The period is stated in the room itself, not only here; the number
-   lives in one place in the code, so this file and the interface cannot drift apart.
-   An operator may shorten it and deliberately cannot lengthen it — that would quietly
-   break a promise made to people in the room.
+6. **A transcript is available for 30 days**, and anybody in the meeting can delete it
+   sooner. Every read (including downloads) removes expired lines and invalidates their
+   summary first. Physical cleanup happens on read, not on a scheduled timer: an unopened
+   room may still have expired rows in storage. Deleting takes the summary with it.
+   The period is stated in the room; an operator may shorten it but cannot lengthen it.
 
 > **What is enforced today.** All four hold in the shipped code as of
 > [#91](https://github.com/Lord-shaban/lor/issues/91). This note remains only to say
