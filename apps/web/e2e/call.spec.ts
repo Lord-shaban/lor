@@ -1,5 +1,8 @@
 import { randomUUID } from "node:crypto";
+import { Buffer } from "node:buffer";
 import { expect, test, type Page, type BrowserContext } from "@playwright/test";
+import * as Y from "yjs";
+import { CANVAS_SNAPSHOT_CONTENT_TYPE } from "../lib/canvas-snapshot-protocol";
 
 /**
  * Two people, one room, and the two things that have to keep working.
@@ -154,6 +157,60 @@ test.describe("a call between two people", () => {
     await expect
       .poll(() => playingVideos(first), { timeout: MEDIA_TIMEOUT })
       .toBeGreaterThanOrEqual(2);
+  });
+
+  test("a Canvas snapshot restores from Postgres and deletes board and notes together", async () => {
+    const first = await alice.newPage();
+    const code = await createRoom(first);
+    const source = new Y.Doc();
+    source.getMap("board").set("shape", "rectangle");
+    source.getText("notes").insert(0, "قرار: deploy يوم الخميس");
+    const update = Y.encodeStateAsUpdate(source);
+    const canvasPath = `/api/rooms/${code}/canvas`;
+
+    // This is the actual Postgres-backed route used by the call, not a mocked
+    // repository. Its table only exists if the migration was applied first.
+    const written = await first.request.put(canvasPath, {
+      headers: {
+        "Content-Type": CANVAS_SNAPSHOT_CONTENT_TYPE,
+        "If-Match": "\"0\"",
+      },
+      data: Buffer.from(update),
+    });
+    expect(written.status()).toBe(201);
+    expect(written.headers().etag).toBe("\"1\"");
+
+    // A stale writer cannot put its complete-but-older document over this one.
+    const stale = await first.request.put(canvasPath, {
+      headers: {
+        "Content-Type": CANVAS_SNAPSHOT_CONTENT_TYPE,
+        "If-Match": "\"0\"",
+      },
+      data: Buffer.from(update),
+    });
+    expect(stale.status()).toBe(409);
+
+    const loaded = await first.request.get(canvasPath);
+    expect(loaded.ok()).toBe(true);
+    const restored = new Y.Doc();
+    Y.applyUpdate(restored, new Uint8Array(await loaded.body()));
+    expect(restored.getMap("board").get("shape")).toBe("rectangle");
+    expect(restored.getText("notes").toString()).toBe("قرار: deploy يوم الخميس");
+
+    // Rendering the status verifies that a re-opened call both reads storage
+    // and tells the meeting how long the joint board-and-notes record lives.
+    await join(first, code, "Ahmed");
+    await expect(
+      first.getByText("Shared board and notes are kept for 30 days.", { exact: false }),
+    ).toBeVisible();
+
+    const deleted = await first.request.delete(canvasPath);
+    expect(deleted.ok()).toBe(true);
+    const afterDelete = await first.request.get(canvasPath);
+    expect(afterDelete.status()).toBe(204);
+
+    source.destroy();
+    restored.destroy();
   });
 
   test("a tile that is not painting yet shows the avatar, not a black rectangle", async () => {

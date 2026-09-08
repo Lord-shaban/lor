@@ -163,6 +163,7 @@ docker compose -f docker/docker-compose.yml up -d
 | `LOR_FREE_STT_SECONDS_PER_ROOM_PER_DAY` | لأ | نفس الحاجة، لكل اجتماع. الافتراضي 3600 |
 | `LOR_FREE_STT_SECONDS_GLOBAL_PER_DAY` | لأ | على مستوى السيرفر كله، عشان حاجة سايبة ما تصرفش مفتاح المشغّل. الافتراضي 18000 |
 | `LOR_FREE_LLM_TOKENS_PER_USER_PER_DAY` | لأ | حصة الـ LLM اليومية لكل مستخدم |
+| `LOR_CANVAS_RETENTION_DAYS` | لأ | مدة حفظ السبورة والنوتس المشتركين، بحد أقصى 30 يوم |
 
 القايمة الكاملة في [`.env.example`](.env.example).
 

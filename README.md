@@ -171,6 +171,7 @@ hosted demo runs the same code.
 | `LOR_FREE_STT_SECONDS_PER_ROOM_PER_DAY` | no | The same, per meeting. Default 3600 |
 | `LOR_FREE_STT_SECONDS_GLOBAL_PER_DAY` | no | Server-wide, so a runaway cannot spend the operator's key. Default 18000 |
 | `LOR_FREE_LLM_TOKENS_PER_USER_PER_DAY` | no | Per-user daily LLM quota |
+| `LOR_CANVAS_RETENTION_DAYS` | no | Shared board and notes retention, 30 days maximum |
 
 See [`.env.example`](.env.example) for the full list.
 
