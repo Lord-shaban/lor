@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -11,6 +12,15 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+
+// Drizzle's Postgres column catalogue does not currently expose a `bytea`
+// builder. Keeping the mapping here gives the database a real binary column —
+// not an accidental Base64/text copy of a Yjs update.
+const binary = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return "bytea";
+  },
+});
 
 /**
  * Everything v0.1 needs, and nothing it does not. Transcripts, decisions, tasks
@@ -256,3 +266,32 @@ export const summaries = pgTable("summaries", {
 });
 
 export type Summary = typeof summaries.$inferSelect;
+
+/**
+ * The current durable form of a room's shared Canvas document.
+ *
+ * A Canvas is one Yjs document, not separate whiteboard and notes records. That
+ * gives a deletion one complete, reviewable blast radius: removing this row
+ * removes both kinds of meeting content together. `version` is an optimistic
+ * concurrency token rather than a Yjs clock; it stops a browser that loaded an
+ * older snapshot from overwriting a newer database write.
+ */
+export const canvasSnapshots = pgTable("canvas_snapshots", {
+  roomId: uuid("room_id")
+    .primaryKey()
+    .references(() => rooms.id, { onDelete: "cascade" }),
+
+  /** Incremented only after a conditional, successful replacement. */
+  version: integer("version").notNull().default(1),
+
+  /** A binary Yjs update for the whole document — never encoded as JSON. */
+  document: binary("document").notNull(),
+
+  /** Used by the read-path retention sweep. */
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type CanvasSnapshot = typeof canvasSnapshots.$inferSelect;
+export type NewCanvasSnapshot = typeof canvasSnapshots.$inferInsert;

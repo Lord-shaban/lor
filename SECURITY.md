@@ -52,12 +52,20 @@ These are invariants, not preferences. A change that breaks one is a bug:
    summary first. Physical cleanup happens on read, not on a scheduled timer: an unopened
    room may still have expired rows in storage. Deleting takes the summary with it.
    The period is stated in the room; an operator may shorten it but cannot lengthen it.
+7. **A shared Canvas snapshot is available for up to 30 days.** It contains the room's
+   board and notes in one Yjs document, so deleting the retained snapshot removes both
+   together. The browser reaches it only through an application route: the underlying
+   table has RLS enabled and grants neither Supabase Data API client role any access.
+   Expired or malformed snapshots are removed when a room opens them. Anybody in the
+   meeting can delete the saved copy sooner; people still connected may continue working
+   live and a later edit can intentionally create a new saved snapshot.
 
-> **What is enforced today.** All four hold in the shipped code as of
-> [#91](https://github.com/Lord-shaban/lor/issues/91). This note remains only to say
-> that it was once not the case: numbers 2 and 4 were written here before they were
-> built, and were labelled as such rather than left to read as fact. A security policy
-> that quietly describes unbuilt features is not a policy.
+> **What is enforced today.** Numbers 1–6 hold in the shipped code as of
+> [#91](https://github.com/Lord-shaban/lor/issues/91); number 7 ships with
+> [#124](https://github.com/Lord-shaban/lor/issues/124). This note remains only to say
+> that numbers 2 and 4 were once written here before they were built, and were labelled
+> as such rather than left to read as fact. A security policy that quietly describes
+> unbuilt features is not a policy.
 
 ## Supported versions
 

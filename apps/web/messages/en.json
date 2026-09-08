@@ -296,6 +296,17 @@
         "unavailable": "The summary service could not be reached. The transcript is untouched."
       }
     },
+    "canvas": {
+      "retention": "Shared board and notes are kept for {days} days. Anyone in this meeting can delete the saved Canvas.",
+      "delete": "Delete saved Canvas",
+      "deleting": "Deleting saved Canvas…",
+      "deleted": "The saved Canvas was deleted. People still in this call can continue working, and a later edit may create a new saved Canvas.",
+      "expired": "The saved Canvas expired after {days} days, so this call starts with an empty board and notes. New work can be saved.",
+      "malformed": "The saved Canvas could not be restored, so it was not loaded. You can continue with an empty board and notes.",
+      "unavailable": "The saved Canvas could not be reached. The call continues, and changes will be saved when the connection returns.",
+      "saveFailed": "The shared Canvas could not be saved. The call continues and LOR. will try again.",
+      "tooLarge": "This shared Canvas is too large to save. The live call continues, but new changes will not be kept after everyone leaves."
+    },
     "keeping": {
       "on": "Keep a record",
       "off": "Stop keeping a record",
