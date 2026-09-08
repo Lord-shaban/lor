@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { useTranslations } from "next-intl";
+import { useDecoding } from "@/components/call/use-decoding";
 import {
   ConnectionQuality,
   Track,
@@ -67,9 +68,18 @@ export function ParticipantTile({
   const videoPublication = participant.getTrackPublication(source);
   const micPublication = participant.getTrackPublication(Track.Source.Microphone);
 
-  const videoOn = Boolean(
+  // Subscription alone does not mean the element has produced a frame.
+  const videoSubscribed = Boolean(
     videoPublication?.isSubscribed && !videoPublication.isMuted,
   );
+
+  // Keep the avatar through negotiation and bring it back after a stall.
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const decoding = useDecoding(
+    videoRef,
+    videoSubscribed ? videoPublication?.track : undefined,
+  );
+  const videoOn = videoSubscribed && decoding;
   const micOn = Boolean(micPublication && !micPublication.isMuted);
 
   const name = participant.name || participant.identity;
@@ -94,6 +104,7 @@ export function ParticipantTile({
       )}
     >
       <MediaTrack
+        elementRef={videoRef}
         publication={videoPublication}
         muted={isLocal}
         // A shared window is any shape. Cropping it to 16:9 is the one case
@@ -102,7 +113,11 @@ export function ParticipantTile({
       />
 
       {!videoOn && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div
+          // Named so the end-to-end suite can hold #67 open and inspect it.
+          data-avatar="true"
+          className="absolute inset-0 flex items-center justify-center bg-[#141416]"
+        >
           <span
             aria-hidden="true"
             className="flex h-16 w-16 items-center justify-center rounded-full bg-[#1e1e21] text-xl font-medium text-[#f4f4f5]"
@@ -241,18 +256,19 @@ export function ParticipantTile({
 
 /** Attach a published track to a media element, and detach it on the way out. */
 function MediaTrack({
+  elementRef,
   publication,
   muted,
   contain = false,
 }: {
+  /** Owned by the tile so it can observe whether this element is painting. */
+  elementRef: RefObject<HTMLVideoElement | null>;
   publication: TrackPublication | undefined;
   muted: boolean;
   contain?: boolean;
 }) {
-  const ref = useRef<HTMLVideoElement>(null);
-
   useEffect(() => {
-    const element = ref.current;
+    const element = elementRef.current;
     const track = publication?.track;
     if (!element || !track) return;
 
@@ -262,11 +278,11 @@ function MediaTrack({
       // removed element keeps decoding frames nobody sees.
       track.detach(element);
     };
-  }, [publication?.track]);
+  }, [elementRef, publication?.track]);
 
   return (
     <video
-      ref={ref}
+      ref={elementRef}
       autoPlay
       playsInline
       // The local tile is the one showing you. Playing your own audio back is
