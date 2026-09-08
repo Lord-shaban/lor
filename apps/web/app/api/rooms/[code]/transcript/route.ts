@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { and, asc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, asc, eq, gte, sql } from "drizzle-orm";
 import { getDb, rooms, summaries, transcriptLines } from "@lor/db";
 import { normalizeRoomCode } from "@/lib/room-code";
 import { keptSince, retentionDays } from "@/lib/stt/retention";
 import { MAX_CAPTION_LENGTH } from "@/lib/data-channel";
+import { exportTranscript } from "@/lib/transcript-export";
+import { sweepTranscript } from "@/lib/transcript-retention";
 
 /**
  * What the meeting said, once it agreed to keep it.
@@ -37,34 +39,17 @@ async function findRoom(rawCode: string) {
   return room ?? null;
 }
 
-/**
- * Drop what is past its time.
- *
- * Done on the way through rather than by a scheduled job: this deployment has
- * no scheduler, and a retention promise that depends on one that does not exist
- * is not a promise. It is one statement against an indexed column.
- */
-async function sweep(roomId: string) {
-  const db = getDb();
-  const cutoff = keptSince(new Date(), retentionDays(process.env));
-
-  await db
-    .delete(transcriptLines)
-    .where(and(eq(transcriptLines.roomId, roomId), lt(transcriptLines.createdAt, cutoff)));
-}
-
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: RouteContext<"/api/rooms/[code]/transcript"> ,
 ) {
   const { code } = await params;
   const room = await findRoom(code);
   if (!room) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
-  await sweep(room.id);
-
   const db = getDb();
   const days = retentionDays(process.env);
+  await sweepTranscript(room.id, keptSince(new Date(), days));
   const lines = await db
     .select({
       speaker: transcriptLines.speakerName,
@@ -80,6 +65,17 @@ export async function GET(
       ),
     )
     .orderBy(asc(transcriptLines.seq));
+
+  // Re-read through the same retention gate: an open panel may be hours old.
+  if (new URL(request.url).searchParams.get("download") === "1") {
+    return new Response(exportTranscript(lines), {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Content-Disposition": `attachment; filename="lor-${normalizeRoomCode(code)}-transcript.txt"`,
+        "Cache-Control": "no-store",
+      },
+    });
+  }
 
   const [summary] = await db
     .select({ text: summaries.text, fromLines: summaries.fromLines })
