@@ -999,16 +999,17 @@ test.describe("a call between two people", () => {
     if (!proposal) throw new Error("Action-item proposal was not stored");
 
     const hostReview = await host.request.get(actionItemsPath);
-    await expect(hostReview.json()).resolves.toMatchObject({
-      canReview: true,
-      participants: expect.arrayContaining([expect.objectContaining({ identity: ownerIdentity, name: "Sarah" })]),
-      actionItems: expect.arrayContaining([expect.objectContaining({
-        id: proposal.id,
-        status: "proposed",
-        assigneeName: "Sarah",
-        source: { quote, speaker: "Ahmed" },
-      })]),
-    });
+    const hostReviewData = await hostReview.json();
+    expect(hostReviewData.canReview).toBe(true);
+    expect(hostReviewData.participants).toEqual(
+      expect.arrayContaining([expect.objectContaining({ identity: ownerIdentity, name: "Sarah" })]),
+    );
+    expect(hostReviewData.actionItems).toEqual(expect.arrayContaining([expect.objectContaining({
+      id: proposal.id,
+      status: "proposed",
+      assigneeName: "Sarah",
+      source: { quote, speaker: "Ahmed" },
+    })]));
 
     // A guest cannot see a proposal, skip its lifecycle, or submit somebody
     // else's identity: completion derives one from the caller's session secret.
@@ -1038,15 +1039,14 @@ test.describe("a call between two people", () => {
     const ownerOpen = await owner.request.get(actionItemsPath, {
       headers: { "x-lor-session-id": ownerSession },
     });
-    await expect(ownerOpen.json()).resolves.toMatchObject({
-      canReview: false,
-      actionItems: expect.arrayContaining([expect.objectContaining({
-        id: proposal.id,
-        status: "open",
-        canComplete: true,
-        assigneeName: "Sarah",
-      })]),
-    });
+    const ownerOpenData = await ownerOpen.json();
+    expect(ownerOpenData.canReview).toBe(false);
+    expect(ownerOpenData.actionItems).toEqual(expect.arrayContaining([expect.objectContaining({
+      id: proposal.id,
+      status: "open",
+      canComplete: true,
+      assigneeName: "Sarah",
+    })]));
 
     const notOwner = await owner.request.patch(actionItemsPath, {
       headers: { "x-lor-session-id": "a".repeat(32) },
@@ -1066,11 +1066,10 @@ test.describe("a call between two people", () => {
     });
     expect(reopened.ok()).toBe(true);
     const afterReopen = await host.request.get(actionItemsPath);
-    await expect(afterReopen.json()).resolves.toMatchObject({
-      actionItems: expect.arrayContaining([
-        expect.objectContaining({ id: proposal.id, status: "open", completedAt: null }),
-      ]),
-    });
+    const afterReopenData = await afterReopen.json();
+    expect(afterReopenData.actionItems).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: proposal.id, status: "open", completedAt: null }),
+    ]));
 
     // Handover revocation happens at the same host-cookie check as every other
     // host route, so a former host cannot force a later lifecycle transition.
@@ -1170,7 +1169,12 @@ test.describe("a call between two people", () => {
     const due = host.getByLabel("Due date", { exact: true });
     await expect(due).toHaveAttribute("type", "date");
     await due.fill("2026-09-12");
+    const openingResponse = host.waitForResponse((response) => (
+      new URL(response.url()).pathname.endsWith(`/rooms/${code}/action-items`)
+      && response.request().method() === "PATCH"
+    ));
     await host.getByRole("button", { name: "Open task", exact: true }).click();
+    expect((await openingResponse).status()).toBe(200);
     await expect(host.getByText("Action item opened.", { exact: true })).toBeVisible();
     await expect(proposalCard.getByText("مراجعة الـ pull request وإرسال النتيجة النهائية.", { exact: true })).toBeVisible();
 
