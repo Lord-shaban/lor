@@ -24,11 +24,13 @@ export function CaptionsNotice({
   onOpenKeys,
   onOpenTranscript,
   onOpenDecisions,
+  onOpenActionItems,
 }: {
   captions: Captions;
   onOpenKeys: () => void;
   onOpenTranscript: () => void;
   onOpenDecisions: () => void;
+  onOpenActionItems: () => void;
 }) {
   const t = useTranslations("call.captions");
   const keys = useTranslations("call.keys");
@@ -56,7 +58,7 @@ export function CaptionsNotice({
       <button
         type="button"
         onClick={captions.toggleKeeping}
-        className="rounded-md px-2 py-0.5 font-medium text-[#a1a1aa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:text-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
+        className="min-h-11 rounded-md px-2 py-0.5 font-medium text-[#a1a1aa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:text-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
       >
         {captions.keeping ? keeping("off") : keeping("on")}
       </button>
@@ -77,6 +79,16 @@ export function CaptionsNotice({
         className="rounded-md px-2 py-0.5 font-medium text-[#a1a1aa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:text-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
       >
         {keeping("decisions")}
+      </button>
+
+      {/* Action items reuse the same retained record, but stay a distinct
+          workspace: a task needs an owner, a due date, and a lifecycle. */}
+      <button
+        type="button"
+        onClick={onOpenActionItems}
+        className="rounded-md px-2 py-0.5 font-medium text-[#a1a1aa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:text-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
+      >
+        {keeping("actionItems")}
       </button>
 
       <button

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Buffer } from "node:buffer";
 import { readFile, stat } from "node:fs/promises";
 import { expect, test, type Page, type BrowserContext } from "@playwright/test";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import {
   actionItems,
   decisions,
@@ -13,6 +13,7 @@ import {
 } from "@lor/db";
 import * as Y from "yjs";
 import { CANVAS_SNAPSHOT_CONTENT_TYPE } from "../lib/canvas-snapshot-protocol";
+import { participantIdentity } from "../lib/livekit";
 
 /**
  * Two people, one room, and the two things that have to keep working.
@@ -925,6 +926,260 @@ test.describe("a call between two people", () => {
     await expect(host.getByRole("button", { name: "Delete", exact: true })).toHaveCount(0);
   });
 
+  test("action items keep host review separate from anonymous-owner completion", async () => {
+    const host = await alice.newPage();
+    const owner = await bob.newPage();
+    const code = await createRoom(host);
+    const actionItemsPath = `/api/rooms/${code}/action-items`;
+
+    await join(host, code, "Ahmed");
+    await join(owner, code, "Sarah");
+    const ownerSession = await owner.evaluate(() => sessionStorage.getItem("lor-session-id"));
+    if (!ownerSession) throw new Error("The assigned browser session was not created");
+
+    const db = getDb();
+    const [room] = await db
+      .select({ id: rooms.id, livekitRoom: rooms.livekitRoom })
+      .from(rooms)
+      .where(eq(rooms.code, code))
+      .limit(1);
+    if (!room) throw new Error("The action-item room was not stored");
+    const ownerIdentity = await participantIdentity(room.livekitRoom, ownerSession);
+    const quote = "Sarah هتراجع الـ pull request قبل 2026-09-12.";
+
+    const storedSource = await host.request.post(`/api/rooms/${code}/transcript`, {
+      data: { text: quote, speaker: "Ahmed", identity: "action-source" },
+    });
+    expect(storedSource.status()).toBe(201);
+    const storedOwner = await host.request.post(`/api/rooms/${code}/transcript`, {
+      data: { text: "I am available for the review.", speaker: "Sarah", identity: ownerIdentity },
+    });
+    expect(storedOwner.status()).toBe(201);
+
+    const [source] = await db
+      .select({
+        id: transcriptLines.id,
+        seq: transcriptLines.seq,
+        speaker: transcriptLines.speakerName,
+        text: transcriptLines.text,
+        createdAt: transcriptLines.createdAt,
+      })
+      .from(transcriptLines)
+      .where(eq(transcriptLines.roomId, room.id))
+      .orderBy(transcriptLines.seq)
+      .limit(1);
+    if (!source) throw new Error("Action-item evidence was not retained");
+
+    const [proposal] = await db
+      .insert(actionItems)
+      .values({
+        roomId: room.id,
+        sourceLineId: source.id,
+        sourceSeq: source.seq,
+        sourceSpeaker: source.speaker,
+        sourceQuote: source.text,
+        sourceCreatedAt: source.createdAt,
+        assigneeIdentity: ownerIdentity,
+        dueOn: "2026-09-12",
+        text: "Review the pull request.",
+        origin: "llm",
+      })
+      .returning({ id: actionItems.id });
+    if (!proposal) throw new Error("Action-item proposal was not stored");
+
+    const hostReview = await host.request.get(actionItemsPath);
+    await expect(hostReview.json()).resolves.toMatchObject({
+      canReview: true,
+      participants: expect.arrayContaining([expect.objectContaining({ identity: ownerIdentity, name: "Sarah" })]),
+      actionItems: [expect.objectContaining({
+        id: proposal.id,
+        status: "proposed",
+        assigneeName: "Sarah",
+        source: { quote, speaker: "Ahmed" },
+      })],
+    });
+
+    // A guest cannot see a proposal, skip its lifecycle, or submit somebody
+    // else's identity: completion derives one from the caller's session secret.
+    const guestProposal = await owner.request.get(actionItemsPath, {
+      headers: { "x-lor-session-id": ownerSession },
+    });
+    await expect(guestProposal.json()).resolves.toMatchObject({ canReview: false, actionItems: [] });
+    const premature = await owner.request.patch(actionItemsPath, {
+      headers: { "x-lor-session-id": ownerSession },
+      data: { id: proposal.id, action: "complete", assigneeIdentity: "forged" },
+    });
+    expect(premature.status()).toBe(404);
+
+    const opened = await host.request.patch(actionItemsPath, {
+      data: {
+        id: proposal.id,
+        action: "open",
+        text: "Review the pull request and share the result.",
+        assigneeIdentity: ownerIdentity,
+        dueOn: "2026-09-12",
+        sourceQuote: "forged evidence",
+      },
+    });
+    expect(opened.ok()).toBe(true);
+    await expect(opened.json()).resolves.toMatchObject({ id: proposal.id, status: "open" });
+
+    const ownerOpen = await owner.request.get(actionItemsPath, {
+      headers: { "x-lor-session-id": ownerSession },
+    });
+    await expect(ownerOpen.json()).resolves.toMatchObject({
+      canReview: false,
+      actionItems: [expect.objectContaining({
+        id: proposal.id,
+        status: "open",
+        canComplete: true,
+        assigneeName: "Sarah",
+      })],
+    });
+
+    const notOwner = await owner.request.patch(actionItemsPath, {
+      headers: { "x-lor-session-id": "a".repeat(32) },
+      data: { id: proposal.id, action: "complete" },
+    });
+    expect(notOwner.status()).toBe(404);
+
+    const completed = await owner.request.patch(actionItemsPath, {
+      headers: { "x-lor-session-id": ownerSession },
+      data: { id: proposal.id, action: "complete" },
+    });
+    expect(completed.ok()).toBe(true);
+    await expect(completed.json()).resolves.toMatchObject({ id: proposal.id, status: "completed" });
+
+    const reopened = await host.request.patch(actionItemsPath, {
+      data: { id: proposal.id, action: "reopen" },
+    });
+    expect(reopened.ok()).toBe(true);
+    const afterReopen = await host.request.get(actionItemsPath);
+    await expect(afterReopen.json()).resolves.toMatchObject({
+      actionItems: [expect.objectContaining({ id: proposal.id, status: "open", completedAt: null })],
+    });
+
+    // Handover revocation happens at the same host-cookie check as every other
+    // host route, so a former host cannot force a later lifecycle transition.
+    await db
+      .update(rooms)
+      .set({ hostSecretHash: "0".repeat(64) })
+      .where(eq(rooms.id, room.id));
+    const revoked = await host.request.patch(actionItemsPath, {
+      data: { id: proposal.id, action: "complete" },
+    });
+    expect(revoked.status()).toBe(404);
+  });
+
+  test("a host reviews an action item beside evidence while its owner completes it", async () => {
+    const host = await alice.newPage();
+    const owner = await bob.newPage();
+    const code = await createRoom(host);
+    const db = getDb();
+    const sourceQuote = "سارة هتراجع الـ pull request قبل 2026-09-12.";
+
+    await join(host, code, "Ahmed");
+    await join(owner, code, "Sarah");
+    const ownerSession = await owner.evaluate(() => sessionStorage.getItem("lor-session-id"));
+    if (!ownerSession) throw new Error("The owner session was not created");
+    const [room] = await db
+      .select({ id: rooms.id, livekitRoom: rooms.livekitRoom })
+      .from(rooms)
+      .where(eq(rooms.code, code))
+      .limit(1);
+    if (!room) throw new Error("The action-item UI room was not stored");
+    const ownerIdentity = await participantIdentity(room.livekitRoom, ownerSession);
+
+    for (const [text, speaker, identity] of [
+      [sourceQuote, "Ahmed", "action-ui-source"],
+      ["I am Sarah and I will send the review result to the team.", "Sarah", ownerIdentity],
+      ["The retained record has enough surrounding context for review, including the agreed owner and the explicit calendar date.", "Mina", "action-ui-context"],
+    ] as const) {
+      const stored = await host.request.post(`/api/rooms/${code}/transcript`, {
+        data: { text, speaker, identity },
+      });
+      expect(stored.status()).toBe(201);
+    }
+    const [source] = await db
+      .select({
+        id: transcriptLines.id,
+        seq: transcriptLines.seq,
+        speaker: transcriptLines.speakerName,
+        text: transcriptLines.text,
+        createdAt: transcriptLines.createdAt,
+      })
+      .from(transcriptLines)
+      .where(and(eq(transcriptLines.roomId, room.id), eq(transcriptLines.text, sourceQuote)))
+      .limit(1);
+    if (!source) throw new Error("The action-item UI source was not retained");
+    const [proposal] = await db
+      .insert(actionItems)
+      .values({
+        roomId: room.id,
+        sourceLineId: source.id,
+        sourceSeq: source.seq,
+        sourceSpeaker: source.speaker,
+        sourceQuote: source.text,
+        sourceCreatedAt: source.createdAt,
+        assigneeIdentity: ownerIdentity,
+        dueOn: "2026-09-12",
+        text: "مراجعة الـ pull request وإرسال النتيجة.",
+        origin: "llm",
+      })
+      .returning({ id: actionItems.id });
+    if (!proposal) throw new Error("The action-item UI proposal was not stored");
+
+    await host.setViewportSize({ width: 375, height: 667 });
+    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
+    await expect(host.getByRole("button", { name: "Action items", exact: true })).toBeVisible();
+    const beforeOpen = await loadedResourceNames(host);
+    expect([...beforeOpen].some((name) => new URL(name).pathname.endsWith("/action-items"))).toBe(false);
+
+    await host.getByRole("button", { name: "Action items", exact: true }).click();
+    const panel = host.getByTestId("action-item-panel");
+    await expect(panel).toBeVisible();
+    await expect(panel).toHaveCSS("background-color", "rgb(17, 17, 19)");
+    await expect(panel.getByText(sourceQuote, { exact: true })).toBeVisible();
+    const proposalCard = host.locator(`[data-action-item-id="${proposal.id}"]`);
+    await expect(proposalCard.locator("[data-action-item-text]")).toHaveAttribute("dir", "rtl");
+    expect(await host.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+    // No configured key is an explained recovery state, not a no-op.
+    await host.getByRole("button", { name: "Find action items", exact: true }).click();
+    await expect(host.getByText("No action-item review key is set up on this server. The record is still kept.", { exact: true })).toBeVisible();
+
+    // Keyboard activation keeps the source card in visual/tab order. The
+    // form exposes a labelled native date input and a server-validated owner.
+    await proposalCard.getByRole("button", { name: "Review proposal", exact: true }).focus();
+    await host.keyboard.press("Enter");
+    await host.getByLabel("Task wording", { exact: true }).fill("مراجعة الـ pull request وإرسال النتيجة النهائية.");
+    await host.getByLabel("Owner", { exact: true }).selectOption(ownerIdentity);
+    const due = host.getByLabel("Due date", { exact: true });
+    await expect(due).toHaveAttribute("type", "date");
+    await due.fill("2026-09-12");
+    await host.getByRole("button", { name: "Open task", exact: true }).click();
+    await expect(host.getByText("Action item opened.", { exact: true })).toBeVisible();
+    await expect(proposalCard.getByText("مراجعة الـ pull request وإرسال النتيجة النهائية.", { exact: true })).toBeVisible();
+
+    // The evidence link is fully keyboard-usable and lands on the immutable
+    // transcript line rather than trying to scroll a hidden background panel.
+    const sourceButton = proposalCard.getByRole("button", { name: "Show source line", exact: true });
+    await sourceButton.focus();
+    await host.keyboard.press("Enter");
+    const transcriptSource = host.locator(`[data-transcript-line="${source.seq}"]`);
+    await expect(transcriptSource).toBeVisible();
+    await expect(transcriptSource).toBeFocused();
+
+    await expect(owner.getByRole("button", { name: "Turn off captions", exact: true })).toBeVisible();
+    await owner.getByRole("button", { name: "Action items", exact: true }).click();
+    const ownerPanel = owner.getByTestId("action-item-panel");
+    await expect(ownerPanel.getByText("مراجعة الـ pull request وإرسال النتيجة النهائية.", { exact: true })).toBeVisible();
+    await expect(ownerPanel.getByRole("button", { name: "Review proposal", exact: true })).toHaveCount(0);
+    await expect(ownerPanel.getByRole("button", { name: "Delete", exact: true })).toHaveCount(0);
+    await ownerPanel.getByRole("button", { name: "Mark completed", exact: true }).click();
+    await expect(owner.getByText("Action item completed.", { exact: true })).toBeVisible();
+  });
+
   test("exports only retained confirmed decisions with their transcript evidence", async () => {
     const host = await alice.newPage();
     const db = getDb();
@@ -1429,6 +1684,20 @@ test.describe("a call between two people", () => {
       .returning({ status: actionItems.status, completedAt: actionItems.completedAt });
     expect(completed).toMatchObject({ status: "completed" });
     expect(completed?.completedAt).toBeInstanceOf(Date);
+
+    // Reopening is the one reversible lifecycle action: it preserves the
+    // original opening and evidence while clearing only the terminal clock.
+    const [reopened] = await db
+      .update(actionItems)
+      .set({ status: "open" })
+      .where(eq(actionItems.id, proposal.id))
+      .returning({
+        status: actionItems.status,
+        openedAt: actionItems.openedAt,
+        completedAt: actionItems.completedAt,
+      });
+    expect(reopened).toMatchObject({ status: "open", completedAt: null });
+    expect(reopened?.openedAt).toBeInstanceOf(Date);
 
     await expect(
       db.insert(actionItems).values({

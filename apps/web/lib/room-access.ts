@@ -9,6 +9,7 @@ import { normalizeRoomCode } from "@/lib/room-code";
 export interface RoomAccess {
   id: string;
   code: string;
+  livekitRoom: string;
   hostSecretHash: string;
 }
 
@@ -17,7 +18,11 @@ export async function findRoomAccess(rawCode: string): Promise<RoomAccess | null
   if (!code) return null;
 
   const [room] = await getDb()
-    .select({ id: rooms.id, hostSecretHash: rooms.hostSecretHash })
+    .select({
+      id: rooms.id,
+      livekitRoom: rooms.livekitRoom,
+      hostSecretHash: rooms.hostSecretHash,
+    })
     .from(rooms)
     .where(eq(rooms.code, code))
     .limit(1);

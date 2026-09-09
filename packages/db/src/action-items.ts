@@ -3,6 +3,7 @@ import { actionItems, type NewActionItem } from "./schema";
 import type { Database } from "./index";
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+export const MAX_ACTION_ITEM_TEXT_LENGTH = 2_000;
 
 /** A caller supplied a calendar day or task value that cannot be persisted. */
 export class ActionItemValidationError extends Error {
@@ -45,6 +46,9 @@ export function isCalendarDate(value: string): boolean {
 function nonEmpty(value: string, field: string) {
   const trimmed = value.trim();
   if (!trimmed) throw new ActionItemValidationError(`${field} is required`);
+  if (trimmed.length > MAX_ACTION_ITEM_TEXT_LENGTH) {
+    throw new ActionItemValidationError(`${field} is too long`);
+  }
   return trimmed;
 }
 
@@ -106,11 +110,16 @@ export interface OpenActionItem {
   /** Already resolved by server code from retained transcript evidence. */
   assigneeIdentity: string;
   dueOn: string;
+  /** The host may finalise a proposal's wording as it opens. */
+  text?: string;
 }
 
 /** Open a proposal only with a retained participant and an explicit calendar day. */
 export async function openActionItem(db: Database, input: OpenActionItem) {
   const assigneeIdentity = nonEmpty(input.assigneeIdentity, "Assignee identity");
+  const text = input.text === undefined
+    ? undefined
+    : nonEmpty(input.text, "Action item text");
   if (!isCalendarDate(input.dueOn)) {
     throw new ActionItemValidationError("Due date must use YYYY-MM-DD");
   }
@@ -121,6 +130,7 @@ export async function openActionItem(db: Database, input: OpenActionItem) {
       status: "open",
       assigneeIdentity,
       dueOn: input.dueOn,
+      ...(text ? { text } : {}),
     })
     .where(
       and(
@@ -132,10 +142,35 @@ export async function openActionItem(db: Database, input: OpenActionItem) {
     .returning({ id: actionItems.id, status: actionItems.status });
 }
 
+/** A current host may put completed work back into the open meeting record. */
+export async function reopenActionItem(
+  db: Database,
+  input: Pick<OpenActionItem, "roomId" | "id">,
+) {
+  return db
+    .update(actionItems)
+    .set({ status: "open" })
+    .where(
+      and(
+        eq(actionItems.id, input.id),
+        eq(actionItems.roomId, input.roomId),
+        eq(actionItems.status, "completed"),
+      ),
+    )
+    .returning({ id: actionItems.id, status: actionItems.status });
+}
+
+export interface CompleteActionItem {
+  roomId: string;
+  id: string;
+  /** Present only for a non-host completing their own anonymous session's task. */
+  assigneeIdentity?: string;
+}
+
 /** Completion is intentionally conditional: proposed work can never skip open. */
 export async function completeActionItem(
   db: Database,
-  input: Pick<OpenActionItem, "roomId" | "id">,
+  input: CompleteActionItem,
 ) {
   return db
     .update(actionItems)
@@ -145,6 +180,9 @@ export async function completeActionItem(
         eq(actionItems.id, input.id),
         eq(actionItems.roomId, input.roomId),
         eq(actionItems.status, "open"),
+        ...(input.assigneeIdentity
+          ? [eq(actionItems.assigneeIdentity, input.assigneeIdentity)]
+          : []),
       ),
     )
     .returning({ id: actionItems.id, status: actionItems.status });
