@@ -324,3 +324,34 @@ describe("captions", () => {
     expect(decodeMessage(bytes)).toBeNull();
   });
 });
+
+describe("local recording announcement", () => {
+  const wire = (message: Parameters<typeof encodeMessage>[0]) =>
+    decodeMessage(encodeMessage(message));
+
+  it("carries only whether a browser-local recording started or stopped", () => {
+    expect(wire({ type: "recording", started: true })).toEqual({
+      type: "recording",
+      started: true,
+    });
+    expect(wire({ type: "recording", started: false })).toEqual({
+      type: "recording",
+      started: false,
+    });
+  });
+
+  it("encodes no media data", () => {
+    const payload = JSON.parse(
+      new TextDecoder().decode(encodeMessage({ type: "recording", started: true })),
+    );
+    expect(payload).toEqual({ v: PROTOCOL_VERSION, type: "recording", started: true });
+  });
+
+  it("rejects an announcement that does not say whether recording started", () => {
+    expect(
+      decodeMessage(
+        new TextEncoder().encode(JSON.stringify({ v: PROTOCOL_VERSION, type: "recording" })),
+      ),
+    ).toBeNull();
+  });
+});

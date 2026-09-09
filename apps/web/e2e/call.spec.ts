@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Buffer } from "node:buffer";
+import { stat } from "node:fs/promises";
 import { expect, test, type Page, type BrowserContext } from "@playwright/test";
 import * as Y from "yjs";
 import { CANVAS_SNAPSHOT_CONTENT_TYPE } from "../lib/canvas-snapshot-protocol";
@@ -552,5 +553,45 @@ test.describe("a call between two people", () => {
       await remoteVideo.evaluate((node) => (node as HTMLVideoElement).currentTime),
     ).toBeGreaterThan(timeBeforeStall);
     await expect(remoteAvatar).toHaveCSS("background-color", "rgb(20, 20, 22)");
+  });
+
+  test("records a fake-device call into a non-empty local WebM download", async () => {
+    const first = await alice.newPage();
+    const second = await bob.newPage();
+
+    const code = await createRoom(first);
+    await join(first, code, "Ahmed");
+    await join(second, code, "سارة");
+
+    // A recording that starts before the fake camera is actually painting can
+    // produce a mounted recorder with no usable data. Wait for real media, the
+    // same condition this suite uses for the rest of the call.
+    await expect
+      .poll(() => playingVideos(first), { timeout: MEDIA_TIMEOUT })
+      .toBeGreaterThanOrEqual(2);
+
+    const start = first.getByRole("button", {
+      name: "Start local recording",
+      exact: true,
+    });
+    await expect(start).toBeEnabled();
+    await start.click();
+
+    await expect(first.getByText("You started a local recording.", { exact: true })).toBeVisible();
+    await expect(second.getByText("Ahmed started a local recording.", { exact: true })).toBeVisible();
+    await expect(first.getByText(/^Recording locally \(00:0[1-9]\)$/)).toBeVisible({
+      timeout: 10_000,
+    });
+
+    await first.getByRole("button", { name: "Stop local recording", exact: true }).click();
+    await expect(second.getByText("Ahmed stopped a local recording.", { exact: true })).toBeVisible();
+
+    const downloadPromise = first.waitForEvent("download");
+    await first.getByRole("button", { name: "Download WebM", exact: true }).click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toMatch(/^lor-recording-.+\.webm$/);
+    const path = await download.path();
+    expect(path).not.toBeNull();
+    expect((await stat(path!)).size).toBeGreaterThan(0);
   });
 });

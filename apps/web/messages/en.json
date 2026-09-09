@@ -212,6 +212,36 @@
       "undo": "Undo",
       "redo": "Redo"
     },
+    "recording": {
+      "title": "Record",
+      "start": "Start local recording",
+      "stop": "Stop local recording",
+      "stopShort": "Stop",
+      "stoppingShort": "Stopping…",
+      "download": "Download WebM",
+      "active": "Recording locally ({elapsed})",
+      "saving": "Finishing the local recording…",
+      "ready": "Your WebM is ready in this tab. It will not be sent anywhere.",
+      "noAudio": "No call audio was available when recording began, so this clip has video only.",
+      "needVideo": "Turn on your camera or start screen sharing before recording.",
+      "fallback": "This browser cannot make a local WebM recording. Use current Chrome, Edge, or Firefox.",
+      "error": {
+        "unsupported": "This browser cannot make a local WebM recording.",
+        "no-video": "Turn on your camera or start screen sharing before recording.",
+        "failed": "The browser could not save the local recording. Try again.",
+        "empty": "No usable recording was made. Try again and keep the selected video on.",
+        "source-ended": "The selected video ended before a usable recording was made.",
+        "source-changed": "The selected video changed. Start a new recording for the new source."
+      },
+      "warning": {
+        "source-ended": "The selected video ended. This is the usable part recorded before it stopped.",
+        "source-changed": "The selected video changed. This is the usable part from the previous source."
+      },
+      "roomStarted": "<n>{name}</n> started a local recording.",
+      "roomStopped": "<n>{name}</n> stopped a local recording.",
+      "roomStartedYou": "You started a local recording.",
+      "roomStoppedYou": "You stopped a local recording."
+    },
     "reactions": {
       "open": "Send a reaction",
       "sent": "{name} reacted {emoji}",
