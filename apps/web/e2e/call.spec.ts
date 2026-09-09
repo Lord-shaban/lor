@@ -1168,27 +1168,71 @@ test.describe("a call between two people", () => {
     await expect(panel.getByText(sourceQuote, { exact: true })).toBeVisible();
     const proposalCard = host.locator(`[data-action-item-id="${proposal.id}"]`);
     await expect(proposalCard.locator("[data-action-item-text]")).toHaveAttribute("dir", "rtl");
+    await expect(proposalCard.getByText("Ahmed", { exact: true })).toBeVisible();
+    await expect(proposalCard.getByText("Sarah", { exact: true })).toBeVisible();
+    await expect(proposalCard.locator('time[datetime="2026-09-12"]')).toBeVisible();
+    await expect(proposalCard.locator(`time[datetime="${source.createdAt.toISOString()}"]`)).toBeVisible();
     expect(await host.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
     // No configured key is an explained recovery state, not a no-op.
     await host.getByRole("button", { name: "Find action items", exact: true }).click();
     await expect(host.getByText("No action-item review key is set up on this server. The record is still kept.", { exact: true })).toBeVisible();
 
+    // The quota response is equally explicit and does not make a failed
+    // request look like an empty review result.
+    await host.route(`**/api/rooms/${code}/action-items/extract`, async (route) => {
+      await route.fulfill({
+        status: 429,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "quota" }),
+      });
+    });
+    await host.getByRole("button", { name: "Find action items", exact: true }).click();
+    await expect(host.getByText("That is enough action-item reviews for this meeting today.", { exact: true })).toBeVisible();
+    await host.unroute(`**/api/rooms/${code}/action-items/extract`);
+
     // Keyboard activation keeps the source card in visual/tab order. The
     // form exposes a labelled native date input and a server-validated owner.
     await proposalCard.getByRole("button", { name: "Review proposal", exact: true }).focus();
     await host.keyboard.press("Enter");
-    await host.getByLabel("Task wording", { exact: true }).fill("مراجعة الـ pull request وإرسال النتيجة النهائية.");
-    await host.getByLabel("Owner", { exact: true }).selectOption(ownerIdentity);
+    const wording = host.getByLabel("Task wording", { exact: true });
+    const ownerField = host.getByLabel("Owner", { exact: true });
+    await wording.fill("مراجعة الـ pull request وإرسال النتيجة النهائية.");
+    await host.keyboard.press("Tab");
+    await expect(ownerField).toBeFocused();
+    await ownerField.selectOption(ownerIdentity);
     const due = host.getByLabel("Due date", { exact: true });
     await expect(due).toHaveAttribute("type", "date");
+    await host.keyboard.press("Tab");
+    await expect(due).toBeFocused();
     await due.fill("2026-09-12");
     const openingResponse = host.waitForResponse((response) => (
       new URL(response.url()).pathname.endsWith(`/rooms/${code}/action-items`)
       && response.request().method() === "PATCH"
     ));
-    await host.getByRole("button", { name: "Open task", exact: true }).click();
+    let mutationRequests = 0;
+    let releaseMutation: (() => void) | undefined;
+    const mutationStarted = new Promise<void>((resolve) => {
+      releaseMutation = resolve;
+    });
+    await host.route(`**/api/rooms/${code}/action-items`, async (route) => {
+      if (route.request().method() !== "PATCH") {
+        await route.continue();
+        return;
+      }
+      mutationRequests += 1;
+      await mutationStarted;
+      await route.continue();
+    });
+    const openTask = host.getByRole("button", { name: "Open task", exact: true });
+    const opening = openTask.click();
+    await expect.poll(() => mutationRequests).toBe(1);
+    await expect(openTask).toBeDisabled();
+    releaseMutation?.();
+    await opening;
     expect((await openingResponse).status()).toBe(200);
+    expect(mutationRequests).toBe(1);
+    await host.unroute(`**/api/rooms/${code}/action-items`);
     await expect(host.getByText("Action item opened.", { exact: true })).toBeVisible();
     await expect(proposalCard.getByText("مراجعة الـ pull request وإرسال النتيجة النهائية.", { exact: true })).toBeVisible();
 
