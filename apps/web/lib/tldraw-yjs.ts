@@ -1,4 +1,4 @@
-import type { TLRecord, TLStore } from "tldraw";
+import type { Editor, TLCamera, TLRecord, TLStore } from "tldraw";
 import * as Y from "yjs";
 
 /**
@@ -8,6 +8,7 @@ import * as Y from "yjs";
  * that changed over LiveKit.
  */
 export const TLDRAW_RECORDS_KEY = "tldraw-records";
+export const TLDRAW_CAMERA_KEY = "tldraw-camera";
 
 type TldrawChanges = {
   added: Record<string, TLRecord>;
@@ -16,21 +17,36 @@ type TldrawChanges = {
 };
 
 type PendingRecord = TLRecord | null;
+type SharedCamera = Pick<TLCamera, "x" | "y" | "z">;
 
-function cameraOnly(changes: TldrawChanges): TldrawChanges {
-  const isCamera = (record: TLRecord) => record.typeName === "camera";
+function isCamera(record: TLRecord): record is TLCamera {
+  return record.typeName === "camera";
+}
 
-  return {
-    added: Object.fromEntries(
-      Object.entries(changes.added).filter(([, record]) => isCamera(record)),
-    ),
-    removed: Object.fromEntries(
-      Object.entries(changes.removed).filter(([, record]) => isCamera(record)),
-    ),
-    updated: Object.fromEntries(
-      Object.entries(changes.updated).filter(([, [, record]]) => isCamera(record)),
-    ),
-  };
+function cameraFrom(changes: TldrawChanges): SharedCamera | undefined {
+  const records = [
+    ...Object.values(changes.added),
+    ...Object.values(changes.updated).map(([, record]) => record),
+  ];
+  const camera = records.find(isCamera);
+  return camera ? { x: camera.x, y: camera.y, z: camera.z } : undefined;
+}
+
+function sameCamera(left: SharedCamera, right: SharedCamera) {
+  return left.x === right.x && left.y === right.y && left.z === right.z;
+}
+
+function isSharedCamera(value: unknown): value is SharedCamera {
+  if (!value || typeof value !== "object") return false;
+  const camera = value as Partial<SharedCamera>;
+  return (
+    typeof camera.x === "number" &&
+    Number.isFinite(camera.x) &&
+    typeof camera.y === "number" &&
+    Number.isFinite(camera.y) &&
+    typeof camera.z === "number" &&
+    Number.isFinite(camera.z)
+  );
 }
 
 /**
@@ -44,12 +60,17 @@ function cameraOnly(changes: TldrawChanges): TldrawChanges {
 export function bindTldrawToYjs({
   document,
   store,
+  editor,
 }: {
   document: Y.Doc;
   store: TLStore;
+  editor: Editor;
 }) {
   const records = document.getMap<TLRecord>(TLDRAW_RECORDS_KEY);
+  const sharedCamera = document.getMap<SharedCamera>(TLDRAW_CAMERA_KEY);
   const pending = new Map<string, PendingRecord>();
+  let pendingCamera: SharedCamera | undefined;
+  let lastRemoteCamera: SharedCamera | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   function flush() {
@@ -57,7 +78,7 @@ export function bindTldrawToYjs({
       clearTimeout(timer);
       timer = undefined;
     }
-    if (pending.size === 0) return;
+    if (pending.size === 0 && !pendingCamera) return;
 
     document.transact(() => {
       for (const [id, record] of pending) {
@@ -69,6 +90,10 @@ export function bindTldrawToYjs({
         } else {
           records.delete(id);
         }
+      }
+      if (pendingCamera) {
+        sharedCamera.set("viewport", pendingCamera);
+        pendingCamera = undefined;
       }
     });
     pending.clear();
@@ -83,15 +108,24 @@ export function bindTldrawToYjs({
 
   function queue(changes: TldrawChanges) {
     for (const record of Object.values(changes.added)) {
-      pending.set(record.id, record);
+      if (!isCamera(record)) pending.set(record.id, record);
     }
     for (const [, record] of Object.values(changes.updated)) {
-      pending.set(record.id, record);
+      if (!isCamera(record)) pending.set(record.id, record);
     }
     for (const record of Object.values(changes.removed)) {
-      pending.set(record.id, null);
+      if (!isCamera(record)) pending.set(record.id, null);
     }
     if (pending.size > 0) scheduleFlush();
+  }
+
+  function queueCamera(changes: TldrawChanges) {
+    const camera = cameraFrom(changes);
+    // Calling editor.setCamera for a remote viewport updates tldraw's session
+    // record too. Do not turn that application into a second outbound update.
+    if (!camera || (lastRemoteCamera && sameCamera(camera, lastRemoteCamera))) return;
+    pendingCamera = camera;
+    scheduleFlush();
   }
 
   function applyRecords(ids: Iterable<string>) {
@@ -100,9 +134,12 @@ export function bindTldrawToYjs({
 
     for (const id of ids) {
       const record = records.get(id);
-      if (record) {
+      // v0.1.8 initially stored camera records alongside document records.
+      // They are session state, not a tldraw document record; applying one as
+      // a remote store merge can blank the editor after the first pan.
+      if (record && !isCamera(record)) {
         additions.push(structuredClone(record));
-      } else if (store.has(id as TLRecord["id"])) {
+      } else if (!record && !id.startsWith("camera:") && store.has(id as TLRecord["id"])) {
         removals.push(id as TLRecord["id"]);
       }
     }
@@ -127,12 +164,33 @@ export function bindTldrawToYjs({
   };
   records.observe(onRecordsChanged);
 
+  function applyRemoteCamera() {
+    const camera = sharedCamera.get("viewport");
+    if (!isSharedCamera(camera)) return;
+    const current = editor.getCamera();
+    if (sameCamera(current, camera)) return;
+
+    lastRemoteCamera = camera;
+    // Immediate avoids an animation fighting a local pointer drag. The visual
+    // state changes once, while the editor itself remains mounted.
+    editor.setCamera(camera, { immediate: true });
+  }
+
+  const onCameraChanged = (
+    _event: Y.YMapEvent<SharedCamera>,
+    transaction: Y.Transaction,
+  ) => {
+    if (!transaction.local) applyRemoteCamera();
+  };
+  sharedCamera.observe(onCameraChanged);
+  applyRemoteCamera();
+
   const stopDocumentListener = store.listen(
     ({ changes }) => queue(changes),
     { source: "user", scope: "document" },
   );
   const stopCameraListener = store.listen(
-    ({ changes }) => queue(cameraOnly(changes)),
+    ({ changes }) => queueCamera(changes),
     { source: "user", scope: "session" },
   );
 
@@ -143,6 +201,7 @@ export function bindTldrawToYjs({
       stopDocumentListener();
       stopCameraListener();
       records.unobserve(onRecordsChanged);
+      sharedCamera.unobserve(onCameraChanged);
     },
   };
 }

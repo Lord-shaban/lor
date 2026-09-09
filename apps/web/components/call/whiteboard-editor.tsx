@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { createTLStore, Tldraw } from "tldraw";
+import { createTLStore, Tldraw, type Editor } from "tldraw";
 import * as Y from "yjs";
 import "tldraw/tldraw.css";
 import { bindTldrawToYjs } from "@/lib/tldraw-yjs";
@@ -21,9 +21,9 @@ export function WhiteboardEditor({
   const bindingRef = useRef<ReturnType<typeof bindTldrawToYjs> | null>(null);
 
   const onMount = useCallback(
-    () => {
+    (editor: Editor) => {
       bindingRef.current?.destroy();
-      bindingRef.current = bindTldrawToYjs({ document, store });
+      bindingRef.current = bindTldrawToYjs({ document, store, editor });
 
       return () => {
         bindingRef.current?.destroy();

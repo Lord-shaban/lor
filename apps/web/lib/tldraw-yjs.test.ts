@@ -59,6 +59,18 @@ class FakeStore {
   }
 }
 
+class FakeEditor {
+  camera = { x: 0, y: 0, z: 1 };
+
+  getCamera() {
+    return { ...this.camera };
+  }
+
+  setCamera(camera: { x: number; y: number; z: number }) {
+    this.camera = { ...camera };
+  }
+}
+
 const bindings: Array<ReturnType<typeof bindTldrawToYjs>> = [];
 
 function record(id: string, typeName = "shape"): TLRecord {
@@ -69,13 +81,14 @@ function emptyChanges(): Changes {
   return { added: {}, removed: {}, updated: {} };
 }
 
-function bind(document: Y.Doc, store: FakeStore) {
+function bind(document: Y.Doc, store: FakeStore, editor = new FakeEditor()) {
   const binding = bindTldrawToYjs({
     document,
     store: store as unknown as TLStore,
+    editor: editor as unknown as import("tldraw").Editor,
   });
   bindings.push(binding);
-  return binding;
+  return { binding, editor };
 }
 
 function copy(source: Y.Doc, destination: Y.Doc) {
@@ -92,7 +105,7 @@ describe("tldraw records over the shared Yjs document", () => {
     const secondDocument = new Y.Doc();
     const first = new FakeStore();
     const second = new FakeStore();
-    const firstBinding = bind(firstDocument, first);
+    const { binding: firstBinding } = bind(firstDocument, first);
     bind(secondDocument, second);
 
     const shape = record("shape:arabic-notes");
@@ -111,7 +124,7 @@ describe("tldraw records over the shared Yjs document", () => {
   it("rebuilds a late joiner's board, including erase and undo updates", () => {
     const sourceDocument = new Y.Doc();
     const source = new FakeStore();
-    const sourceBinding = bind(sourceDocument, source);
+    const { binding: sourceBinding } = bind(sourceDocument, source);
     const firstShape = record("shape:one");
     const revisedShape = { ...firstShape, x: 160 } as TLRecord;
 
@@ -156,10 +169,15 @@ describe("tldraw records over the shared Yjs document", () => {
     const secondDocument = new Y.Doc();
     const first = new FakeStore();
     const second = new FakeStore();
-    const firstBinding = bind(firstDocument, first);
-    bind(secondDocument, second);
+    const { binding: firstBinding } = bind(firstDocument, first);
+    const { editor: secondEditor } = bind(secondDocument, second);
 
-    const camera = record("camera:page", "camera");
+    const camera = {
+      ...record("camera:page", "camera"),
+      x: 240,
+      y: -120,
+      z: 1.5,
+    } as TLRecord;
     const selection = record("instance:local", "instance");
     first.userChange("session", {
       ...emptyChanges(),
@@ -168,7 +186,24 @@ describe("tldraw records over the shared Yjs document", () => {
     firstBinding.flush();
     copy(firstDocument, secondDocument);
 
-    expect(second.records.get(camera.id)).toEqual(camera);
+    expect(secondEditor.camera).toEqual({ x: 240, y: -120, z: 1.5 });
+    expect(second.records.has(camera.id)).toBe(false);
     expect(second.records.has(selection.id)).toBe(false);
+  });
+
+  it("ignores camera records saved by the earlier board version", () => {
+    const document = new Y.Doc();
+    const store = new FakeStore();
+    const legacyCamera = {
+      ...record("camera:page", "camera"),
+      x: 120,
+      y: -80,
+      z: 1.25,
+    } as TLRecord;
+
+    document.getMap(TLDRAW_RECORDS_KEY).set(legacyCamera.id, legacyCamera);
+    bind(document, store);
+
+    expect(store.records.has(legacyCamera.id)).toBe(false);
   });
 });
