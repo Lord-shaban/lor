@@ -21,18 +21,19 @@ No account. No time limit. No download.
 ---
 
 > [!NOTE]
-> **Status: Canvas is live.** `v0.0`, `v0.1`, `v0.1.5`, and `v0.1.8` have shipped and
-> are deployed at [lor-bay.vercel.app](https://lor-bay.vercel.app): open a link, type a
-> name, hold a real meeting with mixed Arabic/English captions, record locally, and work
-> together on a shared board or note.
+> **Status: Decisions are live.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, and `v0.2` have
+> shipped and are deployed at [lor-bay.vercel.app](https://lor-bay.vercel.app): open a
+> link, type a name, hold a real meeting with mixed Arabic/English captions, record
+> locally, work together on a shared board or note, and confirm decisions against their
+> exact transcript evidence.
 > Follow the [milestones](https://github.com/Lord-shaban/lor/milestones) to track progress.
 
 ## What LOR. is
 
 Most video tools treat a meeting as something that happens and then disappears. You get
 a recording nobody watches and a chat log nobody reads. LOR. treats the meeting as the
-beginning: what was decided, who owes what, and what was said stay searchable
-afterwards.
+beginning: the retained transcript keeps what was said, and host-confirmed decisions
+stay attached to their exact evidence.
 
 It is built to be as easy to join as Google Meet — open a link, type a name, you are in
 — and to do the things Meet either cannot do or puts behind a paid plan.
@@ -50,11 +51,12 @@ afterthought.
 | Account required | no | host needs one | host needs one | no |
 | Recording | local, free | paid plan | local | yes |
 | **Mixed Arabic/English captions** | **yes** | no | no | no |
-| Automatic decisions and action items | yes | no | paid | no |
-| Memory across meetings | yes | no | no | no |
-| Semantic search of past meetings | yes | no | paid | no |
-| Plugin API | yes | no | yes | no |
-| Self-hostable | yes | no | no | yes |
+| Grounded decision proposals | yes | no | paid | no |
+| Action items | not yet | no | paid | no |
+| Memory across meetings | not yet | no | no | no |
+| Semantic search of past meetings | not yet | no | paid | no |
+| Plugin API | not yet | no | yes | no |
+| Self-hostable | not yet | no | no | yes |
 | Arabic RTL interface | first-class | partial | partial | partial |
 | Bring your own AI key | yes | n/a | n/a | n/a |
 
@@ -96,11 +98,19 @@ quietly translates instead of transcribing. LOR. addresses this in layers:
 Record locally in the browser and download the file — no paid tier, no upload. A shared
 whiteboard and collaborative notes sync live over the meeting's own data channel.
 
-### Meeting memory — `v0.2` to `v0.6`
+### Decisions with evidence — `v0.2`
+
+A host can ask LOR. to propose decisions from a retained transcript, but a proposal is
+never presented as a settled fact. Its original quote, speaker, and UTC time stay fixed
+as evidence; only the host can edit the final wording, confirm it, or delete it.
+Everyone can read confirmed decisions, and the confirmed record downloads as portable
+text with the same evidence. Deleting or expiring the transcript removes its decisions
+too.
+
+### Meeting memory roadmap — `v0.3` to `v0.6`
 
 | Release | What it adds |
 |---|---|
-| `v0.2` | **Decisions** — extracted with timestamp, speaker, and the exact quote |
 | `v0.3` | **Action items** — owner and due date; open tasks resurface at the start of the next meeting |
 | `v0.4` | **Timeline** — topic chapters, per-person talk time, flagged moments you can jump to |
 | `v0.5` | **Memory** — a recurring room remembers its decisions, open tasks, and vocabulary |
@@ -226,7 +236,7 @@ Drizzle · Postgres.
 | `v0.1` | The Call | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.1.5` | Captions | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.1.8` | Canvas | **shipped** — [live](https://lor-bay.vercel.app) |
-| `v0.2` | Decisions | planned |
+| `v0.2` | Decisions | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.3` | Action items | planned |
 | `v0.4` | Meeting timeline | planned |
 | `v0.5` | Meeting memory | planned |

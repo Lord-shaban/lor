@@ -10,7 +10,7 @@
   "home": {
     "tagline": "Open-source video meetings that remember. No account, no time limit, no download.",
     "codeSwitchExample": "And it understands you when you say «عملت الـ <term>deploy</term> على الـ <term>server</term>».",
-    "building": "building",
+    "latest": "latest",
     "links": {
       "source": "Source",
       "roadmap": "Roadmap",

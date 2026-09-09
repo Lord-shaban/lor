@@ -6,8 +6,8 @@ do not get relitigated or quietly broken in a later session.
 ## The project
 
 **LOR.** — open-source video meetings that remember. Join like Google Meet (link, name,
-in), then keep what the meeting produced: decisions, action items, a searchable
-transcript. Repository: <https://github.com/Lord-shaban/lor>.
+in), then keep what the meeting produced: a retained transcript and grounded decisions
+with their source evidence. Repository: <https://github.com/Lord-shaban/lor>.
 
 The plan and full reasoning live in `~/.claude/plans/happy-painting-hartmanis.md`.
 The roadmap is `v0.0` through `v1.0`, one GitHub milestone per release.
@@ -326,10 +326,10 @@ GitHub is authoritative — issues, milestones, and the
 [board](https://github.com/users/Lord-shaban/projects/8). Update this when a release
 closes.
 
-**Live:** <https://lor-bay.vercel.app>. Everything through `v0.1.8`, including
-the Canvas release, is deployed there on every push to `main`.
+**Live:** <https://lor-bay.vercel.app>. Everything through `v0.2`, including the
+Decisions release, is deployed there on every push to `main`.
 
-**Done.** `v0.0`, `v0.1`, `v0.1.5`, and `v0.1.8` in full, all
+**Done.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, and `v0.2` in full, all
 [tagged and released](https://github.com/Lord-shaban/lor/releases). The call is
 checked end to end on every pull request. Captions split speech at utterance
 boundaries, preserve mixed Arabic/English terms, require explicit consent, and
@@ -347,6 +347,16 @@ one Yjs document synchronised through LiveKit, retained as a room-scoped
 snapshot for up to 30 days, and restored after reconnect or a later return to
 the room. Old tldraw records remain downloadable but are not converted. This
 release-close work does not start or define any later milestone.
+
+**Decisions.** `v0.2` turns a retained transcript into host-reviewed, grounded
+decision proposals. A proposal is tied to one immutable source quote, speaker,
+and UTC timestamp; only the host can edit its final wording, confirm it, or
+delete it. Confirmed decisions are visible to participants and export as
+portable text with their evidence. Retention and deletion of the transcript
+remove every derived decision. The workspace is on demand and the complete
+two-person suite checks that it does not interrupt the call, captions, chat,
+Canvas, notes, or local recording. This release-close work does not start or
+define any later milestone.
 
 **Cutting a release.** A release is a milestone closing, not a date arriving.
 The steps are in `CONTRIBUTING.md`; the one that is easy to get wrong is the
