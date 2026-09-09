@@ -12,6 +12,7 @@ import { RoomEvent, Track, type RoomOptions } from "livekit-client";
 import { VideoGrid } from "@/components/call/video-grid";
 import { CallControls } from "@/components/call/call-controls";
 import { WhiteboardPanel } from "@/components/call/whiteboard-panel";
+import { NotesPanel } from "@/components/call/notes-panel";
 import { ChatPanel } from "@/components/call/chat-panel";
 import { HandQueue } from "@/components/call/hand-queue";
 import { QualityNotice } from "@/components/call/quality-notice";
@@ -219,9 +220,10 @@ function CallStageContent({
 
   // One slot, one panel. Two open at once would halve the grid on a laptop and
   // cover it entirely on a phone.
-  const [panel, setPanel] = useState<"chat" | "door" | "whiteboard" | null>(null);
+  const [panel, setPanel] = useState<"chat" | "door" | "whiteboard" | "notes" | null>(null);
   const chatOpen = panel === "chat";
   const whiteboardOpen = panel === "whiteboard";
+  const notesOpen = panel === "notes";
   // How many messages had arrived the last time the panel was closed. Held here
   // rather than cleared on every arrival, so nothing has to run in an effect to
   // keep the badge honest.
@@ -242,6 +244,11 @@ function CallStageContent({
   function toggleWhiteboard() {
     if (chatOpen) setRead(received);
     setPanel(whiteboardOpen ? null : "whiteboard");
+  }
+
+  function toggleNotes() {
+    if (chatOpen) setRead(received);
+    setPanel(notesOpen ? null : "notes");
   }
 
   return (
@@ -288,6 +295,7 @@ function CallStageContent({
         )}
 
         {whiteboardOpen && <WhiteboardPanel onClose={toggleWhiteboard} />}
+        {notesOpen && <NotesPanel onClose={toggleNotes} />}
       </div>
 
       {announcement && (
@@ -322,6 +330,8 @@ function CallStageContent({
         onToggleChat={toggleChat}
         whiteboardOpen={whiteboardOpen}
         onToggleWhiteboard={toggleWhiteboard}
+        notesOpen={notesOpen}
+        onToggleNotes={toggleNotes}
         isHost={isHost}
         doorOpen={panel === "door"}
         waitingCount={waiting.length}

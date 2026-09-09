@@ -7,6 +7,7 @@ import {
   type CanvasSnapshotStatus,
 } from "./canvas-snapshot";
 import { CANVAS_SNAPSHOT_CONTENT_TYPE } from "./canvas-snapshot-protocol";
+import { notesFragment } from "./notes-yjs";
 
 const endpoint = "/api/rooms/canvas-room/canvas";
 const statuses: CanvasSnapshotStatus[] = [];
@@ -34,6 +35,15 @@ function createWriter(document: Y.Doc, version = 0) {
   return writer;
 }
 
+function addNoteParagraph(document: Y.Doc, value: string) {
+  const paragraph = new Y.XmlElement("paragraph");
+  const text = new Y.XmlText();
+  text.insert(0, value);
+  paragraph.insert(0, [text]);
+  const notes = notesFragment(document);
+  notes.insert(notes.length, [paragraph]);
+}
+
 afterEach(() => {
   for (const writer of writers.splice(0)) writer.stop();
   statuses.splice(0);
@@ -52,10 +62,10 @@ describe("Canvas snapshots", () => {
     vi.stubGlobal("fetch", fetch);
     const document = new Y.Doc();
     createWriter(document, 1);
-    document.getText("notes").insert(0, "first");
+    addNoteParagraph(document, "first");
     await vi.advanceTimersByTimeAsync(CANVAS_SNAPSHOT_THROTTLE_MS);
     expect(statuses.at(-1)?.kind).toBe("saved");
-    document.getText("notes").insert(5, " second");
+    addNoteParagraph(document, "second");
     await vi.advanceTimersByTimeAsync(CANVAS_SNAPSHOT_THROTTLE_MS);
     expect(fetch.mock.calls[1][1].headers["If-Match"]).toBe('"2"');
     expect(statuses.at(-1)?.version).toBe(3);
@@ -63,13 +73,13 @@ describe("Canvas snapshots", () => {
 
   it("restores a response whose ETag was weakened by the proxy", async () => {
     const stored = new Y.Doc();
-    stored.getText("notes").insert(0, "قرار محفوظ");
+    addNoteParagraph(stored, "قرار محفوظ");
     const response = snapshotResponse(Y.encodeStateAsUpdate(stored), 2);
     response.headers.set("ETag", 'W/"2"');
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response));
     const document = new Y.Doc();
     expect((await hydrateCanvasSnapshot(document, endpoint)).kind).toBe("restored");
-    expect(document.getText("notes").toString()).toBe("قرار محفوظ");
+    expect(notesFragment(document).toString()).toContain("قرار محفوظ");
   });
 
   it("retries a failed save without losing document edits", async () => {
@@ -79,17 +89,17 @@ describe("Canvas snapshots", () => {
     vi.stubGlobal("fetch", fetch);
     const document = new Y.Doc();
     createWriter(document);
-    document.getText("notes").insert(0, "still here");
+    addNoteParagraph(document, "still here");
     await vi.advanceTimersByTimeAsync(CANVAS_SNAPSHOT_THROTTLE_MS);
     expect(statuses.at(-1)?.kind).toBe("save_failed");
     await vi.advanceTimersByTimeAsync(10_000);
     expect(statuses.at(-1)?.kind).toBe("saved");
-    expect(document.getText("notes").toString()).toBe("still here");
+    expect(notesFragment(document).toString()).toContain("still here");
   });
 
   it("applies a valid durable update before the document is connected to peers", async () => {
     const stored = new Y.Doc();
-    stored.getText("notes").insert(0, "قرار: deploy بعد المراجعة");
+    addNoteParagraph(stored, "قرار: deploy بعد المراجعة");
     const update = Y.encodeStateAsUpdate(stored);
 
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(snapshotResponse(update, 4, 7)));
@@ -97,7 +107,7 @@ describe("Canvas snapshots", () => {
     const result = await hydrateCanvasSnapshot(document, endpoint);
 
     expect(result).toEqual({ kind: "restored", retentionDays: 7, version: 4 });
-    expect(document.getText("notes").toString()).toBe("قرار: deploy بعد المراجعة");
+    expect(notesFragment(document).toString()).toContain("قرار: deploy بعد المراجعة");
   });
 
   it("fails closed when the server says the durable snapshot is malformed", async () => {
@@ -115,7 +125,7 @@ describe("Canvas snapshots", () => {
     expect(result).toEqual({ kind: "malformed", retentionDays: 30, version: 0 });
     // The lifecycle creates a fresh doc before calling this helper. The bad
     // durable record leaves it empty rather than asking Yjs to repair it.
-    expect(document.getText("notes").toString()).toBe("");
+    expect(notesFragment(document).toString()).toBe("");
   });
 
   it("batches a burst of document updates into one binary database write", async () => {
@@ -127,8 +137,8 @@ describe("Canvas snapshots", () => {
     const document = new Y.Doc();
     createWriter(document);
 
-    document.getText("notes").insert(0, "one");
-    document.getText("notes").insert(3, " two");
+    addNoteParagraph(document, "one");
+    addNoteParagraph(document, "two");
     document.getMap("board").set("shape", "rectangle");
     await vi.advanceTimersByTimeAsync(CANVAS_SNAPSHOT_THROTTLE_MS);
 
@@ -146,7 +156,7 @@ describe("Canvas snapshots", () => {
   it("merges a newer database snapshot after a conflict before retrying", async () => {
     vi.useFakeTimers();
     const remote = new Y.Doc();
-    remote.getText("notes").insert(0, "من مشارك تاني");
+    addNoteParagraph(remote, "من مشارك تاني");
     const fetch = vi
       .fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ error: "snapshot_conflict" }), { status: 409 }))
@@ -157,7 +167,7 @@ describe("Canvas snapshots", () => {
     vi.stubGlobal("fetch", fetch);
     const document = new Y.Doc();
     createWriter(document);
-    document.getText("notes").insert(0, "من عندي + ");
+    addNoteParagraph(document, "من عندي + ");
 
     await vi.advanceTimersByTimeAsync(CANVAS_SNAPSHOT_THROTTLE_MS);
     await vi.advanceTimersByTimeAsync(CANVAS_SNAPSHOT_THROTTLE_MS);
@@ -165,8 +175,8 @@ describe("Canvas snapshots", () => {
     expect(fetch).toHaveBeenCalledTimes(3);
     const [, retry] = fetch.mock.calls[2] as [string, RequestInit];
     expect(retry.headers).toMatchObject({ "If-Match": "\"1\"" });
-    expect(document.getText("notes").toString()).toContain("من عندي");
-    expect(document.getText("notes").toString()).toContain("من مشارك تاني");
+    expect(notesFragment(document).toString()).toContain("من عندي");
+    expect(notesFragment(document).toString()).toContain("من مشارك تاني");
     expect(statuses.at(-1)).toEqual({ kind: "saved", retentionDays: 30, version: 2 });
   });
 });
