@@ -1,5 +1,5 @@
 import "server-only";
-import { AccessToken } from "livekit-server-sdk";
+import { AccessToken, RoomServiceClient } from "livekit-server-sdk";
 
 /**
  * Access tokens for the media server.
@@ -57,6 +57,37 @@ function requireCredentials() {
   }
 
   return { apiKey, apiSecret };
+}
+
+/**
+ * The service API uses HTTP while browsers connect to LiveKit over WebSocket.
+ * Keeping this conversion server-only means neither API secret nor service
+ * endpoint behaviour leaks into the client bundle.
+ */
+function livekitServiceUrl(): string {
+  const value = process.env.NEXT_PUBLIC_LIVEKIT_URL;
+  if (!value) {
+    throw new Error("NEXT_PUBLIC_LIVEKIT_URL is not set.");
+  }
+
+  const url = new URL(value);
+  if (url.protocol === "ws:") url.protocol = "http:";
+  if (url.protocol === "wss:") url.protocol = "https:";
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("NEXT_PUBLIC_LIVEKIT_URL must use ws, wss, http, or https.");
+  }
+  return url.toString();
+}
+
+/**
+ * Ask LiveKit for authoritative presence before minting a token boundary.
+ * A browser's local connection state is not a valid basis for recurring-meeting
+ * lifecycle records because it can be stale, forged, or disconnected.
+ */
+export async function roomIsEmpty(livekitRoom: string): Promise<boolean> {
+  const { apiKey, apiSecret } = requireCredentials();
+  const service = new RoomServiceClient(livekitServiceUrl(), apiKey, apiSecret);
+  return (await service.listParticipants(livekitRoom)).length === 0;
 }
 
 /**

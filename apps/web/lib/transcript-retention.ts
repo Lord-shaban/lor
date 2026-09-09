@@ -1,5 +1,5 @@
 import { and, eq, exists, lt, or } from "drizzle-orm";
-import { decisions, getDb, summaries, transcriptLines } from "@lor/db";
+import { actionItems, decisions, getDb, summaries, transcriptLines } from "@lor/db";
 
 /**
  * Delete every derived copy first; a failed cleanup must leave its transcript
@@ -9,6 +9,10 @@ import { decisions, getDb, summaries, transcriptLines } from "@lor/db";
 export async function sweepTranscript(roomId: string, cutoff: Date) {
   const db = getDb();
   const expired = and(eq(transcriptLines.roomId, roomId), lt(transcriptLines.createdAt, cutoff));
+  await db.delete(actionItems).where(and(
+    eq(actionItems.roomId, roomId),
+    exists(db.select({ id: transcriptLines.id }).from(transcriptLines).where(expired)),
+  ));
   await db.delete(decisions).where(and(
     eq(decisions.roomId, roomId),
     exists(db.select({ id: transcriptLines.id }).from(transcriptLines).where(expired)),

@@ -1,12 +1,27 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { createAccessToken, participantIdentity } from "./livekit";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const roomService = vi.hoisted(() => ({
+  listParticipants: vi.fn(),
+  constructor: vi.fn(function () {
+    return { listParticipants: roomService.listParticipants };
+  }),
+}));
+
+vi.mock("livekit-server-sdk", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("livekit-server-sdk")>();
+  return { ...actual, RoomServiceClient: roomService.constructor };
+});
+
+import { createAccessToken, participantIdentity, roomIsEmpty } from "./livekit";
 
 const ROOM = "lor_mza-krfq-tqn";
 const OTHER_ROOM = "lor_bcd-efgh-jkm";
 
 beforeEach(() => {
+  vi.clearAllMocks();
   process.env.LIVEKIT_API_KEY = "APItestkey";
   process.env.LIVEKIT_API_SECRET = "test-secret-not-a-real-one-abcdefghij";
+  process.env.NEXT_PUBLIC_LIVEKIT_URL = "wss://lor.livekit.cloud";
 });
 
 /** Read the claims without verifying — enough to assert what was granted. */
@@ -113,5 +128,22 @@ describe("createAccessToken", () => {
   it("refuses to mint without credentials", async () => {
     delete process.env.LIVEKIT_API_SECRET;
     await expect(createAccessToken(base)).rejects.toThrow(/LIVEKIT_API/);
+  });
+});
+
+describe("roomIsEmpty", () => {
+  it("asks the server-side LiveKit service over HTTPS, never a browser claim", async () => {
+    roomService.listParticipants.mockResolvedValue([]);
+
+    await expect(roomIsEmpty(ROOM)).resolves.toBe(true);
+    expect(roomService.constructor).toHaveBeenCalledWith(
+      "https://lor.livekit.cloud/",
+      process.env.LIVEKIT_API_KEY,
+      process.env.LIVEKIT_API_SECRET,
+    );
+    expect(roomService.listParticipants).toHaveBeenCalledWith(ROOM);
+
+    roomService.listParticipants.mockResolvedValue([{ identity: "p_someone" }]);
+    await expect(roomIsEmpty(ROOM)).resolves.toBe(false);
   });
 });

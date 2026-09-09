@@ -3,7 +3,14 @@ import { Buffer } from "node:buffer";
 import { readFile, stat } from "node:fs/promises";
 import { expect, test, type Page, type BrowserContext } from "@playwright/test";
 import { eq } from "drizzle-orm";
-import { decisions, getDb, rooms, transcriptLines } from "@lor/db";
+import {
+  actionItems,
+  decisions,
+  getDb,
+  meetingOccurrences,
+  rooms,
+  transcriptLines,
+} from "@lor/db";
 import * as Y from "yjs";
 import { CANVAS_SNAPSHOT_CONTENT_TYPE } from "../lib/canvas-snapshot-protocol";
 
@@ -1301,6 +1308,180 @@ test.describe("a call between two people", () => {
       .from(decisions)
       .where(eq(decisions.id, roomDecision.id));
     expect(afterRoomDelete).toHaveLength(0);
+  });
+
+  test("action-item database rules preserve evidence, lifecycle, retention, and room isolation", async () => {
+    const page = await alice.newPage();
+    const db = getDb();
+    const code = await createRoom(page);
+    const [room] = await db
+      .select({ id: rooms.id })
+      .from(rooms)
+      .where(eq(rooms.code, code))
+      .limit(1);
+    if (!room) throw new Error("The action-item test room was not stored");
+
+    const now = new Date("2026-09-09T10:00:00.000Z");
+    const [source, owner] = await db
+      .insert(transcriptLines)
+      .values([
+        {
+          roomId: room.id,
+          speakerIdentity: "p_ahmed",
+          speakerName: "أحمد",
+          text: "سارة هتراجع الـ pull request قبل الجمعة.",
+          seq: 4,
+          createdAt: now,
+        },
+        {
+          roomId: room.id,
+          speakerIdentity: "p_sara",
+          speakerName: "سارة",
+          text: "أنا هتابع الـ PR.",
+          seq: 5,
+          createdAt: new Date("2026-09-09T10:00:01.000Z"),
+        },
+      ])
+      .returning({
+        id: transcriptLines.id,
+        seq: transcriptLines.seq,
+        speaker: transcriptLines.speakerName,
+        text: transcriptLines.text,
+        createdAt: transcriptLines.createdAt,
+      });
+    if (!source || !owner) throw new Error("Action-item transcript evidence was not stored");
+
+    // These forged values prove that the trigger takes evidence and an owner
+    // display name from retained transcript rows, not the database caller.
+    const [proposal] = await db
+      .insert(actionItems)
+      .values({
+        roomId: room.id,
+        sourceLineId: source.id,
+        sourceSeq: 999,
+        sourceSpeaker: "forged speaker",
+        sourceQuote: "forged quote",
+        sourceCreatedAt: new Date(0),
+        assigneeIdentity: "p_sara",
+        assigneeName: "forged assignee",
+        text: "راجع الـ pull request.",
+      })
+      .returning({
+        id: actionItems.id,
+        status: actionItems.status,
+        sourceSeq: actionItems.sourceSeq,
+        sourceSpeaker: actionItems.sourceSpeaker,
+        sourceQuote: actionItems.sourceQuote,
+        sourceCreatedAt: actionItems.sourceCreatedAt,
+        assigneeName: actionItems.assigneeName,
+      });
+    if (!proposal) throw new Error("Action-item proposal was not stored");
+    expect(proposal).toMatchObject({
+      status: "proposed",
+      sourceSeq: source.seq,
+      sourceSpeaker: source.speaker,
+      sourceQuote: source.text,
+      sourceCreatedAt: source.createdAt,
+      assigneeName: owner.speaker,
+    });
+
+    await expect(
+      db
+        .update(actionItems)
+        .set({ sourceQuote: "changed evidence" })
+        .where(eq(actionItems.id, proposal.id)),
+    ).rejects.toMatchObject({ cause: expect.objectContaining({ code: "23514" }) });
+    await expect(
+      db
+        .update(actionItems)
+        .set({ status: "completed" })
+        .where(eq(actionItems.id, proposal.id)),
+    ).rejects.toMatchObject({ cause: expect.objectContaining({ code: "23514" }) });
+    await expect(
+      db
+        .update(actionItems)
+        .set({ status: "open", assigneeIdentity: "p_missing", dueOn: "2026-09-12" })
+        .where(eq(actionItems.id, proposal.id)),
+    ).rejects.toMatchObject({ cause: expect.objectContaining({ code: "23514" }) });
+    await expect(
+      db
+        .update(actionItems)
+        .set({ status: "open", assigneeIdentity: "p_sara" })
+        .where(eq(actionItems.id, proposal.id)),
+    ).rejects.toMatchObject({ cause: expect.objectContaining({ code: "23514" }) });
+
+    const [opened] = await db
+      .update(actionItems)
+      .set({ status: "open", assigneeIdentity: "p_sara", dueOn: "2026-09-12" })
+      .where(eq(actionItems.id, proposal.id))
+      .returning({
+        status: actionItems.status,
+        assigneeName: actionItems.assigneeName,
+        openedAt: actionItems.openedAt,
+      });
+    expect(opened).toMatchObject({ status: "open", assigneeName: owner.speaker });
+    expect(opened?.openedAt).toBeInstanceOf(Date);
+
+    const [completed] = await db
+      .update(actionItems)
+      .set({ status: "completed" })
+      .where(eq(actionItems.id, proposal.id))
+      .returning({ status: actionItems.status, completedAt: actionItems.completedAt });
+    expect(completed).toMatchObject({ status: "completed" });
+    expect(completed?.completedAt).toBeInstanceOf(Date);
+
+    await expect(
+      db.insert(actionItems).values({
+        roomId: room.id,
+        sourceLineId: source.id,
+        sourceSeq: 0,
+        sourceSpeaker: "ignored",
+        sourceQuote: "ignored",
+        sourceCreatedAt: new Date(0),
+        text: "راجع الـ pull request.",
+      }),
+    ).rejects.toMatchObject({ cause: expect.objectContaining({ code: "23505" }) });
+
+    const otherCode = await createRoom(page);
+    const [otherRoom] = await db
+      .select({ id: rooms.id })
+      .from(rooms)
+      .where(eq(rooms.code, otherCode))
+      .limit(1);
+    if (!otherRoom) throw new Error("The isolation test room was not stored");
+    await expect(
+      db.insert(actionItems).values({
+        roomId: otherRoom.id,
+        sourceLineId: source.id,
+        sourceSeq: 0,
+        sourceSpeaker: "ignored",
+        sourceQuote: "ignored",
+        sourceCreatedAt: new Date(0),
+        text: "Cross-room action item",
+      }),
+    ).rejects.toMatchObject({ cause: expect.objectContaining({ code: "23503" }) });
+
+    const [occurrence] = await db
+      .insert(meetingOccurrences)
+      .values({ roomId: room.id })
+      .returning({ id: meetingOccurrences.id });
+    if (!occurrence) throw new Error("Meeting occurrence was not stored");
+    await expect(
+      db.insert(meetingOccurrences).values({ roomId: room.id }),
+    ).rejects.toMatchObject({ cause: expect.objectContaining({ code: "23505" }) });
+
+    // Source cascade removes the evidence-backed action item, and a separate
+    // room cascade removes occurrence lifecycle metadata with its room.
+    await db.delete(transcriptLines).where(eq(transcriptLines.id, source.id));
+    await expect(
+      db.select({ id: actionItems.id }).from(actionItems).where(eq(actionItems.id, proposal.id)),
+    ).resolves.toHaveLength(0);
+    await db.delete(rooms).where(eq(rooms.id, room.id));
+    await expect(
+      db.select({ id: meetingOccurrences.id })
+        .from(meetingOccurrences)
+        .where(eq(meetingOccurrences.id, occurrence.id)),
+    ).resolves.toHaveLength(0);
   });
 
   test("a tile that is not painting yet shows the avatar, not a black rectangle", async () => {
