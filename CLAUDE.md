@@ -326,10 +326,10 @@ GitHub is authoritative — issues, milestones, and the
 [board](https://github.com/users/Lord-shaban/projects/8). Update this when a release
 closes.
 
-**Live:** <https://lor-bay.vercel.app>. Everything through `v0.1.5`, including
-the #67 participant-tile fix, is deployed there on every push to `main`.
+**Live:** <https://lor-bay.vercel.app>. Everything through `v0.1.8`, including
+the Canvas release, is deployed there on every push to `main`.
 
-**Done.** `v0.0`, `v0.1`, and `v0.1.5` in full, all
+**Done.** `v0.0`, `v0.1`, `v0.1.5`, and `v0.1.8` in full, all
 [tagged and released](https://github.com/Lord-shaban/lor/releases). The call is
 checked end to end on every pull request. Captions split speech at utterance
 boundaries, preserve mixed Arabic/English terms, require explicit consent, and
@@ -341,9 +341,12 @@ Read the captions invariant above before touching anything under
 `apps/web/lib/stt/` — a change there is not reviewable without WER and
 code-switch preservation numbers on both sides of it.
 
-**Next.** `v0.1.8 — Canvas`: local recording, a shared whiteboard, and
-collaborative notes over the LiveKit data channel. The milestone exists but has
-not yet been decomposed into issues; do that before implementation begins.
+**Canvas.** `v0.1.8` adds local WebM recording, an on-demand MIT-licensed
+Excalidraw whiteboard, and collaborative rich-text notes. Board and notes are
+one Yjs document synchronised through LiveKit, retained as a room-scoped
+snapshot for up to 30 days, and restored after reconnect or a later return to
+the room. Old tldraw records remain downloadable but are not converted. This
+release-close work does not start or define any later milestone.
 
 **Cutting a release.** A release is a milestone closing, not a date arriving.
 The steps are in `CONTRIBUTING.md`; the one that is easy to get wrong is the

@@ -126,7 +126,7 @@ milestone is merged:
    what it contained — not a list of commits. Somebody deciding whether to upgrade
    is the reader.
 2. Set the version in `package.json` and each workspace's `package.json`.
-3. Tag the merge commit: `git tag -a v0.1.0 -m "..." && git push origin v0.1.0`.
+3. Tag the merge commit: `git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z`.
 4. Publish a GitHub release from the tag, using the changelog section as its notes.
 5. Close the milestone.
 

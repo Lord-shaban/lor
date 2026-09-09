@@ -6,6 +6,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] — Canvas
+
+The call now has a shared visual workspace that stays with the room while
+keeping meeting media on each participant's device.
+
+### Added
+
+- Local browser recording captures the chosen call video and mixed audio, then
+  downloads a playable WebM. Starting and stopping are announced to the room;
+  no recording blob is sent to LOR., LiveKit data messages, or the database.
+- An on-demand, MIT-licensed Excalidraw whiteboard supports shared drawing,
+  mixed Arabic/English text, erasing, and undo. Camera, selection, and viewport
+  remain local so one participant does not move another's workspace.
+- Collaborative rich-text meeting notes use the same room Canvas as the board.
+  Concurrent edits, a late join, and a reconnect converge through Yjs over the
+  meeting's LiveKit data channel; LOR. still runs no socket server of its own.
+- Board and notes are retained together as a versioned, room-scoped snapshot
+  for up to 30 days. Writes are batched, reopening the room restores the latest
+  safe state, and any participant can delete the saved Canvas early.
+- The two-person browser suite now checks the complete Canvas flow: idle board
+  stability, a shared drawing and note edit, a late join, reconnect recovery,
+  local recording download, and lazy loading of the heavier editors.
+
+### Fixed
+
+- The shared board no longer disappears on a deployed HTTPS domain after the
+  five-second tldraw production-license check. Earlier tldraw records are
+  preserved and remain downloadable from the board, but are not automatically
+  converted to Excalidraw.
+- Successful Canvas saves with Vercel's weak `ETag` responses now retain the
+  correct revision instead of displaying a false save-failure notice.
+
 ## [0.1.5] — Captions
 
 Mixed Arabic/English meetings can now become a readable record without making
