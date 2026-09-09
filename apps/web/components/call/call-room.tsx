@@ -28,6 +28,7 @@ import { CaptionsStrip } from "@/components/call/captions-strip";
 import { CaptionsNotice } from "@/components/call/captions-notice";
 import { KeysDialog } from "@/components/call/keys-dialog";
 import { TranscriptPanel } from "@/components/call/transcript-panel";
+import { DecisionPanel } from "@/components/call/decision-panel";
 import { useVideoMode } from "@/components/call/use-video-mode";
 import { useLocalRecording } from "@/components/call/use-local-recording";
 import { RecordingNotice, RecordingStatus } from "@/components/call/recording-notice";
@@ -185,7 +186,8 @@ function CallStageContent({
   // server's cookie check decides anything; this is what the interface shows.
   const [isHost, setIsHost] = useState(startedAsHost);
   const [keysOpen, setKeysOpen] = useState(false);
-  const [transcriptOpen, setTranscriptOpen] = useState(false);
+  const [recordPanel, setRecordPanel] = useState<"transcript" | "decisions" | null>(null);
+  const [transcriptSourceSeq, setTranscriptSourceSeq] = useState<number | null>(null);
   const { localParticipant } = useLocalParticipant();
   const participants = useParticipants();
   const {
@@ -300,8 +302,23 @@ function CallStageContent({
           <KeysDialog onClose={() => setKeysOpen(false)} onSaved={captions.retry} />
         )}
 
-        {transcriptOpen && (
-          <TranscriptPanel code={code} onClose={() => setTranscriptOpen(false)} />
+        {recordPanel === "transcript" && (
+          <TranscriptPanel
+            code={code}
+            highlightSeq={transcriptSourceSeq ?? undefined}
+            onClose={() => setRecordPanel(null)}
+          />
+        )}
+
+        {recordPanel === "decisions" && (
+          <DecisionPanel
+            code={code}
+            onClose={() => setRecordPanel(null)}
+            onShowSource={(seq) => {
+              setTranscriptSourceSeq(seq);
+              setRecordPanel("transcript");
+            }}
+          />
         )}
 
         {chatOpen && (
@@ -349,7 +366,11 @@ function CallStageContent({
       <CaptionsNotice
         captions={captions}
         onOpenKeys={() => setKeysOpen(true)}
-        onOpenTranscript={() => setTranscriptOpen(true)}
+        onOpenTranscript={() => {
+          setTranscriptSourceSeq(null);
+          setRecordPanel("transcript");
+        }}
+        onOpenDecisions={() => setRecordPanel("decisions")}
       />
 
       <CallControls

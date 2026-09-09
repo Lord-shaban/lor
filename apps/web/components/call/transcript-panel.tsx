@@ -40,9 +40,12 @@ interface Stored {
 export function TranscriptPanel({
   code,
   onClose,
+  highlightSeq,
 }: {
   code: string;
   onClose: () => void;
+  /** A decision card can lead directly back to immutable transcript evidence. */
+  highlightSeq?: number;
 }) {
   const t = useTranslations("call.transcript");
   const locale = useLocale() as Locale;
@@ -66,6 +69,23 @@ export function TranscriptPanel({
     const timer = setTimeout(() => void load(), 0);
     return () => clearTimeout(timer);
   }, [load]);
+
+  useEffect(() => {
+    if (highlightSeq === undefined || !stored?.lines.some((line) => line.seq === highlightSeq)) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      const source = document.getElementById(`transcript-line-${highlightSeq}`);
+      source?.focus({ preventScroll: true });
+      source?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+        block: "center",
+      });
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [highlightSeq, stored]);
 
   async function makeSummary() {
     setBusy("summary");
@@ -151,7 +171,16 @@ export function TranscriptPanel({
 
         <ul className="flex flex-col gap-2">
           {lines.map((line) => (
-            <li key={line.seq} className="flex flex-col gap-0.5 text-sm leading-relaxed">
+            <li
+              key={line.seq}
+              id={`transcript-line-${line.seq}`}
+              data-transcript-line={line.seq}
+              tabIndex={line.seq === highlightSeq ? -1 : undefined}
+              className={cn(
+                "flex scroll-mt-4 flex-col gap-0.5 rounded-md text-sm leading-relaxed",
+                line.seq === highlightSeq && "bg-[#27272a] p-2 ring-1 ring-[#a1a1aa]",
+              )}
+            >
               <bdi className="text-xs font-medium text-[#a1a1aa]">{line.speaker}</bdi>
               <span dir={lineDirection(line.text, fallback)} className="text-[#f4f4f5]">
                 {line.text}
