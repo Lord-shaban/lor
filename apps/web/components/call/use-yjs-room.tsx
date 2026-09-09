@@ -129,6 +129,7 @@ export function YjsRoomLifecycle({
     let cancelled = false;
     let document: Y.Doc | undefined;
     let provider: YjsLiveKitProvider | undefined;
+    let syncRetryTimer: ReturnType<typeof setTimeout> | undefined;
 
     // A timer avoids a synchronous state write while React is committing the
     // call. More importantly, it makes the intentional async boundary visible:
@@ -163,12 +164,22 @@ export function YjsRoomLifecycle({
         // This follows hydration, never precedes it. Existing peers answer
         // with their newer diff if a save raced with the current meeting.
         void provider.requestSync();
+
+        // ParticipantActive can happen while this late join is restoring its
+        // snapshot. Repeat one small state-vector request after the editor's
+        // provider is listening, rather than leaving that participant blank
+        // until an unrelated reconnect. The timer belongs to this call and is
+        // cleared with its document below.
+        syncRetryTimer = setTimeout(() => {
+          if (!cancelled) void provider?.requestSync();
+        }, 1_000);
       })();
     }, 0);
 
     return () => {
       cancelled = true;
       clearTimeout(timer);
+      if (syncRetryTimer) clearTimeout(syncRetryTimer);
       writerRef.current?.stop();
       writerRef.current = null;
       provider?.destroy();
