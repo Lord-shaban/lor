@@ -36,6 +36,13 @@
       "when": 1788904973892,
       "tag": "0004_simple_hex",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788950054123,
+      "tag": "0005_decision_records",
+      "breakpoints": true
     }
   ]
 }

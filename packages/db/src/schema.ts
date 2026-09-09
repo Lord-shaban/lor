@@ -23,8 +23,8 @@ const binary = customType<{ data: Buffer; driverData: Buffer }>({
 });
 
 /**
- * Everything v0.1 needs, and nothing it does not. Transcripts, decisions, tasks
- * and embeddings arrive in the releases that introduce them.
+ * Everything v0.1 needs, plus the verified decision record introduced by
+ * v0.2. Tasks and embeddings still wait for the releases that introduce them.
  *
  * Plain Postgres only — no Supabase-specific types or functions. Self-hosting is
  * a first-class path, and the hosted deployment must not diverge from it.
@@ -266,6 +266,66 @@ export const summaries = pgTable("summaries", {
 });
 
 export type Summary = typeof summaries.$inferSelect;
+
+export const decisionStatus = pgEnum("decision_status", [
+  "proposed",
+  "confirmed",
+]);
+
+/**
+ * A decision anchored to one retained transcript line.
+ *
+ * The source foreign key is the deletion authority. The denormalised source
+ * fields make the evidence portable with the record, but they are written only
+ * from the source row by the server and never accepted from a browser or model.
+ * If that source is removed, this record must disappear with it rather than
+ * becoming a second, unaccounted-for copy of what somebody said.
+ */
+export const decisions = pgTable(
+  "decisions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    roomId: uuid("room_id")
+      .notNull()
+      .references(() => rooms.id, { onDelete: "cascade" }),
+
+    sourceLineId: uuid("source_line_id")
+      .notNull()
+      .references(() => transcriptLines.id, { onDelete: "cascade" }),
+
+    /** Server arrival order of the source, used for a meeting-ordered read. */
+    sourceSeq: integer("source_seq").notNull(),
+
+    /** Immutable server-derived evidence snapshots. */
+    sourceSpeaker: text("source_speaker").notNull(),
+    sourceQuote: text("source_quote").notNull(),
+    sourceCreatedAt: timestamp("source_created_at", { withTimezone: true }).notNull(),
+
+    status: decisionStatus("status").notNull().default("proposed"),
+
+    /** The host may refine this wording; it is never the source quotation. */
+    text: text("text").notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // Room reads are always returned in transcript order.
+    index("decisions_room_source_seq_idx").on(table.roomId, table.sourceSeq),
+    // PostgreSQL does not create this for the source FK; cascading deletion
+    // needs it just as much as an explicit source lookup does.
+    index("decisions_source_line_id_idx").on(table.sourceLineId),
+  ],
+);
+
+export type Decision = typeof decisions.$inferSelect;
+export type NewDecision = typeof decisions.$inferInsert;
 
 /**
  * The current durable form of a room's shared Canvas document.
