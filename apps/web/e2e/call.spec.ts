@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Buffer } from "node:buffer";
-import { stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { expect, test, type Page, type BrowserContext } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { decisions, getDb, rooms, transcriptLines } from "@lor/db";
@@ -915,6 +915,176 @@ test.describe("a call between two people", () => {
     await host.getByRole("button", { name: "Delete decision", exact: true }).click();
     await expect(host.getByText("You are no longer the meeting host, so the review controls were removed.", { exact: true })).toBeVisible();
     await expect(host.getByRole("button", { name: "Delete", exact: true })).toHaveCount(0);
+  });
+
+  test("exports only retained confirmed decisions with their transcript evidence", async () => {
+    const host = await alice.newPage();
+    const db = getDb();
+    const code = await createRoom(host);
+    const exportPath = `/api/rooms/${code}/decisions/export`;
+    const proposedText = "اقتراح موديل لا يظهر في الملف.";
+    const arabicText = "اعتماد الـ release بعد نجاح الـ CI.";
+    const arabicQuote = "اتفقنا إن الـ release هيطلع بعد نجاح الـ CI.";
+    const englishText = "Publish after the security review.";
+    const englishQuote = "We will publish after the security review.";
+
+    for (const [text, speaker, identity] of [
+      [proposedText, "Mina", "export-proposal"],
+      [arabicQuote, "أحمد", "export-arabic"],
+      [englishQuote, "Sarah", "export-english"],
+    ] as const) {
+      const stored = await host.request.post(`/api/rooms/${code}/transcript`, {
+        data: { text, speaker, identity },
+      });
+      expect(stored.status()).toBe(201);
+    }
+
+    const [room] = await db
+      .select({ id: rooms.id })
+      .from(rooms)
+      .where(eq(rooms.code, code))
+      .limit(1);
+    if (!room) throw new Error("The export room was not stored");
+    const sources = await db
+      .select({
+        id: transcriptLines.id,
+        seq: transcriptLines.seq,
+        speaker: transcriptLines.speakerName,
+        text: transcriptLines.text,
+        createdAt: transcriptLines.createdAt,
+      })
+      .from(transcriptLines)
+      .where(eq(transcriptLines.roomId, room.id));
+
+    async function insertRecord(sourceText: string, text: string, status: "proposed" | "confirmed") {
+      const source = sources.find((line) => line.text === sourceText);
+      if (!source) throw new Error("The export source was not stored");
+      await db.insert(decisions).values({
+        roomId: room.id,
+        sourceLineId: source.id,
+        sourceSeq: source.seq,
+        sourceSpeaker: source.speaker,
+        sourceQuote: source.text,
+        sourceCreatedAt: source.createdAt,
+        text,
+        origin: status === "proposed" ? "llm" : "manual",
+        status,
+        ...(status === "confirmed" ? { confirmedAt: new Date() } : {}),
+      });
+      return source;
+    }
+
+    await insertRecord(proposedText, proposedText, "proposed");
+    const arabicSource = await insertRecord(arabicQuote, arabicText, "confirmed");
+    const englishSource = await insertRecord(englishQuote, englishText, "confirmed");
+
+    const response = await host.request.get(exportPath);
+    expect(response.ok()).toBe(true);
+    expect(response.headers()["content-type"]).toBe("text/plain; charset=utf-8");
+    expect(response.headers()["content-disposition"]).toBe(`attachment; filename="lor-${code}-decisions.txt"`);
+    expect(response.headers()["cache-control"]).toBe("no-store");
+    const expected =
+      `[${arabicSource.createdAt.toISOString()}] أحمد\n` +
+      `Decision: ${arabicText}\n` +
+      `Evidence: ${arabicQuote}\n\n` +
+      `[${englishSource.createdAt.toISOString()}] Sarah\n` +
+      `Decision: ${englishText}\n` +
+      `Evidence: ${englishQuote}`;
+    const exportedText = await response.text();
+    expect(exportedText).toBe(expected);
+    expect(exportedText).not.toContain(proposedText);
+
+    // The request is room scoped; another meeting does not become an export
+    // oracle or receive the confirmed record above.
+    const otherCode = await createRoom(host);
+    const otherResponse = await host.request.get(`/api/rooms/${otherCode}/decisions/export`);
+    expect(otherResponse.status()).toBe(204);
+
+    // Download works as a real, keyboard-accessible browser action. It remains
+    // a link rather than a scripted click so browsers retain their download
+    // affordance on both desktop and touch devices.
+    await join(host, code, "Ahmed");
+    await host.setViewportSize({ width: 375, height: 667 });
+    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
+    await host.getByRole("button", { name: "Decisions", exact: true }).click();
+    const exportLink = host.getByRole("link", { name: "Download confirmed decisions", exact: true });
+    await expect(exportLink).toBeVisible();
+    await exportLink.focus();
+    await expect(exportLink).toBeFocused();
+    const downloadPromise = host.waitForEvent("download");
+    await host.keyboard.press("Enter");
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`lor-${code}-decisions.txt`);
+    const downloadPath = await download.path();
+    expect(downloadPath).not.toBeNull();
+    await expect(readFile(downloadPath!, "utf8")).resolves.toBe(expected);
+    expect(await host.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+    // A room with no confirmed record exposes a disabled native control. Even
+    // an explicit click event cannot turn it into a request or empty download.
+    const emptyCode = await createRoom(host);
+    await join(host, emptyCode, "Ahmed");
+    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
+    await host.getByRole("button", { name: "Decisions", exact: true }).click();
+    const disabledExport = host.getByRole("button", { name: "Download confirmed decisions", exact: true });
+    await expect(disabledExport).toBeDisabled();
+    await expect(host.getByText("Confirm a decision before there is anything to download.", { exact: true })).toBeVisible();
+    let emptyExportRequests = 0;
+    host.on("request", (request) => {
+      if (request.url().includes(`/api/rooms/${emptyCode}/decisions/export`)) emptyExportRequests++;
+    });
+    await disabledExport.dispatchEvent("click");
+    expect(emptyExportRequests).toBe(0);
+
+    // Retention and deletion are run again by the download route itself, not
+    // trusted to the panel's earlier GET. Deleting the transcript clears the
+    // export immediately, including decisions that were already confirmed.
+    const deleted = await host.request.delete(`/api/rooms/${code}/transcript`);
+    expect(deleted.ok()).toBe(true);
+    expect((await host.request.get(exportPath)).status()).toBe(204);
+
+    const expiredCode = await createRoom(host);
+    const expiredLine = await host.request.post(`/api/rooms/${expiredCode}/transcript`, {
+      data: { text: "قرار انتهت مدة حفظ دليله", speaker: "أحمد", identity: "export-expired" },
+    });
+    expect(expiredLine.status()).toBe(201);
+    const [expiredRoom] = await db
+      .select({ id: rooms.id })
+      .from(rooms)
+      .where(eq(rooms.code, expiredCode))
+      .limit(1);
+    if (!expiredRoom) throw new Error("The expiry room was not stored");
+    const [expiredSource] = await db
+      .select({ id: transcriptLines.id, seq: transcriptLines.seq, createdAt: transcriptLines.createdAt })
+      .from(transcriptLines)
+      .where(eq(transcriptLines.roomId, expiredRoom.id))
+      .limit(1);
+    if (!expiredSource) throw new Error("The expiry source was not stored");
+    const [expiredDecision] = await db
+      .insert(decisions)
+      .values({
+        roomId: expiredRoom.id,
+        sourceLineId: expiredSource.id,
+        sourceSeq: expiredSource.seq,
+        sourceSpeaker: "أحمد",
+        sourceQuote: "قرار انتهت مدة حفظ دليله",
+        sourceCreatedAt: expiredSource.createdAt,
+        text: "قرار قديم",
+        status: "confirmed",
+        confirmedAt: new Date(),
+      })
+      .returning({ id: decisions.id });
+    if (!expiredDecision) throw new Error("The expiry decision was not stored");
+    await db
+      .update(transcriptLines)
+      .set({ createdAt: new Date("2000-01-01T00:00:00Z") })
+      .where(eq(transcriptLines.id, expiredSource.id));
+    expect((await host.request.get(`/api/rooms/${expiredCode}/decisions/export`)).status()).toBe(204);
+    const afterExpiry = await db
+      .select({ id: decisions.id })
+      .from(decisions)
+      .where(eq(decisions.id, expiredDecision.id));
+    expect(afterExpiry).toHaveLength(0);
   });
 
   test("decision foreign keys remove evidence records when a source or room is erased", async () => {
