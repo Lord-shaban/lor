@@ -16,7 +16,9 @@ export function snapshotEtag(version: number) {
 }
 
 export function parseSnapshotEtag(value: string | null) {
-  const match = value?.match(/^"(\d+)"$/);
+  // Proxies may weaken response ETags during compression. This tag carries
+  // our database revision, not a byte-for-byte HTTP representation checksum.
+  const match = value?.match(/^(?:W\/)?"(\d+)"$/);
   if (!match) return null;
 
   const version = Number(match[1]);

@@ -5,10 +5,16 @@ import { useLocale, useTranslations } from "next-intl";
 import { useCanvasDocument } from "@/components/call/use-yjs-room";
 
 const WhiteboardEditor = dynamic(
-  () =>
-    import("@/components/call/whiteboard-editor").then(
+  () => {
+    // Excalidraw reads this as its module loads. The build copies its fonts
+    // under public/excalidraw so the board never depends on a third-party CDN.
+    if (typeof window !== "undefined") {
+      (window as Window & { EXCALIDRAW_ASSET_PATH?: string }).EXCALIDRAW_ASSET_PATH = "/excalidraw/";
+    }
+    return import("@/components/call/whiteboard-editor").then(
       ({ WhiteboardEditor: Editor }) => Editor,
-    ),
+    );
+  },
   {
     ssr: false,
     loading: () => <WhiteboardLoading />,

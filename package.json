@@ -12,6 +12,11 @@
   "engines": {
     "node": ">=20.9.0"
   },
+  "overrides": {
+    "@excalidraw/excalidraw": { "nanoid": "3.3.18" },
+    "@excalidraw/mermaid-to-excalidraw": { "nanoid": "5.1.16" },
+    "lodash-es": "4.18.1"
+  },
   "scripts": {
     "dev": "npm run dev --workspace web",
     "build": "npm run build --workspace web",

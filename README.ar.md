@@ -205,7 +205,7 @@ serverless وعلى سيرفر واحد مستضاف ذاتياً.
               └───────────────────────────────┘
 ```
 
-**الستاك:** Next.js 16 · React 19 · TypeScript · Tailwind 4 · LiveKit · Yjs · tldraw ·
+**الستاك:** Next.js 16 · React 19 · TypeScript · Tailwind 4 · LiveKit · Yjs · Excalidraw ·
 Drizzle · Postgres.
 
 ## خريطة الطريق
@@ -245,5 +245,5 @@ Drizzle · Postgres.
 [AGPL-3.0](LICENSE). تقدر تشغّل وتعدّل وتستضيف LOR.‎ بحرية. لو قدّمت نسخة معدّلة كخدمة
 على الشبكة، لازم تنشر تعديلاتك.
 
-مبني على [LiveKit](https://livekit.io) و[Yjs](https://yjs.dev) و[tldraw](https://tldraw.dev)
+مبني على [LiveKit](https://livekit.io) و[Yjs](https://yjs.dev) و[Excalidraw](https://github.com/excalidraw/excalidraw)
 و[Whisper](https://github.com/openai/whisper).

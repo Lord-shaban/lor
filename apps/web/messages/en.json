@@ -189,7 +189,9 @@
       "open": "Open shared whiteboard",
       "close": "Close shared whiteboard",
       "loading": "Getting the shared board ready…",
-      "live": "Changes appear for everyone in this call."
+      "live": "Changes appear for everyone in this call.",
+      "legacyNotice": "The previous board is preserved as an archive. New drawings use this board.",
+      "legacyDownload": "Download previous board data"
     },
     "reactions": {
       "open": "Send a reaction",

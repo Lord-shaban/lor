@@ -34,6 +34,20 @@ const MEDIA_TIMEOUT = 45_000;
 // share `127.0.0.1` and consume the real ten-rooms-per-hour test bucket.
 const E2E_CALLER_ADDRESS = `playwright-${randomUUID()}`;
 
+/** Inspect painted document pixels, not just a mounted canvas element. */
+async function boardInk(page: Page) {
+  return page.locator("canvas.excalidraw__canvas.static").evaluate((node) => {
+    const canvas = node as HTMLCanvasElement;
+    const context = canvas.getContext("2d")!;
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let ink = 0;
+    for (let i = 0; i < pixels.length; i += 4) {
+      if (Math.abs(pixels[i] - pixels[0]) + Math.abs(pixels[i + 1] - pixels[1]) + Math.abs(pixels[i + 2] - pixels[2]) > 60) ink++;
+    }
+    return ink;
+  });
+}
+
 /** Videos on this page that are decoding frames, not merely present. */
 async function playingVideos(page: Page): Promise<number> {
   return page.evaluate(
@@ -59,8 +73,8 @@ async function createRoom(page: Page): Promise<string> {
   return code as string;
 }
 
-async function join(page: Page, code: string, name: string) {
-  await page.goto(`/en/${code}`);
+async function join(page: Page, code: string, name: string, locale = "en") {
+  await page.goto(`/${locale}/${code}`);
 
   const nameField = page.locator('input[autocomplete="name"]');
   await expect(nameField).toBeVisible();
@@ -69,7 +83,7 @@ async function join(page: Page, code: string, name: string) {
   await page.locator('button[type="submit"]').click();
 
   // In the call, not merely past the prejoin.
-  await expect(page.getByRole("button", { name: "Leave" })).toBeVisible();
+  await expect(page.getByRole("button", { name: locale === "ar" ? "اخرج" : "Leave", exact: true })).toBeVisible();
 }
 
 test.describe("a call between two people", () => {
@@ -169,33 +183,29 @@ test.describe("a call between two people", () => {
 
     await first.getByRole("button", { name: "Open shared whiteboard" }).click();
     await expect(first.getByRole("heading", { name: "Board" })).toBeVisible();
-    const firstCanvas = first.locator(".tl-canvas").first();
+    const firstCanvas = first.locator("canvas.excalidraw__canvas.interactive");
     await expect(firstCanvas).toBeVisible();
-    await expect(first.locator(".tlui-layout")).toBeVisible();
+    await second.getByRole("button", { name: "Open shared whiteboard" }).click();
+    await expect(second.locator("canvas.excalidraw__canvas.interactive")).toBeVisible();
 
     // Do not interact yet. The original report reproduces after the Canvas
     // persistence lifecycle settles, even if the participant only waits.
-    await first.waitForTimeout(8_000);
-    await expect(first.locator(".tlui-layout")).toBeVisible();
+    await first.waitForTimeout(12_000);
+    await expect(firstCanvas).toBeVisible();
 
     // The drawing shortcut is a deliberate stroke, not a synthetic store
-    // update: this covers the tldraw UI, its record listener, Yjs, and the
+    // update: this covers the Excalidraw UI, its record listener, Yjs, and the
     // existing LiveKit data channel together.
     const canvasBox = await firstCanvas.boundingBox();
     expect(canvasBox).not.toBeNull();
     if (!canvasBox) throw new Error("The whiteboard canvas has no visible box");
-    await first.keyboard.press("d");
-    await first.mouse.move(canvasBox.x + 120, canvasBox.y + 120);
+    await first.keyboard.press("p");
+    await first.mouse.move(canvasBox.x + 320, canvasBox.y + 180);
     await first.mouse.down();
-    await first.mouse.move(canvasBox.x + 260, canvasBox.y + 180, { steps: 8 });
+    await first.mouse.move(canvasBox.x + 460, canvasBox.y + 240, { steps: 8 });
     await first.mouse.up();
-    await expect(first.locator(".tl-shape")).not.toHaveCount(0);
-
-    // Open after the stroke. This is the practical late-open path: the second
-    // tldraw store is built from the shared Yjs document it already received.
-    await second.getByRole("button", { name: "Open shared whiteboard" }).click();
-    await expect(second.getByRole("heading", { name: "Board" })).toBeVisible();
-    await expect(second.locator(".tl-shape")).not.toHaveCount(0);
+    await expect.poll(() => boardInk(first)).toBeGreaterThan(100);
+    await expect.poll(() => boardInk(second)).toBeGreaterThan(100);
 
     // Panning is session state. It must remain local while the shared board
     // stays rendered after the background persistence cycle has settled.
@@ -205,40 +215,85 @@ test.describe("a call between two people", () => {
     await first.mouse.move(canvasBox.x + 460, canvasBox.y + 340, { steps: 4 });
     await first.mouse.up();
     await first.waitForTimeout(8_000);
-    await expect(first.getByRole("application", { name: "tldraw" })).toBeVisible();
+    await expect(firstCanvas).toBeVisible();
     await expect(first.getByRole("heading", { name: "Board" })).toBeVisible();
-    await expect(first.locator(".tlui-layout")).toBeVisible();
 
     // Undo/redo and an ordinary selection-delete all become document records;
     // checking them across pages prevents the board from being "shared" only
     // for newly-created strokes.
     await first.keyboard.press("Control+z");
-    await expect(first.locator(".tl-shape")).toHaveCount(0);
-    await expect(second.locator(".tl-shape")).toHaveCount(0);
+    await expect.poll(() => boardInk(first)).toBe(0);
+    await expect.poll(() => boardInk(second)).toBe(0);
     await first.keyboard.press("Control+Shift+z");
-    await expect(second.locator(".tl-shape")).not.toHaveCount(0);
-    await first.getByRole("button", { name: "Select — V" }).click();
-    const shapeBox = await first.locator(".tl-shape").boundingBox();
-    expect(shapeBox).not.toBeNull();
-    if (!shapeBox) throw new Error("The shared drawing has no visible box");
-    await first.mouse.click(
-      shapeBox.x + shapeBox.width / 2,
-      shapeBox.y + shapeBox.height / 2,
-    );
+    await expect.poll(() => boardInk(second)).toBeGreaterThan(100);
+    await first.keyboard.press("v");
+    await first.keyboard.press("Control+a");
     await first.keyboard.press("Delete");
-    await expect(first.locator(".tl-shape")).toHaveCount(0);
-    await expect(second.locator(".tl-shape")).toHaveCount(0);
+    await expect.poll(() => boardInk(first)).toBe(0);
+    await expect.poll(() => boardInk(second)).toBe(0);
 
     const sharedText = "قرار: deploy الخميس";
     await first.keyboard.press("t");
     await first.mouse.click(canvasBox.x + 300, canvasBox.y + 220);
-    await first.keyboard.type(sharedText);
+    await first.locator("textarea.excalidraw-wysiwyg").fill(sharedText);
     await first.keyboard.press("Escape");
-    // Cameras are deliberately local now, so this text can be outside the
-    // second participant's viewport after the first participant pans. Assert
-    // that the actual canvas received the exact bilingual text, rather than
-    // making one participant's camera position a hidden test dependency.
-    await expect(second.getByTestId("canvas").getByText(sharedText)).toHaveCount(1);
+    await expect.poll(() => boardInk(second)).toBeGreaterThan(100);
+    await expect.poll(async () => {
+      const response = await first.request.get(`/api/rooms/${code}/canvas`);
+      if (response.status() !== 200) return [];
+      const saved = new Y.Doc();
+      Y.applyUpdate(saved, new Uint8Array(await response.body()));
+      const texts = Array.from(saved.getMap<{ text?: string }>("excalidraw-elements").values()).map(e => e.text);
+      saved.destroy();
+      return texts;
+    }).toContain(sharedText);
+    // Reload discards live state: the actual persisted drawing must repaint.
+    await first.getByRole("button", { name: "Leave", exact: true }).click();
+    await second.getByRole("button", { name: "Leave", exact: true }).click();
+    await join(first, code, "Ahmed");
+    await first.getByRole("button", { name: "Open shared whiteboard" }).click();
+    await expect.poll(() => boardInk(first)).toBeGreaterThan(100);
+  });
+
+  test("the board survives a failed save, retries, and accepts proxy-weakened ETags", async () => {
+    const first = await alice.newPage();
+    const code = await createRoom(first);
+    let attempts = 0;
+    let saved = 0;
+    await first.route(`**/api/rooms/${code}/canvas`, async route => {
+      if (route.request().method() !== "PUT") return route.continue();
+      attempts++;
+      if (attempts === 1) return route.fulfill({ status: 503, body: "Temporary outage" });
+      const response = await route.fetch();
+      const headers = response.headers();
+      if (response.ok() && headers.etag) {
+        saved++;
+        headers.etag = `W/${headers.etag.replace(/^W\//, "")}`;
+      }
+      await route.fulfill({ response, headers });
+    });
+    await join(first, code, "Ahmed");
+    await first.getByRole("button", { name: "Open shared whiteboard" }).click();
+    const canvas = first.locator("canvas.excalidraw__canvas.interactive");
+    await expect(canvas).toBeVisible();
+    const box = (await canvas.boundingBox())!;
+    async function stroke(offset: number) {
+      await first.keyboard.press("p");
+      await first.mouse.move(box.x + 320, box.y + 180 + offset);
+      await first.mouse.down();
+      await first.mouse.move(box.x + 480, box.y + 230 + offset, { steps: 6 });
+      await first.mouse.up();
+    }
+    await stroke(0);
+    await expect.poll(() => attempts).toBe(1);
+    await expect(first.getByText(/The shared Canvas could not be saved/)).toBeVisible();
+    await expect.poll(() => boardInk(first)).toBeGreaterThan(100);
+    await expect.poll(() => saved, { timeout: 20_000 }).toBe(1);
+    await expect(first.getByText(/Shared board and notes are kept/)).toBeVisible();
+    await stroke(80);
+    await expect.poll(() => saved).toBe(2);
+    await expect(first.getByText(/The shared Canvas could not be saved/)).toHaveCount(0);
+    await expect.poll(() => boardInk(first)).toBeGreaterThan(100);
   });
 
   test("the shared whiteboard stays usable on a phone and in landscape", async () => {
@@ -249,7 +304,7 @@ test.describe("a call between two people", () => {
     await join(first, code, "Ahmed");
     await first.getByRole("button", { name: "Open shared whiteboard" }).click();
     const board = first.getByRole("region", { name: "Board" });
-    await expect(board.getByRole("application", { name: "tldraw" })).toBeVisible();
+    await expect(board.locator("canvas.excalidraw__canvas.interactive")).toBeVisible();
     const close = board.getByRole("button", { name: "Close shared whiteboard" });
     await expect(close).toBeVisible();
 
@@ -261,7 +316,7 @@ test.describe("a call between two people", () => {
     // rather than leaving the close control beyond the short viewport.
     await first.setViewportSize({ width: 667, height: 375 });
     await expect(close).toBeVisible();
-    await expect(first.getByRole("toolbar", { name: "Tools" })).toBeVisible();
+    await expect(board.locator("canvas.excalidraw__canvas.interactive")).toBeVisible();
   });
 
   test("a Canvas snapshot restores from Postgres and deletes board and notes together", async () => {

@@ -130,7 +130,7 @@ draft re-aligns the box and moves the caret under the person typing.
 ## Stack and layout
 
 Next.js 16 (App Router) · React 19 · TypeScript 7 · Tailwind 4 · LiveKit · Yjs ·
-tldraw · Drizzle · Postgres. npm workspaces; ESLint is pinned to 9 because ESLint 10
+Excalidraw · Drizzle · Postgres. npm workspaces; ESLint is pinned to 9 because ESLint 10
 breaks `eslint-plugin-react`, which arrives through `eslint-config-next`.
 
 ```
@@ -228,6 +228,17 @@ it, rather than four and skim them.
 belongs in a transcript any more than in the database.
 
 ## Mistakes already made here
+
+**Whiteboard disappears only on deployed HTTPS.** tldraw 5.4 deliberately hides
+its editor after five seconds without a production licence. Localhost tests
+are exempt and missed it twice. The user approved MIT-licensed Excalidraw as
+the replacement. Verify the deployed domain too. Previous `tldraw-records`
+remain in the room snapshot and can be downloaded from the board; they are
+not automatically converted to the new editor's format.
+
+**Successful Canvas save reported as failed.** Vercel can return a weak ETag
+such as `W/"2"` on a successful PUT. The client accepts strong and weak response
+tags, then sends the extracted database revision as a canonical `If-Match`.
 
 Each of these cost real time. The symptom is what identifies them.
 

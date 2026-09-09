@@ -3,6 +3,8 @@
   "version": "0.1.5",
   "private": true,
   "scripts": {
+    "predev": "node ../../scripts/copy-board-fonts.mjs",
+    "prebuild": "node ../../scripts/copy-board-fonts.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -13,6 +15,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@excalidraw/excalidraw": "0.18.1",
     "@livekit/components-react": "^2.9.24",
     "@lor/db": "^0.1.5",
     "@radix-ui/react-dialog": "^1.1.23",
@@ -30,7 +33,6 @@
     "server-only": "^0.0.1",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.6.0",
-    "tldraw": "^5.4.0",
     "yjs": "^13.6.32"
   },
   "devDependencies": {

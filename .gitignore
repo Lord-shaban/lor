@@ -43,6 +43,7 @@ yarn-error.log*
 apps/web/test-results/
 apps/web/playwright-report/
 apps/web/blob-report/
+apps/web/public/excalidraw/
 
 # eval artifacts (audio fixtures are large)
 eval/captions/audio/
