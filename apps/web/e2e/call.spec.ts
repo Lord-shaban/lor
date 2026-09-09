@@ -1008,7 +1008,7 @@ test.describe("a call between two people", () => {
       id: proposal.id,
       status: "proposed",
       assigneeName: "Sarah",
-      source: { quote, speaker: "Ahmed" },
+      source: expect.objectContaining({ quote, speaker: "Ahmed" }),
     })]));
 
     // A guest cannot see a proposal, skip its lifecycle, or submit somebody

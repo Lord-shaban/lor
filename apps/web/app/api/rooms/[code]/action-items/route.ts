@@ -15,7 +15,7 @@ import { findRoomAccess, hasRoomHostAccess } from "@/lib/room-access";
 import { keptSince, retentionDays } from "@/lib/stt/retention";
 import { sweepTranscript } from "@/lib/transcript-retention";
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SESSION_HEADER = "x-lor-session-id";
 
 function notFound() {
