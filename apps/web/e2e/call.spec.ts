@@ -48,6 +48,25 @@ async function boardInk(page: Page) {
   });
 }
 
+function addNoteParagraph(document: Y.Doc, value: string) {
+  const paragraph = new Y.XmlElement("paragraph");
+  const text = new Y.XmlText();
+  text.insert(0, value);
+  paragraph.insert(0, [text]);
+  const notes = document.getXmlFragment("notes");
+  notes.insert(notes.length, [paragraph]);
+}
+
+async function persistedNotes(page: Page, code: string) {
+  const response = await page.request.get(`/api/rooms/${code}/canvas`);
+  if (response.status() !== 200) return "";
+  const saved = new Y.Doc();
+  Y.applyUpdate(saved, new Uint8Array(await response.body()));
+  const notes = saved.getXmlFragment("notes").toString();
+  saved.destroy();
+  return notes;
+}
+
 /** Videos on this page that are decoding frames, not merely present. */
 async function playingVideos(page: Page): Promise<number> {
   return page.evaluate(
@@ -171,6 +190,90 @@ test.describe("a call between two people", () => {
     await expect
       .poll(() => playingVideos(first), { timeout: MEDIA_TIMEOUT })
       .toBeGreaterThanOrEqual(2);
+  });
+
+  test("shared rich-text notes merge, paste, and restore for a late participant", async () => {
+    const first = await alice.newPage();
+    const second = await bob.newPage();
+    const code = await createRoom(first);
+    const decision = "قرار: deploy الخميس";
+    const followUp = "Follow up with the design team";
+    const saraNote = "سارة هتراجع الـ PR";
+
+    await join(first, code, "Ahmed");
+    await first.getByRole("button", { name: "Open shared notes" }).click();
+    const firstNotes = first.getByTestId("shared-notes");
+    const firstEditor = firstNotes.locator(".ProseMirror");
+    await expect(firstEditor).toBeVisible();
+
+    // Real editor input and its Ctrl+B shortcut prove the rich-text surface is
+    // not a plain textarea with an optimistic preview.
+    await firstEditor.focus();
+    await first.keyboard.press("Control+b");
+    await first.keyboard.insertText(decision);
+    await first.keyboard.press("Control+b");
+    await first.keyboard.press("Enter");
+
+    // Native paste matters for meeting notes copied from tickets and docs.
+    await first.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await first.evaluate((value) => navigator.clipboard.writeText(value), followUp);
+    await first.keyboard.press("Control+v");
+    await expect(firstNotes.locator(".ProseMirror strong")).toContainText(decision);
+
+    // Sara joins after the first note exists. Her Yjs state-vector request must
+    // get the existing fragment without either person reloading the call.
+    await join(second, code, "سارة");
+    await second.getByRole("button", { name: "Open shared notes" }).click();
+    const secondNotes = second.getByTestId("shared-notes");
+    await expect(secondNotes.locator(".ProseMirror")).toContainText(decision);
+    await expect(secondNotes.locator(".ProseMirror")).toContainText(followUp);
+    await expect(secondNotes.locator(".ProseMirror strong")).toContainText(decision);
+
+    const secondEditor = secondNotes.locator(".ProseMirror");
+    await secondEditor.focus();
+    await second.keyboard.press("Control+End");
+    await second.keyboard.press("Enter");
+    await second.keyboard.insertText(saraNote);
+    await expect(firstNotes.locator(".ProseMirror")).toContainText(saraNote);
+
+    // The durable snapshot is shared by notes and the board, but contains only
+    // the room Yjs document — no media, transcript, keys, or a second service.
+    await expect.poll(() => persistedNotes(first, code)).toContain(decision);
+    await expect.poll(() => persistedNotes(first, code)).toContain(followUp);
+    await expect.poll(() => persistedNotes(first, code)).toContain(saraNote);
+
+    await firstNotes.getByRole("button", { name: "Close shared notes" }).click();
+    await first.getByRole("button", { name: "Leave", exact: true }).click();
+    await second.getByRole("button", { name: "Leave", exact: true }).click();
+    await join(first, code, "Ahmed");
+    await first.getByRole("button", { name: "Open shared notes" }).click();
+    await expect(first.getByTestId("shared-notes").locator(".ProseMirror")).toContainText(decision);
+    await expect(first.getByTestId("shared-notes").locator(".ProseMirror")).toContainText(saraNote);
+  });
+
+  test("shared notes stay readable and operable in Arabic on a phone", async () => {
+    const first = await alice.newPage();
+    await first.setViewportSize({ width: 375, height: 667 });
+    const code = await createRoom(first);
+
+    await join(first, code, "أحمد", "ar");
+    await first.getByRole("button", { name: "افتح النوتس المشتركة" }).click();
+    const notes = first.getByRole("region", { name: "النوتس" });
+    const editor = notes.locator(".ProseMirror");
+    await expect(editor).toBeVisible();
+    await expect(editor).toHaveAttribute("dir", "auto");
+    await editor.focus();
+    await first.keyboard.insertText("قرار: deploy الخميس");
+    await expect(editor).toContainText("قرار: deploy الخميس");
+
+    const close = notes.getByRole("button", { name: "اقفل النوتس المشتركة" });
+    const closeBox = await close.boundingBox();
+    expect(closeBox?.width).toBeGreaterThanOrEqual(44);
+    expect(closeBox?.height).toBeGreaterThanOrEqual(44);
+
+    await first.setViewportSize({ width: 667, height: 375 });
+    await expect(close).toBeVisible();
+    await expect(editor).toBeVisible();
   });
 
   test("a shared whiteboard carries drawing and bilingual text to another participant", async () => {
@@ -324,7 +427,7 @@ test.describe("a call between two people", () => {
     const code = await createRoom(first);
     const source = new Y.Doc();
     source.getMap("board").set("shape", "rectangle");
-    source.getText("notes").insert(0, "قرار: deploy يوم الخميس");
+    addNoteParagraph(source, "قرار: deploy يوم الخميس");
     const update = Y.encodeStateAsUpdate(source);
     const canvasPath = `/api/rooms/${code}/canvas`;
 
@@ -355,7 +458,7 @@ test.describe("a call between two people", () => {
     const restored = new Y.Doc();
     Y.applyUpdate(restored, new Uint8Array(await loaded.body()));
     expect(restored.getMap("board").get("shape")).toBe("rectangle");
-    expect(restored.getText("notes").toString()).toBe("قرار: deploy يوم الخميس");
+    expect(restored.getXmlFragment("notes").toString()).toContain("قرار: deploy يوم الخميس");
 
     // Rendering the status verifies that a re-opened call both reads storage
     // and tells the meeting how long the joint board-and-notes record lives.

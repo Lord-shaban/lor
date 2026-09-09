@@ -109,7 +109,7 @@ describe("Yjs over the LiveKit data channel", () => {
     const firstRoom = new FakeRoom();
     const firstDocument = new Y.Doc();
     const first = createProvider(firstRoom, firstDocument);
-    firstDocument.getText("notes").insert(0, "قرار: deploy على production");
+    firstDocument.getText("transport-text").insert(0, "قرار: deploy على production");
     await first.whenIdle();
     firstRoom.sent.splice(0); // local edits are already in the first document
 
@@ -128,7 +128,7 @@ describe("Yjs over the LiveKit data channel", () => {
 
     await deliver(firstRoom, secondRoom, "first");
     await second.whenIdle();
-    expect(secondDocument.getText("notes").toString()).toBe("قرار: deploy على production");
+    expect(secondDocument.getText("transport-text").toString()).toBe("قرار: deploy على production");
     expect(secondRoom.sent).toHaveLength(0);
   });
 
@@ -141,8 +141,8 @@ describe("Yjs over the LiveKit data channel", () => {
     const second = createProvider(secondRoom, secondDocument);
     await Promise.all([first.whenIdle(), second.whenIdle()]);
 
-    firstDocument.getText("notes").insert(0, "من الأول");
-    secondDocument.getText("notes").insert(0, " + from second");
+    firstDocument.getText("transport-text").insert(0, "من الأول");
+    secondDocument.getText("transport-text").insert(0, " + from second");
     await Promise.all([first.whenIdle(), second.whenIdle()]);
 
     firstRoom.activate("second");
@@ -156,8 +156,8 @@ describe("Yjs over the LiveKit data channel", () => {
     }
 
     expect(firstDocument.toJSON()).toEqual(secondDocument.toJSON());
-    expect(firstDocument.getText("notes").toString()).toContain("من الأول");
-    expect(firstDocument.getText("notes").toString()).toContain("from second");
+    expect(firstDocument.getText("transport-text").toString()).toContain("من الأول");
+    expect(firstDocument.getText("transport-text").toString()).toContain("from second");
   });
 
   it("splits a large update, tolerates duplicate chunks, and restores the exact mixed text", async () => {
@@ -167,7 +167,7 @@ describe("Yjs over the LiveKit data channel", () => {
     await sender.whenIdle();
 
     const expected = `ابدأ بـ deploy ثم ${"ملاحظة ".repeat(5_000)}finish`;
-    senderDocument.getText("notes").insert(0, expected);
+    senderDocument.getText("transport-text").insert(0, expected);
     await sender.whenIdle();
     expect(senderRoom.sent.length).toBeGreaterThan(1);
     expect(senderRoom.sent.every((packet) => packet.payload.byteLength <= MAX_YJS_PACKET_BYTES)).toBe(true);
@@ -181,7 +181,7 @@ describe("Yjs over the LiveKit data channel", () => {
     // assembly and Yjs update path do not turn duplication into corruption.
     const duplicate = packets[0];
     if (duplicate) receiverRoom.receive(duplicate.payload);
-    expect(receiverDocument.getText("notes").toString()).toBe(expected);
+    expect(receiverDocument.getText("transport-text").toString()).toBe(expected);
   });
 
   it("drops malformed, oversized, and wrong-room packets without changing the document", () => {
@@ -218,7 +218,7 @@ describe("Yjs over the LiveKit data channel", () => {
     await provider.whenIdle();
 
     provider.destroy();
-    document.getText("notes").insert(0, "لن تُرسل");
+    document.getText("transport-text").insert(0, "لن تُرسل");
     room.reconnect();
     await provider.whenIdle();
 

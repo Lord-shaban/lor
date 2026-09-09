@@ -55,6 +55,8 @@ export function CallControls({
   onToggleChat,
   whiteboardOpen,
   onToggleWhiteboard,
+  notesOpen,
+  onToggleNotes,
   isHost,
   doorOpen,
   waitingCount,
@@ -75,6 +77,8 @@ export function CallControls({
   onToggleChat: () => void;
   whiteboardOpen: boolean;
   onToggleWhiteboard: () => void;
+  notesOpen: boolean;
+  onToggleNotes: () => void;
   isHost: boolean;
   doorOpen: boolean;
   waitingCount: number;
@@ -171,6 +175,21 @@ export function CallControls({
             )}
           >
             {t("whiteboard.title")}
+          </button>
+
+          <button
+            type="button"
+            onClick={onToggleNotes}
+            aria-pressed={notesOpen}
+            aria-label={notesOpen ? t("notes.close") : t("notes.open")}
+            className={cn(
+              "h-11 rounded-md px-4 text-sm font-medium transition-colors duration-150",
+              notesOpen
+                ? "bg-[#f4f4f5] text-[#0a0a0b] hover:opacity-90"
+                : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
+            )}
+          >
+            {t("notes.title")}
           </button>
         </>
       ) : (

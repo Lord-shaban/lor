@@ -193,6 +193,25 @@
       "legacyNotice": "The previous board is preserved as an archive. New drawings use this board.",
       "legacyDownload": "Download previous board data"
     },
+    "notes": {
+      "title": "Notes",
+      "open": "Open shared notes",
+      "close": "Close shared notes",
+      "loading": "Getting the shared notes ready…",
+      "live": "Changes appear for everyone in this call.",
+      "editorLabel": "Shared meeting notes",
+      "editorHint": "Type, paste, and format notes. Changes are shared with everyone in this call.",
+      "placeholder": "Capture decisions, actions, and questions…",
+      "toolbar": "Note formatting",
+      "bold": "Bold",
+      "italic": "Italic",
+      "heading": "Heading",
+      "bulletList": "Bulleted list",
+      "orderedList": "Numbered list",
+      "quote": "Quote",
+      "undo": "Undo",
+      "redo": "Redo"
+    },
     "reactions": {
       "open": "Send a reaction",
       "sent": "{name} reacted {emoji}",
