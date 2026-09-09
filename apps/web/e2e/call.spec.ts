@@ -171,6 +171,12 @@ test.describe("a call between two people", () => {
     await expect(first.getByRole("heading", { name: "Board" })).toBeVisible();
     const firstCanvas = first.locator(".tl-canvas").first();
     await expect(firstCanvas).toBeVisible();
+    await expect(first.locator(".tlui-layout")).toBeVisible();
+
+    // Do not interact yet. The original report reproduces after the Canvas
+    // persistence lifecycle settles, even if the participant only waits.
+    await first.waitForTimeout(8_000);
+    await expect(first.locator(".tlui-layout")).toBeVisible();
 
     // The drawing shortcut is a deliberate stroke, not a synthetic store
     // update: this covers the tldraw UI, its record listener, Yjs, and the
@@ -191,17 +197,17 @@ test.describe("a call between two people", () => {
     await expect(second.getByRole("heading", { name: "Board" })).toBeVisible();
     await expect(second.locator(".tl-shape")).not.toHaveCount(0);
 
-    // Panning updates the shared viewport. It used to move tldraw's internal
-    // camera through a remote document merge, which could leave the board
-    // blank a moment after this interaction.
+    // Panning is session state. It must remain local while the shared board
+    // stays rendered after the background persistence cycle has settled.
     await first.keyboard.press("h");
     await first.mouse.move(canvasBox.x + 420, canvasBox.y + 300);
     await first.mouse.down();
     await first.mouse.move(canvasBox.x + 460, canvasBox.y + 340, { steps: 4 });
     await first.mouse.up();
-    await first.waitForTimeout(3_000);
+    await first.waitForTimeout(8_000);
     await expect(first.getByRole("application", { name: "tldraw" })).toBeVisible();
     await expect(first.getByRole("heading", { name: "Board" })).toBeVisible();
+    await expect(first.locator(".tlui-layout")).toBeVisible();
 
     // Undo/redo and an ordinary selection-delete all become document records;
     // checking them across pages prevents the board from being "shared" only
@@ -228,10 +234,11 @@ test.describe("a call between two people", () => {
     await first.mouse.click(canvasBox.x + 300, canvasBox.y + 220);
     await first.keyboard.type(sharedText);
     await first.keyboard.press("Escape");
-    // tldraw mirrors selected text into its accessibility status, so scope to
-    // the actual canvas rather than asking Playwright to choose between the
-    // visible shape and that announcement.
-    await expect(second.getByTestId("canvas").getByText(sharedText)).toBeVisible();
+    // Cameras are deliberately local now, so this text can be outside the
+    // second participant's viewport after the first participant pans. Assert
+    // that the actual canvas received the exact bilingual text, rather than
+    // making one participant's camera position a hidden test dependency.
+    await expect(second.getByTestId("canvas").getByText(sharedText)).toHaveCount(1);
   });
 
   test("the shared whiteboard stays usable on a phone and in landscape", async () => {
