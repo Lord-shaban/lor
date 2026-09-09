@@ -611,6 +611,18 @@ test.describe("a call between two people", () => {
       data: { text: quote, speaker: "أحمد", identity: "host-evidence" },
     });
     expect(line.status()).toBe(201);
+    const storedTranscript = await host.request.get(transcriptPath);
+    const sourceSeq = (await storedTranscript.json() as {
+      lines: Array<{ seq: number; text: string }>;
+    }).lines.find((stored) => stored.text === quote)?.seq;
+    if (typeof sourceSeq !== "number") throw new Error("The decision source was not retained");
+    expect(sourceSeq).toBeGreaterThanOrEqual(0);
+
+    const hostBeforeProposal = await host.request.get(decisionsPath);
+    await expect(hostBeforeProposal.json()).resolves.toMatchObject({
+      canReview: true,
+      decisions: [],
+    });
 
     // A visitor can never see a pending decision, nor use the source sequence
     // to create one. Both behaviours exercise the current host cookie check.
@@ -621,7 +633,7 @@ test.describe("a call between two people", () => {
       decisions: [],
     });
     const guestProposal = await guest.request.post(decisionsPath, {
-      data: { sourceSeq: 0, text: "قرار مزيف" },
+      data: { sourceSeq, text: "قرار مزيف" },
     });
     expect(guestProposal.status()).toBe(404);
 
@@ -629,15 +641,16 @@ test.describe("a call between two people", () => {
     // the resulting quote, speaker, and time must come from transcript_lines.
     const proposalResponse = await host.request.post(decisionsPath, {
       data: {
-        sourceSeq: 0,
+        sourceSeq,
         text: "اعتماد التصميم بعد مراجعة سارة",
         quote: "اقتباس لم يقله أحد",
         speaker: "نموذج",
         at: "1999-01-01T00:00:00.000Z",
       },
     });
-    expect(proposalResponse.status()).toBe(201);
-    const proposal = await proposalResponse.json() as { id: string; status: string };
+    const proposalBody = await proposalResponse.text();
+    expect(proposalResponse.status(), proposalBody).toBe(201);
+    const proposal = JSON.parse(proposalBody) as { id: string; status: string };
     expect(proposal.status).toBe("proposed");
 
     const hostProposals = await host.request.get(decisionsPath);
@@ -648,7 +661,7 @@ test.describe("a call between two people", () => {
     expect(hostRecord[0]).toMatchObject({
       id: proposal.id,
       status: "proposed",
-      source: { seq: 0, quote, speaker: "أحمد" },
+      source: { seq: sourceSeq, quote, speaker: "أحمد" },
     });
     expect(hostRecord[0].source.at).not.toBe("1999-01-01T00:00:00.000Z");
 
@@ -716,7 +729,7 @@ test.describe("a call between two people", () => {
     // Create a second record, then remove its transcript. The route's derived-
     // first cleanup must leave neither a proposed decision nor its quotation.
     const secondProposal = await host.request.post(decisionsPath, {
-      data: { sourceSeq: 0, text: "قرار سيُحذف مع المصدر" },
+      data: { sourceSeq, text: "قرار سيُحذف مع المصدر" },
     });
     expect(secondProposal.status()).toBe(201);
     const deletedTranscript = await host.request.delete(transcriptPath);
