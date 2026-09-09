@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { and, asc, eq, gte, sql } from "drizzle-orm";
-import { decisions, getDb, rooms, summaries, transcriptLines } from "@lor/db";
+import { actionItems, decisions, getDb, rooms, summaries, transcriptLines } from "@lor/db";
 import { normalizeRoomCode } from "@/lib/room-code";
 import { keptSince, retentionDays } from "@/lib/stt/retention";
 import { MAX_CAPTION_LENGTH } from "@/lib/data-channel";
@@ -160,6 +160,7 @@ export async function DELETE(
 
   // Derived records first. If cleanup fails, source lines stay available for a
   // retry rather than leaving a quote or summary with no deletion path.
+  await db.delete(actionItems).where(eq(actionItems.roomId, room.id));
   await db.delete(decisions).where(eq(decisions.roomId, room.id));
   await db.delete(summaries).where(eq(summaries.roomId, room.id));
   await db.delete(transcriptLines).where(eq(transcriptLines.roomId, room.id));

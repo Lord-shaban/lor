@@ -1,7 +1,10 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   customType,
+  date,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -9,6 +12,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
@@ -23,8 +27,9 @@ const binary = customType<{ data: Buffer; driverData: Buffer }>({
 });
 
 /**
- * Everything v0.1 needs, plus the verified decision record introduced by
- * v0.2. Tasks and embeddings still wait for the releases that introduce them.
+ * The durable meeting record through v0.3: retained transcript, verified
+ * decisions, evidence-backed action items, and recurring-meeting boundaries.
+ * Embeddings still wait for their later release.
  *
  * Plain Postgres only — no Supabase-specific types or functions. Self-hosting is
  * a first-class path, and the hosted deployment must not diverge from it.
@@ -32,7 +37,8 @@ const binary = customType<{ data: Buffer; driverData: Buffer }>({
 
 /**
  * A room is created before anyone joins and outlives any single meeting, so a
- * recurring link keeps working. `v0.5` hangs meeting memory off this row.
+ * recurring link keeps working. v0.3 hangs occurrence lifecycle metadata from
+ * this row without making the recurring URL itself a meeting record.
  */
 export const rooms = pgTable(
   "rooms",
@@ -88,6 +94,47 @@ export const rooms = pgTable(
     index("rooms_last_seen_at_idx").on(table.lastSeenAt),
   ],
 );
+
+/**
+ * A durable boundary between two visits to the same recurring room.
+ *
+ * The token route creates this record only after asking LiveKit whether the
+ * media room is empty. It is room-scoped lifecycle metadata, not a second copy
+ * of anything somebody said in the meeting.
+ */
+export const meetingOccurrences = pgTable(
+  "meeting_occurrences",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    roomId: uuid("room_id")
+      .notNull()
+      .references(() => rooms.id, { onDelete: "cascade" }),
+
+    startedAt: timestamp("started_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    endedAt: timestamp("ended_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("meeting_occurrences_room_started_at_idx").on(
+      table.roomId,
+      table.startedAt,
+    ),
+    // One active occurrence is the recurrence invariant and the final
+    // database backstop if two token requests race through separate instances.
+    uniqueIndex("meeting_occurrences_room_active_unique")
+      .on(table.roomId)
+      .where(sql`${table.endedAt} is null`),
+    check(
+      "meeting_occurrences_end_after_start_check",
+      sql`${table.endedAt} is null or ${table.endedAt} >= ${table.startedAt}`,
+    ),
+  ],
+);
+
+export type MeetingOccurrence = typeof meetingOccurrences.$inferSelect;
+export type NewMeetingOccurrence = typeof meetingOccurrences.$inferInsert;
 
 export const knockStatus = pgEnum("knock_status", [
   "pending",
@@ -237,6 +284,16 @@ export const transcriptLines = pgTable(
   (table) => [
     // Every read is "this room, in order", and every delete is "this room".
     index("transcript_lines_room_seq_idx").on(table.roomId, table.seq),
+    // A composite FK from action items makes a source from another room
+    // impossible. Postgres requires the referenced tuple to be unique.
+    unique("transcript_lines_room_id_id_key").on(table.roomId, table.id),
+    // The action-item trigger resolves an assignee's canonical display-name
+    // snapshot from retained evidence, never from model or browser input.
+    index("transcript_lines_room_speaker_created_at_idx").on(
+      table.roomId,
+      table.speakerIdentity,
+      table.createdAt,
+    ),
   ],
 );
 
@@ -337,6 +394,127 @@ export const decisions = pgTable(
 
 export type Decision = typeof decisions.$inferSelect;
 export type NewDecision = typeof decisions.$inferInsert;
+
+export const actionItemStatus = pgEnum("action_item_status", [
+  "proposed",
+  "open",
+  "completed",
+]);
+
+/** Whether a host wrote the proposal or a bounded extractor supplied it. */
+export const actionItemOrigin = pgEnum("action_item_origin", ["manual", "llm"]);
+
+/**
+ * An evidence-backed task the room chose to retain.
+ *
+ * The application inserts only a source row id, task wording, provenance, and
+ * (where applicable) an already-resolved participant identity. The migration
+ * trigger fills evidence and the display-name snapshot from the transcript;
+ * database constraints then make an invalid lifecycle impossible even if a
+ * future route has a bug.
+ */
+export const actionItems = pgTable(
+  "action_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    roomId: uuid("room_id")
+      .notNull()
+      .references(() => rooms.id, { onDelete: "cascade" }),
+
+    sourceLineId: uuid("source_line_id").notNull(),
+    sourceSeq: integer("source_seq").notNull(),
+    sourceSpeaker: text("source_speaker").notNull(),
+    sourceQuote: text("source_quote").notNull(),
+    sourceCreatedAt: timestamp("source_created_at", { withTimezone: true }).notNull(),
+
+    /** A LiveKit identity from this room's retained transcript, never an account. */
+    assigneeIdentity: text("assignee_identity"),
+    /** Server-derived snapshot matching `assigneeIdentity` at assignment time. */
+    assigneeName: text("assignee_name"),
+
+    /** A calendar day, not an invented instant or timezone. */
+    dueOn: date("due_on", { mode: "string" }),
+
+    status: actionItemStatus("status").notNull().default("proposed"),
+    origin: actionItemOrigin("origin").notNull().default("manual"),
+
+    /** Reviewed task wording; it is distinct from the immutable source quote. */
+    text: text("text").notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    openedAt: timestamp("opened_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // This composite FK—not an application comparison—rejects a source line
+    // from another room. Deleting either source or room cascades this record.
+    foreignKey({
+      name: "action_items_room_source_line_transcript_lines_fk",
+      columns: [table.roomId, table.sourceLineId],
+      foreignColumns: [transcriptLines.roomId, transcriptLines.id],
+    }).onDelete("cascade"),
+    index("action_items_room_source_seq_idx").on(table.roomId, table.sourceSeq),
+    // The source FK needs its own leading-column index for fast cascades.
+    index("action_items_source_line_id_idx").on(table.sourceLineId),
+    // The next-meeting query reads only open work, ordered by when it opened.
+    index("action_items_room_opened_at_idx")
+      .on(table.roomId, table.openedAt)
+      .where(sql`${table.status} = 'open'`),
+    // A retry may not create a second copy of the same task from one source.
+    uniqueIndex("action_items_room_source_text_unique").on(
+      table.roomId,
+      table.sourceLineId,
+      table.text,
+    ),
+    check(
+      "action_items_nonempty_text_check",
+      sql`char_length(btrim(${table.text})) > 0`,
+    ),
+    check(
+      "action_items_assignee_pair_check",
+      sql`(
+        (${table.assigneeIdentity} is null and ${table.assigneeName} is null)
+        or (
+          ${table.assigneeIdentity} is not null
+          and ${table.assigneeName} is not null
+          and char_length(btrim(${table.assigneeIdentity})) > 0
+          and char_length(btrim(${table.assigneeName})) > 0
+        )
+      )`,
+    ),
+    check(
+      "action_items_lifecycle_state_check",
+      sql`(
+        ${table.status} = 'proposed'
+        and ${table.openedAt} is null
+        and ${table.completedAt} is null
+      ) or (
+        ${table.status} = 'open'
+        and ${table.assigneeIdentity} is not null
+        and ${table.assigneeName} is not null
+        and ${table.dueOn} is not null
+        and ${table.openedAt} is not null
+        and ${table.completedAt} is null
+      ) or (
+        ${table.status} = 'completed'
+        and ${table.assigneeIdentity} is not null
+        and ${table.assigneeName} is not null
+        and ${table.dueOn} is not null
+        and ${table.openedAt} is not null
+        and ${table.completedAt} is not null
+      )`,
+    ),
+  ],
+);
+
+export type ActionItem = typeof actionItems.$inferSelect;
+export type NewActionItem = typeof actionItems.$inferInsert;
 
 /**
  * The current durable form of a room's shared Canvas document.

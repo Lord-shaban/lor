@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";
-import { decisions, getDb, summaries, transcriptLines } from "@lor/db";
+import { actionItems, decisions, getDb, summaries, transcriptLines } from "@lor/db";
 import { sweepTranscript } from "./transcript-retention";
 
 vi.mock("@lor/db", async (original) => ({
@@ -29,25 +29,35 @@ describe("transcript retention", () => {
     const { calls } = database();
     const cutoff = new Date("2026-08-09T12:00:00Z");
     await sweepTranscript("room-a", cutoff);
-    expect(calls.map((call) => call.table)).toEqual([decisions, summaries, transcriptLines]);
-    expect(calls[0].sql).toContain('"decisions"."room_id" =');
+    expect(calls.map((call) => call.table)).toEqual([
+      actionItems,
+      decisions,
+      summaries,
+      transcriptLines,
+    ]);
+    expect(calls[0].sql).toContain('"action_items"."room_id" =');
     expect(calls[0].sql).toContain("exists (select");
     expect(calls[0].sql).toContain('"transcript_lines"."created_at" <');
     expect(calls[0].params).toEqual(["room-a", "room-a", cutoff.toISOString()]);
-    expect(calls[1].params).toEqual(["room-a", cutoff.toISOString(), "room-a", cutoff.toISOString()]);
-    expect(calls[2].params).toEqual(["room-a", cutoff.toISOString()]);
+    expect(calls[1].params).toEqual(["room-a", "room-a", cutoff.toISOString()]);
+    expect(calls[2].params).toEqual(["room-a", cutoff.toISOString(), "room-a", cutoff.toISOString()]);
+    expect(calls[3].params).toEqual(["room-a", cutoff.toISOString()]);
   });
 
-  it("leaves source rows available for retry if deleting a decision fails", async () => {
-    const { remove } = database(decisions);
+  it("leaves source rows available for retry if deleting an action item fails", async () => {
+    const { remove } = database(actionItems);
     await expect(sweepTranscript("room-a", new Date())).rejects.toThrow("cleanup unavailable");
     expect(remove).toHaveBeenCalledTimes(1);
-    expect(remove).toHaveBeenCalledWith(decisions);
+    expect(remove).toHaveBeenCalledWith(actionItems);
   });
 
   it("leaves transcript rows available for retry if another derived cleanup fails", async () => {
     const { remove } = database(summaries);
     await expect(sweepTranscript("room-a", new Date())).rejects.toThrow("cleanup unavailable");
-    expect(remove.mock.calls.map(([table]) => table)).toEqual([decisions, summaries]);
+    expect(remove.mock.calls.map(([table]) => table)).toEqual([
+      actionItems,
+      decisions,
+      summaries,
+    ]);
   });
 });

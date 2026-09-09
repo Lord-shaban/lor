@@ -50,6 +50,13 @@
       "when": 1788952245931,
       "tag": "0006_decision_extraction",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788960623809,
+      "tag": "0007_wealthy_queen_noir",
+      "breakpoints": true
     }
   ]
 }
