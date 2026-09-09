@@ -3,6 +3,7 @@ import { Buffer } from "node:buffer";
 import { readFile, stat } from "node:fs/promises";
 import { expect, test, type Page, type BrowserContext } from "@playwright/test";
 import { and, eq } from "drizzle-orm";
+import { RoomServiceClient } from "livekit-server-sdk";
 import {
   actionItems,
   decisions,
@@ -147,6 +148,19 @@ async function join(page: Page, code: string, name: string, locale = "en") {
 
   // In the call, not merely past the prejoin.
   await expect(page.getByRole("button", { name: locale === "ar" ? "اخرج" : "Leave", exact: true })).toBeVisible();
+}
+
+/** Wait for the same LiveKit presence fact the token route uses for recurrence. */
+async function waitForEmptyLiveKitRoom(livekitRoom: string) {
+  const service = new RoomServiceClient(
+    "http://127.0.0.1:7880",
+    process.env.LIVEKIT_API_KEY ?? "devkey",
+    process.env.LIVEKIT_API_SECRET ?? "",
+  );
+  await expect.poll(
+    async () => (await service.listParticipants(livekitRoom)).length,
+    { message: "the media room should be empty before the next occurrence starts" },
+  ).toBe(0);
 }
 
 test.describe("a call between two people", () => {
@@ -1195,6 +1209,209 @@ test.describe("a call between two people", () => {
     await expect(ownerPanel.getByRole("button", { name: "Delete", exact: true })).toHaveCount(0);
     await ownerPanel.getByRole("button", { name: "Mark completed", exact: true }).click();
     await expect(owner.getByText("Action item completed.", { exact: true })).toBeVisible();
+  });
+
+  test("open work resurfaces only when the recurring room starts a later occurrence", async () => {
+    const host = await alice.newPage();
+    const owner = await bob.newPage();
+    const code = await createRoom(host);
+    const actionItemsPath = `/api/rooms/${code}/action-items`;
+    const db = getDb();
+
+    await join(host, code, "Ahmed");
+    await join(owner, code, "سارة", "ar");
+    const ownerSession = await owner.evaluate(() => sessionStorage.getItem("lor-session-id"));
+    if (!ownerSession) throw new Error("The recurring owner session was not created");
+
+    const [room] = await db
+      .select({ id: rooms.id, livekitRoom: rooms.livekitRoom })
+      .from(rooms)
+      .where(eq(rooms.code, code))
+      .limit(1);
+    if (!room) throw new Error("The recurring action-item room was not stored");
+
+    const ownerIdentity = participantIdentity(room.livekitRoom, ownerSession);
+    const sources = [
+      ["سارة هتراجع الـ pull request قبل يوم الجمعة.", "المراجعة المفتوحة من الاجتماع الأول."],
+      ["سارة هتحدّث ملف التصميم قبل يوم الخميس.", "اقتراح لا يتجاوز المراجعة."],
+      ["سارة هتشارك نتيجة الاختبار قبل يوم الأربعاء.", "مهمة اكتملت في الاجتماع الأول."],
+    ] as const;
+    for (const [text] of sources) {
+      const stored = await host.request.post(`/api/rooms/${code}/transcript`, {
+        data: { text, speaker: "سارة", identity: ownerIdentity },
+      });
+      expect(stored.status()).toBe(201);
+    }
+
+    const evidence = await db
+      .select({
+        id: transcriptLines.id,
+        seq: transcriptLines.seq,
+        speaker: transcriptLines.speakerName,
+        text: transcriptLines.text,
+        createdAt: transcriptLines.createdAt,
+      })
+      .from(transcriptLines)
+      .where(eq(transcriptLines.roomId, room.id));
+
+    async function createProposal(sourceText: string, text: string) {
+      const source = evidence.find((line) => line.text === sourceText);
+      if (!source) throw new Error("Recurring action-item evidence was not retained");
+      const [proposal] = await db
+        .insert(actionItems)
+        .values({
+          roomId: room.id,
+          sourceLineId: source.id,
+          sourceSeq: source.seq,
+          sourceSpeaker: source.speaker,
+          sourceQuote: source.text,
+          sourceCreatedAt: source.createdAt,
+          assigneeIdentity: ownerIdentity,
+          dueOn: "2026-09-12",
+          text,
+          origin: "manual",
+        })
+        .returning({ id: actionItems.id });
+      if (!proposal) throw new Error("Recurring action-item proposal was not stored");
+      return proposal;
+    }
+
+    const openProposal = await createProposal(...sources[0]);
+    const proposedOnly = await createProposal(...sources[1]);
+    const completedProposal = await createProposal(...sources[2]);
+
+    for (const proposal of [openProposal, completedProposal]) {
+      const opened = await host.request.patch(actionItemsPath, {
+        data: {
+          id: proposal.id,
+          action: "open",
+          text: proposal === openProposal
+            ? sources[0][1]
+            : sources[2][1],
+          assigneeIdentity: ownerIdentity,
+          dueOn: "2026-09-12",
+        },
+      });
+      expect(opened.status()).toBe(200);
+    }
+    const completed = await host.request.patch(actionItemsPath, {
+      data: { id: completedProposal.id, action: "complete" },
+    });
+    expect(completed.status()).toBe(200);
+
+    const [firstOccurrence] = await db
+      .select({ id: meetingOccurrences.id, endedAt: meetingOccurrences.endedAt })
+      .from(meetingOccurrences)
+      .where(eq(meetingOccurrences.roomId, room.id));
+    if (!firstOccurrence) throw new Error("The first occurrence was not stored");
+    expect(firstOccurrence.endedAt).toBeNull();
+
+    // Rejoining while someone remains connected gets the same occurrence. The
+    // current meeting's newly-opened work must not be labelled as prior work.
+    await host.getByRole("button", { name: "Leave", exact: true }).click();
+    await expect(host.locator('input[autocomplete="name"]')).toBeVisible();
+    const sameOccurrenceCarry = host.waitForResponse((response) =>
+      new URL(response.url()).pathname.endsWith(`/rooms/${code}/action-items/carry-over`),
+    );
+    await join(host, code, "Ahmed");
+    const sameOccurrenceResponse = await sameOccurrenceCarry;
+    expect(sameOccurrenceResponse.status()).toBe(200);
+    await expect(sameOccurrenceResponse.json()).resolves.toEqual({ count: 0 });
+    await expect(host.getByTestId("carry-over-notice")).toHaveCount(0);
+    const afterReconnect = await db
+      .select({ id: meetingOccurrences.id, endedAt: meetingOccurrences.endedAt })
+      .from(meetingOccurrences)
+      .where(eq(meetingOccurrences.roomId, room.id));
+    expect(afterReconnect).toHaveLength(1);
+    expect(afterReconnect[0]).toMatchObject({ id: firstOccurrence.id, endedAt: null });
+
+    await host.getByRole("button", { name: "Leave", exact: true }).click();
+    await owner.getByRole("button", { name: "اخرج", exact: true }).click();
+    await waitForEmptyLiveKitRoom(room.livekitRoom);
+
+    // The next first join makes a new server occurrence. Only the one still
+    // open item predates it; the proposed and completed records stay absent.
+    const nextOccurrenceCarry = host.waitForResponse((response) =>
+      new URL(response.url()).pathname.endsWith(`/rooms/${code}/action-items/carry-over`),
+    );
+    await join(host, code, "Ahmed");
+    const nextOccurrenceResponse = await nextOccurrenceCarry;
+    expect(nextOccurrenceResponse.status()).toBe(200);
+    await expect(nextOccurrenceResponse.json()).resolves.toEqual({ count: 1 });
+    const carryOverNotice = host.getByTestId("carry-over-notice");
+    await expect(carryOverNotice.getByText("1 open task from a previous meeting", { exact: true })).toBeVisible();
+    await carryOverNotice.getByRole("button", { name: "Open action items", exact: true }).click();
+    const hostPanel = host.getByTestId("action-item-panel");
+    await expect(hostPanel.getByText(sources[0][1], { exact: true })).toBeVisible();
+    await expect(hostPanel.getByText(sources[1][1], { exact: true })).toHaveCount(0);
+    await expect(hostPanel.getByText(sources[2][1], { exact: true })).toBeVisible();
+    await hostPanel.getByRole("button", { name: "Close", exact: true }).click();
+
+    const occurrences = await db
+      .select({ id: meetingOccurrences.id, endedAt: meetingOccurrences.endedAt })
+      .from(meetingOccurrences)
+      .where(eq(meetingOccurrences.roomId, room.id));
+    expect(occurrences).toHaveLength(2);
+    expect(occurrences.find((occurrence) => occurrence.id === firstOccurrence.id)?.endedAt).not.toBeNull();
+    expect(occurrences.filter((occurrence) => occurrence.endedAt === null)).toHaveLength(1);
+
+    await owner.setViewportSize({ width: 375, height: 667 });
+    const ownerCarry = owner.waitForResponse((response) =>
+      new URL(response.url()).pathname.endsWith(`/rooms/${code}/action-items/carry-over`),
+    );
+    await join(owner, code, "سارة", "ar");
+    await expect((await ownerCarry).json()).resolves.toEqual({ count: 1 });
+    const ownerNotice = owner.getByTestId("carry-over-notice");
+    await expect(ownerNotice.getByText("في مهمة مفتوحة من اجتماع سابق", { exact: true })).toBeVisible();
+    expect(await owner.evaluate(() => document.documentElement.dir)).toBe("rtl");
+    expect(await owner.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await ownerNotice.getByRole("button", { name: "افتح المهام", exact: true }).click();
+    const ownerPanel = owner.getByTestId("action-item-panel");
+    await ownerPanel.getByRole("button", { name: "علّمها خلصت", exact: true }).click();
+    await expect(owner.getByText("المهمة اتعلّمت خلصت.", { exact: true })).toBeVisible();
+
+    // The host can reopen later work after refreshing its record, and the call
+    // controls remain usable while both participants see the reminder.
+    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
+    await host.getByRole("button", { name: "Action items", exact: true }).click();
+    await host.getByRole("button", { name: "Reopen task", exact: true }).click();
+    await expect(host.getByText("Action item reopened.", { exact: true })).toBeVisible();
+    await host.getByRole("button", { name: /^Open chat/ }).click();
+    await expect(host.getByRole("textbox", { name: "Write a message" })).toBeVisible();
+
+    // Keep this identifier exercised so a future refactor cannot quietly turn
+    // the proposed record into carry-over by only asserting a total count.
+    expect(proposedOnly.id).not.toBe(openProposal.id);
+  });
+
+  test("a failed carry-over check stays non-blocking and can be retried", async () => {
+    const host = await alice.newPage();
+    const code = await createRoom(host);
+    let attempts = 0;
+
+    await host.route(`**/api/rooms/${code}/action-items/carry-over?*`, async (route) => {
+      attempts += 1;
+      if (attempts === 1) {
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({ error: "unavailable" }),
+        });
+        return;
+      }
+      await route.continue();
+    });
+
+    await join(host, code, "Ahmed");
+    const notice = host.getByTestId("carry-over-notice");
+    await expect(notice.getByText(
+      "Couldn’t check open tasks from a previous meeting. Your call is still running.",
+      { exact: true },
+    )).toBeVisible();
+    await expect(host.getByRole("button", { name: "Mute microphone", exact: true })).toBeVisible();
+    await notice.getByRole("button", { name: "Try again", exact: true }).click();
+    await expect(notice).toHaveCount(0);
+    expect(attempts).toBeGreaterThanOrEqual(2);
   });
 
   test("exports only retained confirmed decisions with their transcript evidence", async () => {
