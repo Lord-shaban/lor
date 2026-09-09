@@ -234,10 +234,11 @@ test.describe("a call between two people", () => {
     await first.mouse.click(canvasBox.x + 300, canvasBox.y + 220);
     await first.keyboard.type(sharedText);
     await first.keyboard.press("Escape");
-    // tldraw mirrors selected text into its accessibility status, so scope to
-    // the actual canvas rather than asking Playwright to choose between the
-    // visible shape and that announcement.
-    await expect(second.getByTestId("canvas").getByText(sharedText)).toBeVisible();
+    // Cameras are deliberately local now, so this text can be outside the
+    // second participant's viewport after the first participant pans. Assert
+    // that the actual canvas received the exact bilingual text, rather than
+    // making one participant's camera position a hidden test dependency.
+    await expect(second.getByTestId("canvas").getByText(sharedText)).toHaveCount(1);
   });
 
   test("the shared whiteboard stays usable on a phone and in landscape", async () => {
