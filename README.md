@@ -21,11 +21,12 @@ No account. No time limit. No download.
 ---
 
 > [!NOTE]
-> **Status: Decisions are live.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, and `v0.2` have
+> **Status: Action items are live.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, and `v0.3` have
 > shipped and are deployed at [lor-bay.vercel.app](https://lor-bay.vercel.app): open a
 > link, type a name, hold a real meeting with mixed Arabic/English captions, record
-> locally, work together on a shared board or note, and confirm decisions against their
-> exact transcript evidence.
+> locally, work together on a shared board or note, confirm decisions against their
+> exact transcript evidence, and turn clear commitments into assigned work that returns
+> at the start of the next meeting.
 > Follow the [milestones](https://github.com/Lord-shaban/lor/milestones) to track progress.
 
 ## What LOR. is
@@ -52,7 +53,7 @@ afterthought.
 | Recording | local, free | paid plan | local | yes |
 | **Mixed Arabic/English captions** | **yes** | no | no | no |
 | Grounded decision proposals | yes | no | paid | no |
-| Action items | not yet | no | paid | no |
+| Action items | yes | no | paid | no |
 | Memory across meetings | not yet | no | no | no |
 | Semantic search of past meetings | not yet | no | paid | no |
 | Plugin API | not yet | no | yes | no |
@@ -107,11 +108,21 @@ Everyone can read confirmed decisions, and the confirmed record downloads as por
 text with the same evidence. Deleting or expiring the transcript removes its decisions
 too.
 
-### Meeting memory roadmap — `v0.3` to `v0.6`
+### Action items that return — `v0.3`
+
+LOR. can propose only clear, participant-owned commitments from the kept meeting
+record. A proposal remains a proposal until the host reviews its wording, picks the
+known owner, and confirms the agreed due date. The exact source quote, speaker, and UTC
+time remain alongside the task; only that participant's browser session can complete it.
+
+Open work resurfaces when a recurring room genuinely starts its next meeting. It does
+not appear again on a reconnect to the same meeting, and deleting or expiring its source
+removes the task with it.
+
+### Meeting memory roadmap — `v0.4` to `v0.6`
 
 | Release | What it adds |
 |---|---|
-| `v0.3` | **Action items** — owner and due date; open tasks resurface at the start of the next meeting |
 | `v0.4` | **Timeline** — topic chapters, per-person talk time, flagged moments you can jump to |
 | `v0.5` | **Memory** — a recurring room remembers its decisions, open tasks, and vocabulary |
 | `v0.6` | **Semantic search** — *"when did we talk about pricing?"* across every meeting |
@@ -181,6 +192,7 @@ hosted demo runs the same code.
 | `LOR_FREE_STT_SECONDS_GLOBAL_PER_DAY` | no | Server-wide, so a runaway cannot spend the operator's key. Default 18000 |
 | `LOR_FREE_LLM_TOKENS_PER_USER_PER_DAY` | no | Per-user daily LLM quota |
 | `LOR_FREE_DECISION_EXTRACTIONS_PER_USER_PER_DAY` | no | Host-triggered decision extractions per requester and meeting per day. Default 3; `0` disables the operator-backed extractor |
+| `LOR_FREE_ACTION_ITEM_EXTRACTIONS_PER_USER_PER_DAY` | no | Host-triggered action-item extractions per requester and meeting per day. Default 3; `0` disables the operator-backed extractor |
 | `LOR_CANVAS_RETENTION_DAYS` | no | Shared board and notes retention, 30 days maximum |
 
 See [`.env.example`](.env.example) for the full list.
@@ -237,7 +249,7 @@ Drizzle · Postgres.
 | `v0.1.5` | Captions | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.1.8` | Canvas | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.2` | Decisions | **shipped** — [live](https://lor-bay.vercel.app) |
-| `v0.3` | Action items | planned |
+| `v0.3` | Action items | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.4` | Meeting timeline | planned |
 | `v0.5` | Meeting memory | planned |
 | `v0.6` | Semantic search | planned |

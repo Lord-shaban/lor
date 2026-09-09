@@ -9,7 +9,7 @@ import { LiveDot } from "@/components/ui/live-dot";
 const REPO = "https://github.com/Lord-shaban/lor";
 
 /** The most recent shipped release. Everything after it is planned. */
-const LATEST_RELEASE = "v0.2";
+const LATEST_RELEASE = "v0.3";
 
 /** Message key per release, so the names translate with everything else. */
 const RELEASES = [
