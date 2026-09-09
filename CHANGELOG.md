@@ -6,6 +6,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] — Decisions
+
+The meeting record can now turn a retained transcript into reviewable, evidence-backed
+decisions without treating model output as a meeting fact.
+
+### Added
+
+- A host can explicitly extract decision *proposals* from a retained transcript. Every
+  candidate is grounded in one original transcript line: its exact quote, speaker, and
+  UTC time come from the server-side source record, never from the model or client.
+- The on-demand Decisions workspace keeps proposals visibly model-generated until the
+  host reviews them. The host can edit the final wording, confirm it, or delete it;
+  everyone else sees confirmed decisions only. Handing over the room immediately
+  revokes the former host's review authority.
+- Confirmed decisions export as a deterministic UTF-8 text file in transcript order,
+  carrying the final wording and its original speaker, UTC timestamp, and verbatim
+  supporting quote. Draft proposals and records deleted with their transcript source
+  never appear in an export.
+- Decision records follow transcript retention: a source-line or transcript deletion,
+  expiry, or room deletion removes every derived proposal and confirmed decision.
+- The two-person browser suite verifies Arabic/English evidence, host and guest roles,
+  retry behaviour, export, host handover, retention, and that Decisions stays lazy and
+  never interrupts media, captions, chat, Canvas, or local recording.
+
 ## [0.1.8] — Canvas
 
 The call now has a shared visual workspace that stays with the room while

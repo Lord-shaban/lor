@@ -10,7 +10,7 @@
   "home": {
     "tagline": "اجتماعات فيديو مفتوحة المصدر بتفتكر. من غير حساب، من غير حد زمني، من غير تحميل.",
     "codeSwitchExample": "وبيفهم لما تقول «عملت الـ <term>deploy</term> على الـ <term>server</term>».",
-    "building": "جارٍ",
+    "latest": "الأحدث",
     "links": {
       "source": "الكود",
       "roadmap": "خريطة الطريق",

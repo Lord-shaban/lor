@@ -8,8 +8,8 @@ import { LiveDot } from "@/components/ui/live-dot";
 
 const REPO = "https://github.com/Lord-shaban/lor";
 
-/** The release being built. Everything before it is done, everything after is planned. */
-const CURRENT_RELEASE = "v0.1.8";
+/** The most recent shipped release. Everything after it is planned. */
+const LATEST_RELEASE = "v0.2";
 
 /** Message key per release, so the names translate with everything else. */
 const RELEASES = [
@@ -77,12 +77,12 @@ export default function Home({ params }: PageProps<"/[locale]">) {
 
             <ol className="space-y-2 text-sm">
               {RELEASES.map((release) => {
-                const isCurrent = release.tag === CURRENT_RELEASE;
+                const isLatest = release.tag === LATEST_RELEASE;
                 return (
                   <li
                     key={release.tag}
                     className={
-                      isCurrent
+                      isLatest
                         ? "flex items-center gap-4"
                         : "flex items-center gap-4 text-muted"
                     }
@@ -97,9 +97,9 @@ export default function Home({ params }: PageProps<"/[locale]">) {
                       {release.tag}
                     </span>
                     <span>{releases(release.key)}</span>
-                    {isCurrent && (
+                    {isLatest && (
                       <LiveDot
-                        label={t("building")}
+                        label={t("latest")}
                         className="ms-auto text-xs"
                       />
                     )}
