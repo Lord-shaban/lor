@@ -14,6 +14,10 @@ export interface ActiveMeetingOccurrence {
   startedAt: Date;
 }
 
+export type MeetingOccurrenceAttempt =
+  | { status: "recorded"; occurrence: ActiveMeetingOccurrence }
+  | { status: "presence_unavailable"; cause: unknown };
+
 interface LockedOccurrenceStore {
   active(): Promise<ActiveMeetingOccurrence | undefined>;
   close(id: string): Promise<void>;
@@ -114,4 +118,37 @@ function databaseOccurrenceStore(): MeetingOccurrenceStore {
 /** Persist the server-defined meeting boundary for one successful token request. */
 export function recordMeetingOccurrence(boundary: MeetingOccurrenceBoundary) {
   return resolveMeetingBoundary(databaseOccurrenceStore(), boundary);
+}
+
+/**
+ * Record an occurrence only when LiveKit can authoritatively describe the
+ * room. Presence enriches a call; it must never become a reason to deny a
+ * valid participant their token. Returning the original failure lets the route
+ * log an operational signal without exposing it to the browser.
+ */
+export async function recordMeetingOccurrenceIfPresent({
+  roomId,
+  livekitRoom,
+  observeRoomEmpty,
+  record = recordMeetingOccurrence,
+  now = () => new Date(),
+}: {
+  roomId: string;
+  livekitRoom: string;
+  observeRoomEmpty: (livekitRoom: string) => Promise<boolean>;
+  record?: (boundary: MeetingOccurrenceBoundary) => Promise<ActiveMeetingOccurrence>;
+  now?: () => Date;
+}): Promise<MeetingOccurrenceAttempt> {
+  const observedAt = now();
+  let roomWasEmpty: boolean;
+  try {
+    roomWasEmpty = await observeRoomEmpty(livekitRoom);
+  } catch (cause) {
+    return { status: "presence_unavailable", cause };
+  }
+
+  return {
+    status: "recorded",
+    occurrence: await record({ roomId, observedAt, roomWasEmpty }),
+  };
 }
