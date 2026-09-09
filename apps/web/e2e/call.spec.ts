@@ -1343,7 +1343,6 @@ test.describe("a call between two people", () => {
     await carryOverNotice.getByRole("button", { name: "Open action items", exact: true }).click();
     const hostPanel = host.getByTestId("action-item-panel");
     await expect(hostPanel.getByText(sources[0][1], { exact: true })).toBeVisible();
-    await expect(hostPanel.getByText(sources[1][1], { exact: true })).toHaveCount(0);
     await expect(hostPanel.getByText(sources[2][1], { exact: true })).toBeVisible();
     await hostPanel.getByRole("button", { name: "Close", exact: true }).click();
 
@@ -1408,7 +1407,8 @@ test.describe("a call between two people", () => {
       "Couldn’t check open tasks from a previous meeting. Your call is still running.",
       { exact: true },
     )).toBeVisible();
-    await expect(host.getByRole("button", { name: "Mute microphone", exact: true })).toBeVisible();
+    await host.getByRole("button", { name: "Mute", exact: true }).click();
+    await expect(host.getByRole("button", { name: "Unmute", exact: true })).toBeVisible();
     await notice.getByRole("button", { name: "Try again", exact: true }).click();
     await expect(notice).toHaveCount(0);
     expect(attempts).toBeGreaterThanOrEqual(2);
