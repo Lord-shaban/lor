@@ -345,6 +345,33 @@ export function DecisionPanel({
       </div>
 
       <footer className="border-t border-[#27272a] px-4 py-3">
+        {stored && (
+          <div className="mb-3">
+            {confirmed.length > 0 ? (
+              <a
+                href={`/api/rooms/${code}/decisions/export`}
+                download
+                className="inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-[#d4d4d8] underline decoration-[#52525b] underline-offset-4 transition-colors duration-150 hover:text-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f5] motion-reduce:transition-none"
+              >
+                {t("export")}
+              </a>
+            ) : (
+              <div>
+                <button
+                  type="button"
+                  disabled
+                  aria-describedby="decision-export-unavailable"
+                  className="min-h-11 rounded-md px-3 text-sm font-medium text-[#71717a] disabled:cursor-not-allowed"
+                >
+                  {t("export")}
+                </button>
+                <p id="decision-export-unavailable" className="mt-1 text-xs leading-relaxed text-[#71717a]">
+                  {t("exportUnavailable")}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
         <p className="text-[11px] leading-relaxed text-[#71717a]">
           {t("retention", { days: stored?.retentionDays ?? 30 })}
         </p>

@@ -403,6 +403,8 @@
       "deleteConfirm": "Delete this decision? Its source line will remain in the meeting record.",
       "deleteNow": "Delete decision",
       "deleted": "Decision deleted.",
+      "export": "Download confirmed decisions",
+      "exportUnavailable": "Confirm a decision before there is anything to download.",
       "retention": "Evidence is available for {days} days. If its source expires, the linked decision is removed too.",
       "error": {
         "no_key": "No decision-review key is set up on this server. The record is still kept.",
