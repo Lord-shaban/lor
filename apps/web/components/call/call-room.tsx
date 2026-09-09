@@ -6,9 +6,10 @@ import { direction as localeDirection, type Locale } from "@/i18n/routing";
 import {
   LiveKitRoom,
   useLocalParticipant,
+  useParticipants,
   useRoomContext,
 } from "@livekit/components-react";
-import { RoomEvent, Track, type RoomOptions } from "livekit-client";
+import { RoomEvent, Track, type Participant, type RoomOptions } from "livekit-client";
 import { VideoGrid } from "@/components/call/video-grid";
 import { CallControls } from "@/components/call/call-controls";
 import { WhiteboardPanel } from "@/components/call/whiteboard-panel";
@@ -28,6 +29,8 @@ import { CaptionsNotice } from "@/components/call/captions-notice";
 import { KeysDialog } from "@/components/call/keys-dialog";
 import { TranscriptPanel } from "@/components/call/transcript-panel";
 import { useVideoMode } from "@/components/call/use-video-mode";
+import { useLocalRecording } from "@/components/call/use-local-recording";
+import { RecordingNotice, RecordingStatus } from "@/components/call/recording-notice";
 import { YjsRoomLifecycle } from "@/components/call/use-yjs-room";
 import { unreadCount } from "@/lib/chat-log";
 import type { JoinDetails } from "@/components/prejoin/prejoin";
@@ -184,6 +187,7 @@ function CallStageContent({
   const [keysOpen, setKeysOpen] = useState(false);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const { localParticipant } = useLocalParticipant();
+  const participants = useParticipants();
   const {
     entries,
     received,
@@ -193,7 +197,25 @@ function CallStageContent({
     hands,
     handRaised,
     toggleHand,
+    recordingAnnouncement,
+    announceRecording,
   } = useRoomMessages();
+
+  // A screen share is the selected video while it is live; otherwise record
+  // the local camera. The recorder stops rather than silently splicing files
+  // when this value changes — MediaRecorder cannot safely switch tracks in a
+  // WebM already in progress.
+  const screenPublication = localParticipant.getTrackPublication(Track.Source.ScreenShare);
+  const cameraPublication = localParticipant.getTrackPublication(Track.Source.Camera);
+  const selectedVideoTrack =
+    (!screenPublication?.isMuted && screenPublication?.track?.mediaStreamTrack) ||
+    (!cameraPublication?.isMuted && cameraPublication?.track?.mediaStreamTrack) ||
+    undefined;
+  const recording = useLocalRecording({
+    videoTrack: selectedVideoTrack,
+    audioTracks: callAudioTracks(participants),
+    onRoomAnnouncement: announceRecording,
+  });
   const locale = useLocale() as Locale;
   const captions = useCaptions({
     code,
@@ -264,6 +286,11 @@ function CallStageContent({
             the control bar, rather than over the whole screen. */}
         <ReactionsOverlay reactions={reactions} />
 
+        <RecordingNotice
+          announcement={recordingAnnouncement}
+          localIdentity={localParticipant.identity}
+        />
+
         {/* Over the video and under the panels: a caption is read while looking
             at the person saying it, and a chat panel that opened behind it
             would be the thing hidden. */}
@@ -314,6 +341,8 @@ function CallStageContent({
 
       <HandQueue hands={hands} localIdentity={localParticipant.identity} />
 
+      {canPublish && <RecordingStatus recording={recording} />}
+
       {/* Above the controls rather than inside them: it has to stay visible
           for as long as captions are on, and a control bar is somewhere people
           stop looking. */}
@@ -332,6 +361,7 @@ function CallStageContent({
         onToggleWhiteboard={toggleWhiteboard}
         notesOpen={notesOpen}
         onToggleNotes={toggleNotes}
+        recording={recording}
         isHost={isHost}
         doorOpen={panel === "door"}
         waitingCount={waiting.length}
@@ -348,6 +378,30 @@ function CallStageContent({
       />
     </>
   );
+}
+
+/**
+ * LiveKit hands every subscribed remote audio track to this participant, and
+ * its local publications expose the microphone through the same shape. Mix
+ * those live browser tracks once in Web Audio; no audio crosses an LOR API.
+ */
+function callAudioTracks(participants: Participant[]): MediaStreamTrack[] {
+  const tracks = new Map<string, MediaStreamTrack>();
+  for (const participant of participants) {
+    for (const publication of participant.getTrackPublications()) {
+      const track = publication.track?.mediaStreamTrack;
+      if (
+        publication.isMuted ||
+        !track ||
+        track.kind !== "audio" ||
+        track.readyState !== "live"
+      ) {
+        continue;
+      }
+      tracks.set(track.id, track);
+    }
+  }
+  return [...tracks.values()];
 }
 
 /**

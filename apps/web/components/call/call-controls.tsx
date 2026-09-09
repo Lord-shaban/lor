@@ -12,6 +12,7 @@ import { REACTIONS, type Reaction } from "@/lib/data-channel";
 import type { VideoMode } from "@/lib/video-mode";
 import { VideoModeControl } from "@/components/call/video-mode-control";
 import { cn } from "@/lib/cn";
+import type { LocalRecording } from "@/components/call/use-local-recording";
 
 /**
  * What each reaction is called.
@@ -57,6 +58,7 @@ export function CallControls({
   onToggleWhiteboard,
   notesOpen,
   onToggleNotes,
+  recording,
   isHost,
   doorOpen,
   waitingCount,
@@ -79,6 +81,7 @@ export function CallControls({
   onToggleWhiteboard: () => void;
   notesOpen: boolean;
   onToggleNotes: () => void;
+  recording: LocalRecording;
   isHost: boolean;
   doorOpen: boolean;
   waitingCount: number;
@@ -191,6 +194,8 @@ export function CallControls({
           >
             {t("notes.title")}
           </button>
+
+          <RecordingControls recording={recording} />
         </>
       ) : (
         // Someone still in the waiting room. Saying why the controls are absent
@@ -379,6 +384,50 @@ export function CallControls({
         {t("leave")}
       </button>
     </div>
+  );
+}
+
+function RecordingControls({ recording }: { recording: LocalRecording }) {
+  const t = useTranslations("call.recording");
+
+  if (!recording.supported) return null;
+
+  const isRecording = recording.status === "recording";
+  const isStopping = recording.status === "stopping";
+  const canDownload = recording.status === "ready";
+  const needsVideo = !recording.canStart && !isRecording && !isStopping;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={isRecording ? recording.stop : recording.start}
+        disabled={isStopping || (!isRecording && needsVideo)}
+        aria-describedby="local-recording-status"
+        aria-label={isRecording ? t("stop") : t("start")}
+        title={needsVideo ? t("needVideo") : undefined}
+        className={cn(
+          "h-11 rounded-md px-4 text-sm font-medium transition-colors duration-150",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          isRecording
+            ? "bg-[#f87171] text-[#0a0a0b] hover:opacity-90"
+            : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
+        )}
+      >
+        {isRecording ? t("stopShort") : isStopping ? t("stoppingShort") : t("title")}
+      </button>
+
+      {canDownload && (
+        <button
+          type="button"
+          onClick={recording.download}
+          aria-label={t("download")}
+          className="h-11 rounded-md bg-[#f4f4f5] px-4 text-sm font-medium text-[#0a0a0b] transition-opacity duration-150 hover:opacity-90"
+        >
+          {t("download")}
+        </button>
+      )}
+    </>
   );
 }
 

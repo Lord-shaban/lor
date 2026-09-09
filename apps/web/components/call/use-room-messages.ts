@@ -70,6 +70,12 @@ export interface FloatingReaction {
   offset: number;
 }
 
+export interface RecordingAnnouncement {
+  identity: string;
+  name: string;
+  started: boolean;
+}
+
 /**
  * Everything participants say to each other that is not audio or video.
  *
@@ -94,6 +100,8 @@ export function useRoomMessages() {
 
   const [reactions, setReactions] = useState<FloatingReaction[]>([]);
   const [hands, setHands] = useState<RaisedHand[]>([]);
+  const [recordingAnnouncement, setRecordingAnnouncement] =
+    useState<RecordingAnnouncement | null>(null);
 
   // When this participant's own hand went up, on this clock. The announcement
   // sent to somebody who joins later is a duration measured from here.
@@ -106,6 +114,22 @@ export function useRoomMessages() {
       for (const timer of timers) clearTimeout(timer);
       timers.clear();
     };
+  }, []);
+
+  const recordingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) clearTimeout(recordingTimerRef.current);
+    };
+  }, []);
+
+  const showRecording = useCallback((announcement: RecordingAnnouncement) => {
+    setRecordingAnnouncement(announcement);
+    if (recordingTimerRef.current) clearTimeout(recordingTimerRef.current);
+    recordingTimerRef.current = setTimeout(() => {
+      recordingTimerRef.current = null;
+      setRecordingAnnouncement(null);
+    }, REACTION_LIFETIME_MS);
   }, []);
 
   const showReaction = useCallback(
@@ -172,6 +196,14 @@ export function useRoomMessages() {
             message.emoji,
             name,
           );
+          return;
+
+        case "recording":
+          showRecording({
+            identity: participant.identity,
+            name,
+            started: message.started,
+          });
           return;
 
         case "hand":
@@ -249,7 +281,7 @@ export function useRoomMessages() {
       room.off(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
       room.off(RoomEvent.Reconnected, onReconnected);
     };
-  }, [room, localParticipant, showReaction]);
+  }, [room, localParticipant, showReaction, showRecording]);
 
   /**
    * Publish a message, then show it.
@@ -324,6 +356,22 @@ export function useRoomMessages() {
     publishQuietly(localParticipant, { type: "hand", raised, sinceMs: 0 });
   }, [localParticipant]);
 
+  /**
+   * The room learns that a local WebM recording started or stopped, but never
+   * receives a byte of that WebM. Attribution remains LiveKit's job.
+   */
+  const announceRecording = useCallback(
+    (started: boolean) => {
+      showRecording({
+        identity: localParticipant.identity,
+        name: localParticipant.name || localParticipant.identity,
+        started,
+      });
+      publishQuietly(localParticipant, { type: "recording", started });
+    },
+    [localParticipant, showRecording],
+  );
+
   return {
     entries,
     received,
@@ -333,5 +381,7 @@ export function useRoomMessages() {
     hands,
     handRaised,
     toggleHand,
+    recordingAnnouncement,
+    announceRecording,
   };
 }

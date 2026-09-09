@@ -213,6 +213,17 @@ export type RoomMessage =
       on: boolean;
     }
   | {
+      /**
+       * A participant started or stopped a browser-local recording.
+       *
+       * This deliberately contains no recording id, duration, or media. The
+       * room needs notice that recording began; the WebM itself never leaves
+       * the participant's device through this channel or any other LOR path.
+       */
+      type: "recording";
+      started: boolean;
+    }
+  | {
       type: "hand";
       raised: boolean;
       /**
@@ -319,6 +330,12 @@ export function decodeMessage(payload: Uint8Array): RoomMessage | null {
       const { on } = envelope;
       if (typeof on !== "boolean") return null;
       return { type: "keeping", on };
+    }
+
+    case "recording": {
+      const { started } = envelope;
+      if (typeof started !== "boolean") return null;
+      return { type: "recording", started };
     }
 
     case "hand": {
