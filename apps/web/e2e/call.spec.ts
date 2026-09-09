@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { Buffer } from "node:buffer";
 import { readFile, stat } from "node:fs/promises";
 import { expect, test, type Page, type BrowserContext } from "@playwright/test";
@@ -13,7 +13,6 @@ import {
 } from "@lor/db";
 import * as Y from "yjs";
 import { CANVAS_SNAPSHOT_CONTENT_TYPE } from "../lib/canvas-snapshot-protocol";
-import { participantIdentity } from "../lib/livekit";
 
 /**
  * Two people, one room, and the two things that have to keep working.
@@ -39,6 +38,18 @@ import { participantIdentity } from "../lib/livekit";
  * the one thing a required check must never do.
  */
 const MEDIA_TIMEOUT = 45_000;
+
+/**
+ * Mirrors the server-only token helper without importing its LiveKit SDK
+ * dependency into Playwright's browser-facing test runtime.
+ */
+function participantIdentity(livekitRoom: string, sessionId: string): string {
+  const salt = process.env.LIVEKIT_API_SECRET ?? "";
+  const digest = createHash("sha256")
+    .update(`${livekitRoom}:${salt}:${sessionId}`)
+    .digest("hex");
+  return `p_${digest.slice(0, 24)}`;
+}
 
 // The production proxy rewrites this header with the actual caller address.
 // Playwright talks to Next directly, so each test room gets a private address:
@@ -944,7 +955,7 @@ test.describe("a call between two people", () => {
       .where(eq(rooms.code, code))
       .limit(1);
     if (!room) throw new Error("The action-item room was not stored");
-    const ownerIdentity = await participantIdentity(room.livekitRoom, ownerSession);
+    const ownerIdentity = participantIdentity(room.livekitRoom, ownerSession);
     const quote = "Sarah هتراجع الـ pull request قبل 2026-09-12.";
 
     const storedSource = await host.request.post(`/api/rooms/${code}/transcript`, {
@@ -1088,7 +1099,7 @@ test.describe("a call between two people", () => {
       .where(eq(rooms.code, code))
       .limit(1);
     if (!room) throw new Error("The action-item UI room was not stored");
-    const ownerIdentity = await participantIdentity(room.livekitRoom, ownerSession);
+    const ownerIdentity = participantIdentity(room.livekitRoom, ownerSession);
 
     for (const [text, speaker, identity] of [
       [sourceQuote, "Ahmed", "action-ui-source"],
