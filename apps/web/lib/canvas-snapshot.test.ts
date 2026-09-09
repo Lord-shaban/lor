@@ -42,6 +42,51 @@ afterEach(() => {
 });
 
 describe("Canvas snapshots", () => {
+  it("accepts proxy-weakened ETags and sends the next database revision", async () => {
+    vi.useFakeTimers();
+    const fetch = vi.fn().mockResolvedValueOnce(
+      new Response('{"version":2}', { headers: { ETag: 'W/"2"' } }),
+    ).mockResolvedValueOnce(
+      new Response('{"version":3}', { headers: { ETag: 'W/"3"' } }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    const document = new Y.Doc();
+    createWriter(document, 1);
+    document.getText("notes").insert(0, "first");
+    await vi.advanceTimersByTimeAsync(CANVAS_SNAPSHOT_THROTTLE_MS);
+    expect(statuses.at(-1)?.kind).toBe("saved");
+    document.getText("notes").insert(5, " second");
+    await vi.advanceTimersByTimeAsync(CANVAS_SNAPSHOT_THROTTLE_MS);
+    expect(fetch.mock.calls[1][1].headers["If-Match"]).toBe('"2"');
+    expect(statuses.at(-1)?.version).toBe(3);
+  });
+
+  it("restores a response whose ETag was weakened by the proxy", async () => {
+    const stored = new Y.Doc();
+    stored.getText("notes").insert(0, "قرار محفوظ");
+    const response = snapshotResponse(Y.encodeStateAsUpdate(stored), 2);
+    response.headers.set("ETag", 'W/"2"');
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response));
+    const document = new Y.Doc();
+    expect((await hydrateCanvasSnapshot(document, endpoint)).kind).toBe("restored");
+    expect(document.getText("notes").toString()).toBe("قرار محفوظ");
+  });
+
+  it("retries a failed save without losing document edits", async () => {
+    vi.useFakeTimers();
+    const fetch = vi.fn().mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(null, { headers: { ETag: 'W/"1"' } }));
+    vi.stubGlobal("fetch", fetch);
+    const document = new Y.Doc();
+    createWriter(document);
+    document.getText("notes").insert(0, "still here");
+    await vi.advanceTimersByTimeAsync(CANVAS_SNAPSHOT_THROTTLE_MS);
+    expect(statuses.at(-1)?.kind).toBe("save_failed");
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(statuses.at(-1)?.kind).toBe("saved");
+    expect(document.getText("notes").toString()).toBe("still here");
+  });
+
   it("applies a valid durable update before the document is connected to peers", async () => {
     const stored = new Y.Doc();
     stored.getText("notes").insert(0, "قرار: deploy بعد المراجعة");

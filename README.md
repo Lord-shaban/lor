@@ -215,7 +215,7 @@ same codebase run on serverless and on a single self-hosted box.
               └───────────────────────────────┘
 ```
 
-**Stack:** Next.js 16 · React 19 · TypeScript · Tailwind 4 · LiveKit · Yjs · tldraw ·
+**Stack:** Next.js 16 · React 19 · TypeScript · Tailwind 4 · LiveKit · Yjs · Excalidraw ·
 Drizzle · Postgres.
 
 ## Roadmap
@@ -257,4 +257,4 @@ and it becomes an eval case.
 modified version as a network service, you must publish your changes.
 
 Built on [LiveKit](https://livekit.io), [Yjs](https://yjs.dev),
-[tldraw](https://tldraw.dev), and [Whisper](https://github.com/openai/whisper).
+[Excalidraw](https://github.com/excalidraw/excalidraw), and [Whisper](https://github.com/openai/whisper).
