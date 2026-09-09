@@ -191,6 +191,18 @@ test.describe("a call between two people", () => {
     await expect(second.getByRole("heading", { name: "Board" })).toBeVisible();
     await expect(second.locator(".tl-shape")).not.toHaveCount(0);
 
+    // Panning updates the shared viewport. It used to move tldraw's internal
+    // camera through a remote document merge, which could leave the board
+    // blank a moment after this interaction.
+    await first.keyboard.press("h");
+    await first.mouse.move(canvasBox.x + 420, canvasBox.y + 300);
+    await first.mouse.down();
+    await first.mouse.move(canvasBox.x + 460, canvasBox.y + 340, { steps: 4 });
+    await first.mouse.up();
+    await first.waitForTimeout(3_000);
+    await expect(first.getByRole("application", { name: "tldraw" })).toBeVisible();
+    await expect(first.getByRole("heading", { name: "Board" })).toBeVisible();
+
     // Undo/redo and an ordinary selection-delete all become document records;
     // checking them across pages prevents the board from being "shared" only
     // for newly-created strokes.
