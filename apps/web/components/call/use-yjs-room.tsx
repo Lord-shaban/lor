@@ -137,7 +137,13 @@ export function YjsRoomLifecycle({
       document = new Y.Doc();
       void (async () => {
         const initial = await hydrateCanvasSnapshot(document!, endpoint);
-        if (cancelled) return;
+        // Hydration is intentionally asynchronous. If the caller leaves while
+        // it is in flight, no component owns this document any more, so tear it
+        // down here instead of waiting for a cleanup that has already run.
+        if (cancelled) {
+          document?.destroy();
+          return;
+        }
 
         setStatus(initial);
         setCanvasDocument(document);
