@@ -326,10 +326,10 @@ GitHub is authoritative — issues, milestones, and the
 [board](https://github.com/users/Lord-shaban/projects/8). Update this when a release
 closes.
 
-**Live:** <https://lor-bay.vercel.app>. Everything through `v0.2`, including the
-Decisions release, is deployed there on every push to `main`.
+**Live:** <https://lor-bay.vercel.app>. Everything through `v0.3`, including the
+Action items release, is deployed there on every push to `main`.
 
-**Done.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, and `v0.2` in full, all
+**Done.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, and `v0.3` in full, all
 [tagged and released](https://github.com/Lord-shaban/lor/releases). The call is
 checked end to end on every pull request. Captions split speech at utterance
 boundaries, preserve mixed Arabic/English terms, require explicit consent, and
@@ -345,8 +345,7 @@ code-switch preservation numbers on both sides of it.
 Excalidraw whiteboard, and collaborative rich-text notes. Board and notes are
 one Yjs document synchronised through LiveKit, retained as a room-scoped
 snapshot for up to 30 days, and restored after reconnect or a later return to
-the room. Old tldraw records remain downloadable but are not converted. This
-release-close work does not start or define any later milestone.
+the room. Old tldraw records remain downloadable but are not converted.
 
 **Decisions.** `v0.2` turns a retained transcript into host-reviewed, grounded
 decision proposals. A proposal is tied to one immutable source quote, speaker,
@@ -355,8 +354,19 @@ delete it. Confirmed decisions are visible to participants and export as
 portable text with their evidence. Retention and deletion of the transcript
 remove every derived decision. The workspace is on demand and the complete
 two-person suite checks that it does not interrupt the call, captions, chat,
-Canvas, notes, or local recording. This release-close work does not start or
-define any later milestone.
+Canvas, notes, or local recording.
+
+**Action items.** `v0.3` turns an explicit participant-owned commitment in a
+retained transcript into a host-reviewed proposal with fixed source quote,
+speaker, UTC time, canonical owner, and agreed calendar date. A task opens only
+after host review; only its matching anonymous browser session can complete it,
+and the host can reopen or delete it. Open work resurfaces only after a recurring
+room starts a genuinely new occurrence, never on a reconnect to the same one.
+Transcript retention/deletion cascades into action items, and room deletion also
+removes occurrence records. The workspace stays lazy and the post-connection
+carry-over reminder stays non-blocking; the two-person suite covers Arabic RTL,
+English LTR, phone width, roles, keyboard operation, error recovery, and the
+full lifecycle.
 
 **Cutting a release.** A release is a milestone closing, not a date arriving.
 The steps are in `CONTRIBUTING.md`; the one that is easy to get wrong is the

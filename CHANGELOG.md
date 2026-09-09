@@ -6,6 +6,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — Action items
+
+Clear meeting commitments can now become assigned work without turning a model
+suggestion into a task by itself.
+
+### Added
+
+- A host can ask for action-item proposals from the retained transcript. Only an
+  explicit commitment with a participant the room can identify is eligible; a
+  proposal keeps its exact source quote, speaker, UTC time, canonical owner,
+  and an agreed calendar date when one was said.
+- The on-demand Action items workspace keeps every proposal in review until the
+  host corrects it and opens the task. Only the matching anonymous browser
+  session can mark its open task complete; the host can reopen or delete it,
+  and a host handover immediately removes the former host's review authority.
+- When everyone leaves a recurring room, its next meeting occurrence shows a
+  lightweight reminder for open work from earlier occurrences. A reconnect to
+  the same meeting does not duplicate the reminder, and opening or dismissing
+  it never blocks the call.
+- Task records follow their retained source: transcript deletion or expiry
+  removes derived proposals and open/completed tasks, and room deletion removes
+  both tasks and occurrence records. Arabic RTL and English LTR task review,
+  retry, keyboard navigation, and phone layouts are covered in the two-person
+  browser suite.
+
 ## [0.2.0] — Decisions
 
 The meeting record can now turn a retained transcript into reviewable, evidence-backed
