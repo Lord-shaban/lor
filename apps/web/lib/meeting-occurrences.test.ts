@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  recordMeetingOccurrenceIfPresent,
   resolveMeetingBoundary,
   type ActiveMeetingOccurrence,
   type MeetingOccurrenceStore,
@@ -54,6 +55,44 @@ function memoryStore(
 }
 
 describe("meeting occurrence boundary", () => {
+  it("does not create or close an occurrence when LiveKit presence is unavailable", async () => {
+    const unavailable = new Error("LiveKit service unavailable");
+    const record = vi.fn();
+
+    await expect(recordMeetingOccurrenceIfPresent({
+      roomId: "room-a",
+      livekitRoom: "lor_room-a",
+      observeRoomEmpty: async () => { throw unavailable; },
+      record,
+      now: () => new Date("2026-09-09T10:00:00.000Z"),
+    })).resolves.toEqual({ status: "presence_unavailable", cause: unavailable });
+
+    expect(record).not.toHaveBeenCalled();
+  });
+
+  it("records a boundary from the LiveKit observation when presence is available", async () => {
+    const observedAt = new Date("2026-09-09T10:00:00.000Z");
+    const occurrence = {
+      id: "meeting-1",
+      startedAt: new Date("2026-09-09T10:00:01.000Z"),
+    };
+    const record = vi.fn().mockResolvedValue(occurrence);
+
+    await expect(recordMeetingOccurrenceIfPresent({
+      roomId: "room-a",
+      livekitRoom: "lor_room-a",
+      observeRoomEmpty: async () => true,
+      record,
+      now: () => observedAt,
+    })).resolves.toEqual({ status: "recorded", occurrence });
+
+    expect(record).toHaveBeenCalledWith({
+      roomId: "room-a",
+      observedAt,
+      roomWasEmpty: true,
+    });
+  });
+
   it("starts only one occurrence for concurrent first joins that both observed an empty room", async () => {
     const memory = memoryStore(undefined, [new Date("2026-09-09T10:00:03.000Z")]);
 

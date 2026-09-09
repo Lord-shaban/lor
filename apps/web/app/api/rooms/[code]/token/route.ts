@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { getDb, knocks, rooms } from "@lor/db";
 import { hostCookieName, verifyHostCookie } from "@/lib/host-cookie";
 import { createAccessToken, participantIdentity, roomIsEmpty } from "@/lib/livekit";
-import { recordMeetingOccurrence } from "@/lib/meeting-occurrences";
+import { recordMeetingOccurrenceIfPresent } from "@/lib/meeting-occurrences";
 import { callerKey, clientAddress, consume } from "@/lib/rate-limit";
 import { normalizeRoomCode } from "@/lib/room-code";
 
@@ -115,29 +115,22 @@ export async function POST(
   const canPublish =
     !room.waitingRoomEnabled || isHost || knock?.status === "admitted";
 
-  // A token is the server boundary around an attendance attempt. Query LiveKit
-  // before the database transaction: the service call can take seconds, while
-  // the occurrence helper holds its per-room lock only long enough to close or
-  // create one row. A browser's connection state never gets to define a
-  // recurring meeting boundary.
-  const observedAt = new Date();
-  let roomWasEmpty: boolean;
-  try {
-    roomWasEmpty = await roomIsEmpty(room.livekitRoom);
-  } catch {
-    // Guessing from an unavailable media service could close a valid occurrence
-    // or invent a new one. The caller can retry its normal token request.
-    return NextResponse.json(
-      { error: "meeting_presence_unavailable" },
-      { status: 503 },
-    );
-  }
-
-  const occurrence = await recordMeetingOccurrence({
+  // Presence is authoritative for recurring-meeting boundaries, but it is
+  // metadata rather than admission. If LiveKit's service API is unavailable,
+  // never guess a boundary and never turn that outage into a failed call.
+  const occurrenceAttempt = await recordMeetingOccurrenceIfPresent({
     roomId: room.id,
-    observedAt,
-    roomWasEmpty,
+    livekitRoom: room.livekitRoom,
+    observeRoomEmpty: roomIsEmpty,
   });
+  if (occurrenceAttempt.status === "presence_unavailable") {
+    // Do not log the provider error: SDK errors can include request details.
+    // The event is enough to find the failure in production without risking a
+    // credential, token, or room URL entering logs.
+    console.error("LiveKit presence lookup unavailable while minting a room token", {
+      event: "meeting_presence_unavailable",
+    });
+  }
 
   const token = await createAccessToken({
     livekitRoom: room.livekitRoom,
@@ -160,9 +153,11 @@ export async function POST(
     identity,
     canPublish,
     isHost,
-    meeting: {
-      id: occurrence.id,
-      startedAt: occurrence.startedAt,
-    },
+    meeting: occurrenceAttempt.status === "recorded"
+      ? {
+          id: occurrenceAttempt.occurrence.id,
+          startedAt: occurrenceAttempt.occurrence.startedAt,
+        }
+      : null,
   });
 }

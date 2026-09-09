@@ -14,14 +14,16 @@ export type CarryOverState =
  *
  * The token response carries the occurrence id minted by the server. It is not
  * recreated here, and a reconnect to the same room never repeats the request
- * or presents work opened in the current occurrence as carry-over.
+ * or presents work opened in the current occurrence as carry-over. When the
+ * server cannot authoritatively observe LiveKit presence, there is no safe
+ * occurrence to query and the call simply continues without this reminder.
  */
 export function useCarryOver({
   code,
   meetingId,
 }: {
   code: string;
-  meetingId: string;
+  meetingId: string | null;
 }) {
   const room = useRoomContext();
   const [carryOver, setCarryOver] = useState<CarryOverState>({
@@ -32,7 +34,13 @@ export function useCarryOver({
   const requested = useRef<string | null>(null);
 
   useEffect(() => {
-    const requestKey = `${meetingId}:${attempt}`;
+    // Hold a non-null value for the nested async function. The prop can change
+    // between scheduling and fetching, but this request remains scoped to the
+    // occurrence that scheduled it and is aborted by the effect cleanup.
+    if (!meetingId) return;
+    const activeMeetingId = meetingId;
+
+    const requestKey = `${activeMeetingId}:${attempt}`;
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     let disposed = false;
@@ -43,7 +51,7 @@ export function useCarryOver({
 
       try {
         const response = await fetch(
-          `/api/rooms/${code}/action-items/carry-over?meeting=${encodeURIComponent(meetingId)}`,
+          `/api/rooms/${code}/action-items/carry-over?meeting=${encodeURIComponent(activeMeetingId)}`,
           { cache: "no-store", signal: controller.signal },
         );
         if (!response.ok) throw new Error("Could not load carry-over action items");

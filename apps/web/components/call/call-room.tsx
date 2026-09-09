@@ -45,11 +45,11 @@ export interface Connection {
   identity: string;
   canPublish: boolean;
   isHost: boolean;
-  /** Server-defined boundary for this recurring-room visit. */
+  /** Null only when LiveKit could not authoritatively define a boundary. */
   meeting: {
     id: string;
     startedAt: string;
-  };
+  } | null;
 }
 
 /**
@@ -132,7 +132,7 @@ export function CallRoom({
           code={code}
           canPublish={connection.canPublish}
           startedAsHost={connection.isHost}
-          meetingId={connection.meeting.id}
+          meetingId={connection.meeting?.id ?? null}
           onLeave={onLeave}
         />
 
@@ -167,7 +167,7 @@ function CallStage({
   canPublish: boolean;
   /** Whether the token minted at join said host. The seat can move afterwards. */
   startedAsHost: boolean;
-  meetingId: string;
+  meetingId: string | null;
   onLeave: () => void;
 }) {
   return (
@@ -193,7 +193,7 @@ function CallStageContent({
   code: string;
   canPublish: boolean;
   startedAsHost: boolean;
-  meetingId: string;
+  meetingId: string | null;
   onLeave: () => void;
 }) {
   // Held in state because the host seat can change hands mid-call. Only the
