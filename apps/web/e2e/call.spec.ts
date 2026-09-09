@@ -603,6 +603,7 @@ test.describe("a call between two people", () => {
     const code = await createRoom(host);
     const transcriptPath = `/api/rooms/${code}/transcript`;
     const decisionsPath = `/api/rooms/${code}/decisions`;
+    const extractPath = `${decisionsPath}/extract`;
     const quote = "هنعتمد التصميم بعد مراجعة سارة.";
 
     // These calls pass through the actual route handlers and the CI Postgres
@@ -636,6 +637,13 @@ test.describe("a call between two people", () => {
       data: { sourceSeq, text: "قرار مزيف" },
     });
     expect(guestProposal.status()).toBe(404);
+    const guestExtraction = await guest.request.post(extractPath);
+    expect(guestExtraction.status()).toBe(404);
+
+    // Extraction needs enough retained evidence before it can charge a quota
+    // or call a provider. This one short line is intentionally not enough.
+    const shortExtraction = await host.request.post(extractPath);
+    expect(shortExtraction.status()).toBe(422);
 
     // Deliberately send forged evidence. The route accepts only the sequence;
     // the resulting quote, speaker, and time must come from transcript_lines.
@@ -655,12 +663,13 @@ test.describe("a call between two people", () => {
 
     const hostProposals = await host.request.get(decisionsPath);
     const hostRecord = (await hostProposals.json() as {
-      decisions: Array<{ id: string; status: string; source: { quote: string; speaker: string; at: string; seq: number } }>;
+      decisions: Array<{ id: string; status: string; origin: string; source: { quote: string; speaker: string; at: string; seq: number } }>;
     }).decisions;
     expect(hostRecord).toHaveLength(1);
     expect(hostRecord[0]).toMatchObject({
       id: proposal.id,
       status: "proposed",
+      origin: "manual",
       source: { seq: sourceSeq, quote, speaker: "أحمد" },
     });
     expect(hostRecord[0].source.at).not.toBe("1999-01-01T00:00:00.000Z");
@@ -753,6 +762,24 @@ test.describe("a call between two people", () => {
       data: { sourceSeq: 0, text: "لا ينبغي أن يُحفظ" },
     });
     expect(revokedMutation.status()).toBe(404);
+
+    // The CI server has no LLM key. A useful transcript must fail explicitly
+    // without reaching an upstream provider or consuming an extraction slot.
+    const noKeyCode = await createRoom(host);
+    const noKeyTranscriptPath = `/api/rooms/${noKeyCode}/transcript`;
+    for (const text of [
+      "اتفقنا إن deploy يحصل بعد ما الـ CI ينجح على staging server.",
+      "سارة قالت إن مراجعة الـ security خلصت ومفيش blocker.",
+      "خلاص القرار النهائي: هننشر الإصدار النهارده بعد الظهر.",
+    ]) {
+      const retained = await host.request.post(noKeyTranscriptPath, {
+        data: { text, speaker: "أحمد", identity: `no-key-${randomUUID()}` },
+      });
+      expect(retained.status()).toBe(201);
+    }
+    const noKeyExtraction = await host.request.post(`/api/rooms/${noKeyCode}/decisions/extract`);
+    expect(noKeyExtraction.status()).toBe(503);
+    await expect(noKeyExtraction.json()).resolves.toEqual({ error: "no_key" });
   });
 
   test("decision foreign keys remove evidence records when a source or room is erased", async () => {
@@ -766,7 +793,7 @@ test.describe("a call between two people", () => {
       });
       expect(stored.status()).toBe(201);
       const [room] = await db
-        .select({ id: rooms.id })
+        .select({ id: rooms.id, code: rooms.code })
         .from(rooms)
         .where(eq(rooms.code, code))
         .limit(1);
@@ -792,7 +819,7 @@ test.describe("a call between two people", () => {
       speaker: string;
       text: string;
       createdAt: Date;
-    }) {
+    }, origin?: "llm") {
       const [decision] = await db
         .insert(decisions)
         .values({
@@ -803,11 +830,24 @@ test.describe("a call between two people", () => {
           sourceQuote: source.text,
           sourceCreatedAt: source.createdAt,
           text: "قرار اختبار",
+          ...(origin ? { origin } : {}),
         })
         .returning({ id: decisions.id });
       if (!decision) throw new Error("The decision created for the database check was not stored");
       return decision;
     }
+
+    // The model provenance reaches the review API, while the database rejects
+    // a second record for the same utterance even if two requests race.
+    const generatedCase = await createSourceRoom("قرار متولد من مصدر واحد");
+    const generatedDecision = await insertDecision(generatedCase.room.id, generatedCase.source, "llm");
+    const generatedView = await host.request.get(`/api/rooms/${generatedCase.room.code}/decisions`);
+    expect(generatedView.ok()).toBe(true);
+    await expect(generatedView.json()).resolves.toMatchObject({
+      decisions: [expect.objectContaining({ id: generatedDecision.id, origin: "llm" })],
+    });
+    await expect(insertDecision(generatedCase.room.id, generatedCase.source, "llm"))
+      .rejects.toMatchObject({ code: "23505" });
 
     // Source cascade is the safeguard behind retention: a line cannot vanish
     // while a decision preserves its quotation elsewhere.
