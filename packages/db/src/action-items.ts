@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { actionItems } from "./schema";
+import { actionItems, type NewActionItem } from "./schema";
 import type { Database } from "./index";
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -60,14 +60,12 @@ export interface CreateActionItemProposal {
 }
 
 /**
- * Create a review-only proposal without accepting a quote, speaker, timestamp,
- * sequence, or assignee display name from the caller. The database trigger
- * derives those fields from the matched transcript row before constraints run.
+ * Build the deliberately small insert surface shared by server routes.
+ *
+ * The evidence columns are non-null in Postgres but intentionally absent here:
+ * the database trigger derives them from `sourceLineId` before constraints run.
  */
-export async function createActionItemProposal(
-  db: Database,
-  input: CreateActionItemProposal,
-) {
+export function actionItemProposalValues(input: CreateActionItemProposal): NewActionItem {
   const text = nonEmpty(input.text, "Action item text");
   const assigneeIdentity = input.assigneeIdentity
     ? nonEmpty(input.assigneeIdentity, "Assignee identity")
@@ -76,22 +74,28 @@ export async function createActionItemProposal(
     throw new ActionItemValidationError("Due date must use YYYY-MM-DD");
   }
 
-  // These columns are non-null in the durable schema. The `BEFORE INSERT`
-  // trigger replaces the temporary nulls with the one matching transcript row,
-  // before Postgres checks NOT NULL. Keeping the cast here prevents a future
-  // caller from mistaking client/model evidence for an accepted input.
-  const values = {
+  return {
     roomId: input.roomId,
     sourceLineId: input.sourceLineId,
     text,
     origin: input.origin ?? "manual",
     ...(assigneeIdentity ? { assigneeIdentity } : {}),
     ...(input.dueOn ? { dueOn: input.dueOn } : {}),
-  } as typeof actionItems.$inferInsert;
+  } as NewActionItem;
+}
 
+/**
+ * Create a review-only proposal without accepting a quote, speaker, timestamp,
+ * sequence, or assignee display name from the caller. The database trigger
+ * derives those fields from the matched transcript row before constraints run.
+ */
+export async function createActionItemProposal(
+  db: Database,
+  input: CreateActionItemProposal,
+) {
   return db
     .insert(actionItems)
-    .values(values)
+    .values(actionItemProposalValues(input))
     .onConflictDoNothing()
     .returning({ id: actionItems.id, status: actionItems.status });
 }
