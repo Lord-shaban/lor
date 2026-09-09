@@ -126,4 +126,22 @@ describe("cookie shape", () => {
     expect(options.path).toBe("/");
     expect(options.maxAge).toBeGreaterThan(0);
   });
+
+  it("keeps the host credential usable for a local production server but secure on HTTPS", () => {
+    const environment = process.env as Record<string, string | undefined>;
+    const previousNodeEnv = environment.NODE_ENV;
+    const previousOrigin = environment.NEXT_PUBLIC_APP_URL;
+    try {
+      environment.NODE_ENV = "production";
+      environment.NEXT_PUBLIC_APP_URL = "http://127.0.0.1:3210";
+      expect(hostCookieOptions().secure).toBe(false);
+
+      environment.NEXT_PUBLIC_APP_URL = "https://lor-bay.vercel.app";
+      expect(hostCookieOptions().secure).toBe(true);
+    } finally {
+      environment.NODE_ENV = previousNodeEnv;
+      if (previousOrigin === undefined) delete environment.NEXT_PUBLIC_APP_URL;
+      else environment.NEXT_PUBLIC_APP_URL = previousOrigin;
+    }
+  });
 });

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { and, asc, eq, gte, sql } from "drizzle-orm";
-import { getDb, rooms, summaries, transcriptLines } from "@lor/db";
+import { decisions, getDb, rooms, summaries, transcriptLines } from "@lor/db";
 import { normalizeRoomCode } from "@/lib/room-code";
 import { keptSince, retentionDays } from "@/lib/stt/retention";
 import { MAX_CAPTION_LENGTH } from "@/lib/data-channel";
@@ -18,8 +18,8 @@ import { sweepTranscript } from "@/lib/transcript-retention";
  * - **Rows older than the retention period are never returned and are removed
  *   on the way past.** A period enforced only by a job that might not be
  *   running is a period nobody can rely on, so every read sweeps.
- * - **Deleting takes the summary too.** Otherwise deletion leaves behind a
- *   derived copy of exactly what was deleted.
+ * - **Deleting takes derived records too.** Otherwise deletion leaves behind a
+ *   summary or a decision that repeats exactly what was deleted.
  */
 
 /** One line is one utterance, which `vad.ts` already bounds. */
@@ -158,8 +158,9 @@ export async function DELETE(
 
   const db = getDb();
 
-  // The summary first. If only one of the two can happen, the copy derived from
-  // the transcript is the worse thing to leave behind.
+  // Derived records first. If cleanup fails, source lines stay available for a
+  // retry rather than leaving a quote or summary with no deletion path.
+  await db.delete(decisions).where(eq(decisions.roomId, room.id));
   await db.delete(summaries).where(eq(summaries.roomId, room.id));
   await db.delete(transcriptLines).where(eq(transcriptLines.roomId, room.id));
 

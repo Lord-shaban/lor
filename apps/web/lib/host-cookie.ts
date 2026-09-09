@@ -136,14 +136,33 @@ export function hostCookieName(roomCode: string): string {
   return `lor_host_${roomCode}`;
 }
 
+function secureCookiesRequired(): boolean {
+  const origin = process.env.NEXT_PUBLIC_APP_URL;
+  if (!origin) return process.env.NODE_ENV === "production";
+
+  try {
+    // `next start` is production mode even on a developer's plain HTTP
+    // localhost. Cookies marked Secure there are discarded by the browser,
+    // silently turning the creator into a guest. A configured HTTPS origin is
+    // the reliable signal for the deployed app, not NODE_ENV alone.
+    return new URL(origin).protocol === "https:";
+  } catch {
+    // A malformed deployment setting must fail closed rather than weakening the
+    // cookie merely because its origin could not be parsed.
+    return process.env.NODE_ENV === "production";
+  }
+}
+
 export function hostCookieOptions() {
   return {
     httpOnly: true,
     // Lax, not Strict: someone opening their own invitation link from a chat
     // app arrives via a cross-site navigation and should still be the host.
     sameSite: "lax" as const,
-    // Off on localhost, where there is no HTTPS to attach it to.
-    secure: process.env.NODE_ENV === "production",
+    // Off only for an explicitly configured HTTP local origin; HTTPS deploys
+    // keep the browser-level transport guard even though routes verify the
+    // signed, database-revocable credential as well.
+    secure: secureCookiesRequired(),
     path: "/",
     maxAge: MAX_AGE_SECONDS,
   };

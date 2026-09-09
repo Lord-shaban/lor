@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { Buffer } from "node:buffer";
 import { stat } from "node:fs/promises";
 import { expect, test, type Page, type BrowserContext } from "@playwright/test";
+import { eq } from "drizzle-orm";
+import { decisions, getDb, rooms, transcriptLines } from "@lor/db";
 import * as Y from "yjs";
 import { CANVAS_SNAPSHOT_CONTENT_TYPE } from "../lib/canvas-snapshot-protocol";
 
@@ -593,6 +595,241 @@ test.describe("a call between two people", () => {
 
     source.destroy();
     restored.destroy();
+  });
+
+  test("a decision keeps server-derived evidence, host-only proposals, and the transcript deletion path", async () => {
+    const host = await alice.newPage();
+    const guest = await bob.newPage();
+    const code = await createRoom(host);
+    const transcriptPath = `/api/rooms/${code}/transcript`;
+    const decisionsPath = `/api/rooms/${code}/decisions`;
+    const quote = "هنعتمد التصميم بعد مراجعة سارة.";
+
+    // These calls pass through the actual route handlers and the CI Postgres
+    // service. No test helper inserts a decision directly into the database.
+    const line = await host.request.post(transcriptPath, {
+      data: { text: quote, speaker: "أحمد", identity: "host-evidence" },
+    });
+    expect(line.status()).toBe(201);
+    const storedTranscript = await host.request.get(transcriptPath);
+    const sourceSeq = (await storedTranscript.json() as {
+      lines: Array<{ seq: number; text: string }>;
+    }).lines.find((stored) => stored.text === quote)?.seq;
+    if (typeof sourceSeq !== "number") throw new Error("The decision source was not retained");
+    expect(sourceSeq).toBeGreaterThanOrEqual(0);
+
+    const hostBeforeProposal = await host.request.get(decisionsPath);
+    await expect(hostBeforeProposal.json()).resolves.toMatchObject({
+      canReview: true,
+      decisions: [],
+    });
+
+    // A visitor can never see a pending decision, nor use the source sequence
+    // to create one. Both behaviours exercise the current host cookie check.
+    const guestBeforeConfirmation = await guest.request.get(decisionsPath);
+    expect(guestBeforeConfirmation.ok()).toBe(true);
+    await expect(guestBeforeConfirmation.json()).resolves.toMatchObject({
+      canReview: false,
+      decisions: [],
+    });
+    const guestProposal = await guest.request.post(decisionsPath, {
+      data: { sourceSeq, text: "قرار مزيف" },
+    });
+    expect(guestProposal.status()).toBe(404);
+
+    // Deliberately send forged evidence. The route accepts only the sequence;
+    // the resulting quote, speaker, and time must come from transcript_lines.
+    const proposalResponse = await host.request.post(decisionsPath, {
+      data: {
+        sourceSeq,
+        text: "اعتماد التصميم بعد مراجعة سارة",
+        quote: "اقتباس لم يقله أحد",
+        speaker: "نموذج",
+        at: "1999-01-01T00:00:00.000Z",
+      },
+    });
+    const proposalBody = await proposalResponse.text();
+    expect(proposalResponse.status(), proposalBody).toBe(201);
+    const proposal = JSON.parse(proposalBody) as { id: string; status: string };
+    expect(proposal.status).toBe("proposed");
+
+    const hostProposals = await host.request.get(decisionsPath);
+    const hostRecord = (await hostProposals.json() as {
+      decisions: Array<{ id: string; status: string; source: { quote: string; speaker: string; at: string; seq: number } }>;
+    }).decisions;
+    expect(hostRecord).toHaveLength(1);
+    expect(hostRecord[0]).toMatchObject({
+      id: proposal.id,
+      status: "proposed",
+      source: { seq: sourceSeq, quote, speaker: "أحمد" },
+    });
+    expect(hostRecord[0].source.at).not.toBe("1999-01-01T00:00:00.000Z");
+
+    // Bad IDs, a guest, and a host of another room get no existence oracle.
+    const malformed = await host.request.patch(decisionsPath, {
+      data: { id: "not-a-uuid", action: "confirm" },
+    });
+    expect(malformed.status()).toBe(404);
+    const guestEdit = await guest.request.patch(decisionsPath, {
+      data: { id: proposal.id, action: "edit", text: "لا" },
+    });
+    expect(guestEdit.status()).toBe(404);
+    const wrongCookieCode = await createRoom(guest);
+    const wrongCookieEdit = await guest.request.patch(decisionsPath, {
+      data: { id: proposal.id, action: "edit", text: "لا" },
+    });
+    expect(wrongCookieEdit.status()).toBe(404);
+    expect(wrongCookieCode).not.toBe(code);
+    const otherCode = await createRoom(host);
+    const crossRoom = await host.request.patch(`/api/rooms/${otherCode}/decisions`, {
+      data: { id: proposal.id, action: "confirm" },
+    });
+    expect(crossRoom.status()).toBe(404);
+
+    // Editing changes the decision wording only. Extra source-shaped values
+    // are ignored, preserving the canonical transcript evidence above.
+    const edited = await host.request.patch(decisionsPath, {
+      data: {
+        id: proposal.id,
+        action: "edit",
+        text: "اعتماد التصميم بعد مراجعة سارة النهائية",
+        sourceSeq: 999,
+        quote: "محاولة تغيير الدليل",
+      },
+    });
+    expect(edited.ok()).toBe(true);
+    const confirmed = await host.request.patch(decisionsPath, {
+      data: { id: proposal.id, action: "confirm" },
+    });
+    expect(confirmed.ok()).toBe(true);
+    await expect(confirmed.json()).resolves.toMatchObject({
+      id: proposal.id,
+      status: "confirmed",
+    });
+
+    const visibleToGuest = await guest.request.get(decisionsPath);
+    const guestRecord = (await visibleToGuest.json() as {
+      decisions: Array<{ id: string; status: string; text: string; source: { quote: string; speaker: string } }>;
+    }).decisions;
+    expect(guestRecord).toEqual([expect.objectContaining({
+      id: proposal.id,
+      status: "confirmed",
+      text: "اعتماد التصميم بعد مراجعة سارة النهائية",
+      source: expect.objectContaining({ quote, speaker: "أحمد" }),
+    })]);
+
+    // Record deletion never deletes its evidence.
+    const erasedDecision = await host.request.delete(decisionsPath, { data: { id: proposal.id } });
+    expect(erasedDecision.ok()).toBe(true);
+    const transcriptAfterDecisionDelete = await host.request.get(transcriptPath);
+    await expect(transcriptAfterDecisionDelete.json()).resolves.toMatchObject({
+      lines: [expect.objectContaining({ text: quote })],
+    });
+
+    // Create a second record, then remove its transcript. The route's derived-
+    // first cleanup must leave neither a proposed decision nor its quotation.
+    const secondProposal = await host.request.post(decisionsPath, {
+      data: { sourceSeq, text: "قرار سيُحذف مع المصدر" },
+    });
+    expect(secondProposal.status()).toBe(201);
+    const deletedTranscript = await host.request.delete(transcriptPath);
+    expect(deletedTranscript.ok()).toBe(true);
+    const afterTranscriptDelete = await host.request.get(decisionsPath);
+    await expect(afterTranscriptDelete.json()).resolves.toMatchObject({ decisions: [] });
+
+    // A host handover rotates this database hash. The old browser retains its
+    // signed cookie but must lose the ability to create records immediately.
+    const revokedCode = await createRoom(host);
+    const revokedLine = await host.request.post(`/api/rooms/${revokedCode}/transcript`, {
+      data: { text: "قرار بعد تسليم الغرفة", speaker: "أحمد", identity: "revoked-host" },
+    });
+    expect(revokedLine.status()).toBe(201);
+    const db = getDb();
+    await db
+      .update(rooms)
+      .set({ hostSecretHash: "0".repeat(64) })
+      .where(eq(rooms.code, revokedCode));
+    const revokedMutation = await host.request.post(`/api/rooms/${revokedCode}/decisions`, {
+      data: { sourceSeq: 0, text: "لا ينبغي أن يُحفظ" },
+    });
+    expect(revokedMutation.status()).toBe(404);
+  });
+
+  test("decision foreign keys remove evidence records when a source or room is erased", async () => {
+    const host = await alice.newPage();
+    const db = getDb();
+
+    async function createSourceRoom(text: string) {
+      const code = await createRoom(host);
+      const stored = await host.request.post(`/api/rooms/${code}/transcript`, {
+        data: { text, speaker: "أحمد", identity: `source-${randomUUID()}` },
+      });
+      expect(stored.status()).toBe(201);
+      const [room] = await db
+        .select({ id: rooms.id })
+        .from(rooms)
+        .where(eq(rooms.code, code))
+        .limit(1);
+      if (!room) throw new Error("The room created for the database check was not stored");
+      const [source] = await db
+        .select({
+          id: transcriptLines.id,
+          seq: transcriptLines.seq,
+          speaker: transcriptLines.speakerName,
+          text: transcriptLines.text,
+          createdAt: transcriptLines.createdAt,
+        })
+        .from(transcriptLines)
+        .where(eq(transcriptLines.roomId, room.id))
+        .limit(1);
+      if (!source) throw new Error("The transcript source created for the database check was not stored");
+      return { room, source };
+    }
+
+    async function insertDecision(roomId: string, source: {
+      id: string;
+      seq: number;
+      speaker: string;
+      text: string;
+      createdAt: Date;
+    }) {
+      const [decision] = await db
+        .insert(decisions)
+        .values({
+          roomId,
+          sourceLineId: source.id,
+          sourceSeq: source.seq,
+          sourceSpeaker: source.speaker,
+          sourceQuote: source.text,
+          sourceCreatedAt: source.createdAt,
+          text: "قرار اختبار",
+        })
+        .returning({ id: decisions.id });
+      if (!decision) throw new Error("The decision created for the database check was not stored");
+      return decision;
+    }
+
+    // Source cascade is the safeguard behind retention: a line cannot vanish
+    // while a decision preserves its quotation elsewhere.
+    const sourceCase = await createSourceRoom("قرار يختفي مع السطر المصدر");
+    const sourceDecision = await insertDecision(sourceCase.room.id, sourceCase.source);
+    await db.delete(transcriptLines).where(eq(transcriptLines.id, sourceCase.source.id));
+    const afterSourceDelete = await db
+      .select({ id: decisions.id })
+      .from(decisions)
+      .where(eq(decisions.id, sourceDecision.id));
+    expect(afterSourceDelete).toHaveLength(0);
+
+    // Room cascade is a distinct path: deleting a room removes every record
+    // below it even if no transcript-retention sweep has run first.
+    const roomCase = await createSourceRoom("قرار يختفي مع الغرفة");
+    const roomDecision = await insertDecision(roomCase.room.id, roomCase.source);
+    await db.delete(rooms).where(eq(rooms.id, roomCase.room.id));
+    const afterRoomDelete = await db
+      .select({ id: decisions.id })
+      .from(decisions)
+      .where(eq(decisions.id, roomDecision.id));
+    expect(afterRoomDelete).toHaveLength(0);
   });
 
   test("a tile that is not painting yet shows the avatar, not a black rectangle", async () => {
