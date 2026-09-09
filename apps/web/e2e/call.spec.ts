@@ -907,6 +907,7 @@ test.describe("a call between two people", () => {
     // The UI asks the server again after a failed mutation. An old host cookie
     // must not keep review controls after the seat is handed over.
     await host.getByRole("button", { name: "Decisions", exact: true }).click();
+    await expect(proposalCard.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
     await db
       .update(rooms)
       .set({ hostSecretHash: "0".repeat(64) })
