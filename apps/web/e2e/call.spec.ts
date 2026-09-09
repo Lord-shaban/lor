@@ -1373,7 +1373,10 @@ test.describe("a call between two people", () => {
     // controls remain usable while both participants see the reminder.
     await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
     await host.getByRole("button", { name: "Action items", exact: true }).click();
-    await host.getByRole("button", { name: "Reopen task", exact: true }).click();
+    await host
+      .locator(`[data-action-item-id="${completedProposal.id}"]`)
+      .getByRole("button", { name: "Reopen task", exact: true })
+      .click();
     await expect(host.getByText("Action item reopened.", { exact: true })).toBeVisible();
     await host.getByRole("button", { name: /^Open chat/ }).click();
     await expect(host.getByRole("textbox", { name: "Write a message" })).toBeVisible();
@@ -1410,8 +1413,8 @@ test.describe("a call between two people", () => {
     await host.getByRole("button", { name: "Mute", exact: true }).click();
     await expect(host.getByRole("button", { name: "Unmute", exact: true })).toBeVisible();
     await notice.getByRole("button", { name: "Try again", exact: true }).click();
+    await expect.poll(() => attempts).toBeGreaterThanOrEqual(2);
     await expect(notice).toHaveCount(0);
-    expect(attempts).toBeGreaterThanOrEqual(2);
   });
 
   test("exports only retained confirmed decisions with their transcript evidence", async () => {
