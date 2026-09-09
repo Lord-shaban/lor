@@ -31,9 +31,8 @@ import { CANVAS_SNAPSHOT_CONTENT_TYPE } from "../lib/canvas-snapshot-protocol";
 const MEDIA_TIMEOUT = 45_000;
 
 // The production proxy rewrites this header with the actual caller address.
-// Playwright talks to Next directly, so repeated local runs would otherwise
-// share `127.0.0.1` and consume the real ten-rooms-per-hour test bucket.
-const E2E_CALLER_ADDRESS = `playwright-${randomUUID()}`;
+// Playwright talks to Next directly, so each test room gets a private address:
+// an expanding suite must not consume one real ten-rooms-per-hour test bucket.
 
 /** Inspect painted document pixels, not just a mounted canvas element. */
 async function boardInk(page: Page) {
@@ -68,6 +67,29 @@ async function persistedNotes(page: Page, code: string) {
   return notes;
 }
 
+/** Resources fetched after a deliberate user action, excluding initial call UI. */
+async function resourcesSince(page: Page, before: Set<string>) {
+  return page.evaluate((known) =>
+    performance
+      .getEntriesByType("resource")
+      .map((entry) => entry as PerformanceResourceTiming)
+      .filter((entry) => !known.includes(entry.name))
+      .map((entry) => ({
+        name: entry.name,
+        initiatorType: entry.initiatorType,
+        transferSize: entry.transferSize,
+      })),
+  Array.from(before));
+}
+
+async function loadedResourceNames(page: Page) {
+  return new Set(
+    await page.evaluate(() =>
+      performance.getEntriesByType("resource").map((entry) => entry.name),
+    ),
+  );
+}
+
 /** Videos on this page that are decoding frames, not merely present. */
 async function playingVideos(page: Page): Promise<number> {
   return page.evaluate(
@@ -85,7 +107,7 @@ async function playingVideos(page: Page): Promise<number> {
 async function createRoom(page: Page): Promise<string> {
   const response = await page.request.post("/api/rooms", {
     data: {},
-    headers: { "x-forwarded-for": E2E_CALLER_ADDRESS },
+    headers: { "x-forwarded-for": `playwright-${randomUUID()}` },
   });
   expect(response.ok()).toBe(true);
   const { code } = await response.json();
@@ -250,6 +272,102 @@ test.describe("a call between two people", () => {
     await first.getByRole("button", { name: "Open shared notes" }).click();
     await expect(first.getByTestId("shared-notes").locator(".ProseMirror")).toContainText(decision);
     await expect(first.getByTestId("shared-notes").locator(".ProseMirror")).toContainText(saraNote);
+  });
+
+  test("Canvas catches up after a LiveKit reconnect", async () => {
+    const first = await alice.newPage();
+    const second = await bob.newPage();
+    const code = await createRoom(first);
+    const beforeReconnect = "قرار قبل انقطاع الاتصال";
+    const duringReconnect = "Follow up after reconnect";
+
+    // Playwright's offline mode blocks new requests but leaves an already-open
+    // WebSocket alive. Track the browser's real LiveKit signaling socket so
+    // closing it drives the same reconnect path a dropped connection does.
+    await second.addInitScript(() => {
+      const NativeWebSocket = window.WebSocket;
+      const sockets: WebSocket[] = [];
+      class TrackingWebSocket extends NativeWebSocket {
+        constructor(...args: ConstructorParameters<typeof WebSocket>) {
+          super(...args);
+          sockets.push(this);
+        }
+      }
+      window.WebSocket = TrackingWebSocket;
+      (window as Window & { __lorTestWebSockets?: WebSocket[] }).__lorTestWebSockets = sockets;
+    });
+
+    await join(first, code, "Ahmed");
+    await join(second, code, "سارة");
+    await first.getByRole("button", { name: "Open shared notes" }).click();
+    await second.getByRole("button", { name: "Open shared notes" }).click();
+
+    const firstEditor = first.getByTestId("shared-notes").locator(".ProseMirror");
+    const secondEditor = second.getByTestId("shared-notes").locator(".ProseMirror");
+    await firstEditor.focus();
+    await first.keyboard.insertText(beforeReconnect);
+    await expect(secondEditor).toContainText(beforeReconnect);
+
+    // This is a real network drop from LiveKit's point of view. The provider
+    // and data channel stay unmocked; only the browser transport is closed.
+    await expect.poll(() => second.evaluate(
+      () => (window as Window & { __lorTestWebSockets?: WebSocket[] }).__lorTestWebSockets?.length ?? 0,
+    )).toBeGreaterThan(0);
+    const socketCountBeforeReconnect = await second.evaluate(
+      () => (window as Window & { __lorTestWebSockets?: WebSocket[] }).__lorTestWebSockets?.length ?? 0,
+    );
+    await second.evaluate(() => {
+      const sockets = (window as Window & { __lorTestWebSockets?: WebSocket[] }).__lorTestWebSockets ?? [];
+      for (const socket of sockets) {
+        if (socket.readyState === WebSocket.OPEN) socket.close(4000, "test reconnect");
+      }
+    });
+
+    await firstEditor.focus();
+    await first.keyboard.press("Control+End");
+    await first.keyboard.press("Enter");
+    await first.keyboard.insertText(duringReconnect);
+
+    // A new signaling socket is an observable LiveKit reconnect. Signal-only
+    // recovery is normally too quick to show the media-loss banner, but it
+    // must still request the missing Yjs state and apply the delayed edit.
+    await expect.poll(() => second.evaluate(
+      () => (window as Window & { __lorTestWebSockets?: WebSocket[] }).__lorTestWebSockets?.length ?? 0,
+    ), {
+      timeout: 30_000,
+    }).toBeGreaterThan(socketCountBeforeReconnect);
+    await expect(secondEditor).toContainText(duringReconnect, { timeout: 30_000 });
+  });
+
+  test("keeps Canvas editors out of the initial call load", async () => {
+    const first = await alice.newPage();
+    const code = await createRoom(first);
+
+    await join(first, code, "Ahmed");
+    const beforeCanvas = await loadedResourceNames(first);
+
+    await first.getByRole("button", { name: "Open shared whiteboard" }).click();
+    await expect(first.locator("canvas.excalidraw__canvas.interactive")).toBeVisible();
+    const boardResources = await resourcesSince(first, beforeCanvas);
+
+    // Excalidraw is the intentionally heavy editor chunk. It must be absent
+    // until its control opens it; a dynamically imported script then proves
+    // the call shell did not pre-load the board just in case. `transferSize`
+    // cannot be the assertion: a production asset can legitimately be served
+    // from the browser cache and report zero transferred bytes.
+    expect(boardResources.filter((resource) => resource.initiatorType === "script")).not.toHaveLength(0);
+
+    const beforeNotes = await loadedResourceNames(first);
+    await first
+      .getByRole("region", { name: "Board" })
+      .getByRole("button", { name: "Close shared whiteboard", exact: true })
+      .click();
+    await first.getByRole("button", { name: "Open shared notes" }).click();
+    await expect(first.getByTestId("shared-notes").locator(".ProseMirror")).toBeVisible();
+    const notesResources = await resourcesSince(first, beforeNotes);
+
+    // Tiptap likewise arrives only when the notes control is activated.
+    expect(notesResources.filter((resource) => resource.initiatorType === "script")).not.toHaveLength(0);
   });
 
   test("shared notes stay readable and operable in Arabic on a phone", async () => {
