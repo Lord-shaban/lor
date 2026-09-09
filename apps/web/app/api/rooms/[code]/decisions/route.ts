@@ -1,9 +1,7 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { and, asc, eq, gte } from "drizzle-orm";
-import { decisions, getDb, rooms, transcriptLines } from "@lor/db";
-import { hostCookieName, verifyHostCookie } from "@/lib/host-cookie";
-import { normalizeRoomCode } from "@/lib/room-code";
+import { decisions, getDb, transcriptLines } from "@lor/db";
+import { findRoomAccess, hasRoomHostAccess, requireRoomHost } from "@/lib/room-access";
 import { keptSince, retentionDays } from "@/lib/stt/retention";
 import { sweepTranscript } from "@/lib/transcript-retention";
 
@@ -24,35 +22,6 @@ function decisionText(value: unknown): string | null {
   return text && text.length <= MAX_DECISION_LENGTH ? text : null;
 }
 
-async function findRoom(rawCode: string) {
-  const code = normalizeRoomCode(rawCode);
-  if (!code) return null;
-
-  const db = getDb();
-  const [room] = await db
-    .select({ id: rooms.id, hostSecretHash: rooms.hostSecretHash })
-    .from(rooms)
-    .where(eq(rooms.code, code))
-    .limit(1);
-
-  return room ? { ...room, code } : null;
-}
-
-/** A guest and a revoked or wrong-room host receive the same answer. */
-async function requireHost(rawCode: string) {
-  const room = await findRoom(rawCode);
-  if (!room) return null;
-
-  const store = await cookies();
-  const isHost = await verifyHostCookie(
-    store.get(hostCookieName(room.code))?.value,
-    room.code,
-    room.hostSecretHash,
-  );
-
-  return isHost ? room : null;
-}
-
 function notFound() {
   return NextResponse.json({ error: "not_found" }, { status: 404 });
 }
@@ -69,15 +38,9 @@ export async function GET(
   { params }: RouteContext<"/api/rooms/[code]/decisions">,
 ) {
   const { code: rawCode } = await params;
-  const room = await findRoom(rawCode);
+  const room = await findRoomAccess(rawCode);
   if (!room) return notFound();
-
-  const store = await cookies();
-  const isHost = await verifyHostCookie(
-    store.get(hostCookieName(room.code))?.value,
-    room.code,
-    room.hostSecretHash,
-  );
+  const isHost = await hasRoomHostAccess(room);
 
   const db = getDb();
   const days = retentionDays(process.env);
@@ -94,6 +57,7 @@ export async function GET(
     .select({
       id: decisions.id,
       status: decisions.status,
+      origin: decisions.origin,
       text: decisions.text,
       createdAt: decisions.createdAt,
       confirmedAt: decisions.confirmedAt,
@@ -114,6 +78,7 @@ export async function GET(
       decisions: records.map((record) => ({
         id: record.id,
         status: record.status,
+        origin: record.origin,
         text: record.text,
         createdAt: record.createdAt,
         confirmedAt: record.confirmedAt,
@@ -141,7 +106,7 @@ export async function POST(
   { params }: RouteContext<"/api/rooms/[code]/decisions">,
 ) {
   const { code: rawCode } = await params;
-  const room = await requireHost(rawCode);
+  const room = await requireRoomHost(rawCode);
   if (!room) return notFound();
 
   const body = await request.json().catch(() => null);
@@ -201,7 +166,7 @@ export async function PATCH(
   { params }: RouteContext<"/api/rooms/[code]/decisions">,
 ) {
   const { code: rawCode } = await params;
-  const room = await requireHost(rawCode);
+  const room = await requireRoomHost(rawCode);
   if (!room) return notFound();
 
   const body = await request.json().catch(() => null);
@@ -250,7 +215,7 @@ export async function DELETE(
   { params }: RouteContext<"/api/rooms/[code]/decisions">,
 ) {
   const { code: rawCode } = await params;
-  const room = await requireHost(rawCode);
+  const room = await requireRoomHost(rawCode);
   if (!room) return notFound();
 
   const body = await request.json().catch(() => null);

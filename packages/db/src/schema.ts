@@ -272,6 +272,9 @@ export const decisionStatus = pgEnum("decision_status", [
   "confirmed",
 ]);
 
+/** Whether a host wrote the draft or the bounded extractor proposed it. */
+export const decisionOrigin = pgEnum("decision_origin", ["manual", "llm"]);
+
 /**
  * A decision anchored to one retained transcript line.
  *
@@ -304,6 +307,10 @@ export const decisions = pgTable(
 
     status: decisionStatus("status").notNull().default("proposed"),
 
+    // A generated proposal must stay distinguishable from host-authored text
+    // until the review UI makes its provenance visible to the meeting.
+    origin: decisionOrigin("origin").notNull().default("manual"),
+
     /** The host may refine this wording; it is never the source quotation. */
     text: text("text").notNull(),
 
@@ -321,6 +328,10 @@ export const decisions = pgTable(
     // PostgreSQL does not create this for the source FK; cascading deletion
     // needs it just as much as an explicit source lookup does.
     index("decisions_source_line_id_idx").on(table.sourceLineId),
+    // One retained utterance may support only one decision record. Apart from
+    // making retries idempotent, the database constraint closes the race
+    // between concurrent extraction requests.
+    uniqueIndex("decisions_room_source_line_unique").on(table.roomId, table.sourceLineId),
   ],
 );
 

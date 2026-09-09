@@ -5,6 +5,7 @@ import { callerKey, clientAddress, consume } from "@/lib/rate-limit";
 import { normalizeRoomCode } from "@/lib/room-code";
 import { keptSince, retentionDays } from "@/lib/stt/retention";
 import { estimatedTokens, buildTranscript, summarise } from "@/lib/llm/summarise";
+import { configuredLlm } from "@/lib/llm/provider";
 
 /**
  * Turn a stored transcript into something somebody who missed the call can act
@@ -30,23 +31,6 @@ const DAY_SECONDS = 24 * 60 * 60;
 /** Long enough for a long transcript, short enough for a serverless handler. */
 const TIMEOUT_MS = 45_000;
 
-/**
- * The model when the operator names none.
- *
- * `.env.example` has suggested `llama-3.3-70b-versatile` since `v0.0`, and the
- * provider retired it — asking for it now answers 404, which arrived here as
- * "the summary service is unavailable" and would have been an unexplainable
- * bug report. A default that names a specific third-party model is a thing that
- * expires, so this one was checked against the provider's live model list, and
- * the code owns the default rather than the example file.
- */
-const DEFAULT_MODEL = "openai/gpt-oss-120b";
-
-const CHAT_ENDPOINT: Record<string, string> = {
-  groq: "https://api.groq.com/openai/v1/chat/completions",
-  openai: "https://api.openai.com/v1/chat/completions",
-};
-
 export async function POST(
   request: Request,
   { params }: RouteContext<"/api/rooms/[code]/summary">,
@@ -64,13 +48,11 @@ export async function POST(
 
   if (!room) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
-  const provider = (process.env.LOR_LLM_PROVIDER ?? "groq").trim();
-  const endpoint = CHAT_ENDPOINT[provider];
-  const key = process.env.LOR_LLM_API_KEY?.trim() || process.env.LOR_STT_API_KEY?.trim();
+  const llm = configuredLlm(process.env);
 
   // The meeting keeps its transcript either way. Only the summary is missing,
   // which is the documented degradation rather than a failure.
-  if (!endpoint || !key) {
+  if (!llm) {
     return NextResponse.json({ error: "no_key" }, { status: 503 });
   }
 
@@ -105,9 +87,9 @@ export async function POST(
 
   const result = await summarise({
     lines,
-    endpoint,
-    model: (process.env.LOR_LLM_MODEL?.trim() || DEFAULT_MODEL),
-    key,
+    endpoint: llm.endpoint,
+    model: llm.model,
+    key: llm.key,
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
 
