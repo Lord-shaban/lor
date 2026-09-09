@@ -30,6 +30,8 @@ import { KeysDialog } from "@/components/call/keys-dialog";
 import { TranscriptPanel } from "@/components/call/transcript-panel";
 import { DecisionPanel } from "@/components/call/decision-panel";
 import { ActionItemPanel } from "@/components/call/action-item-panel";
+import { CarryOverNotice } from "@/components/call/carry-over-notice";
+import { useCarryOver } from "@/components/call/use-carry-over";
 import { useVideoMode } from "@/components/call/use-video-mode";
 import { useLocalRecording } from "@/components/call/use-local-recording";
 import { RecordingNotice, RecordingStatus } from "@/components/call/recording-notice";
@@ -43,6 +45,11 @@ export interface Connection {
   identity: string;
   canPublish: boolean;
   isHost: boolean;
+  /** Server-defined boundary for this recurring-room visit. */
+  meeting: {
+    id: string;
+    startedAt: string;
+  };
 }
 
 /**
@@ -125,6 +132,7 @@ export function CallRoom({
           code={code}
           canPublish={connection.canPublish}
           startedAsHost={connection.isHost}
+          meetingId={connection.meeting.id}
           onLeave={onLeave}
         />
 
@@ -152,12 +160,14 @@ function CallStage({
   code,
   canPublish,
   startedAsHost,
+  meetingId,
   onLeave,
 }: {
   code: string;
   canPublish: boolean;
   /** Whether the token minted at join said host. The seat can move afterwards. */
   startedAsHost: boolean;
+  meetingId: string;
   onLeave: () => void;
 }) {
   return (
@@ -166,6 +176,7 @@ function CallStage({
         code={code}
         canPublish={canPublish}
         startedAsHost={startedAsHost}
+        meetingId={meetingId}
         onLeave={onLeave}
       />
     </YjsRoomLifecycle>
@@ -176,11 +187,13 @@ function CallStageContent({
   code,
   canPublish,
   startedAsHost,
+  meetingId,
   onLeave,
 }: {
   code: string;
   canPublish: boolean;
   startedAsHost: boolean;
+  meetingId: string;
   onLeave: () => void;
 }) {
   // Held in state because the host seat can change hands mid-call. Only the
@@ -189,6 +202,8 @@ function CallStageContent({
   const [keysOpen, setKeysOpen] = useState(false);
   const [recordPanel, setRecordPanel] = useState<"transcript" | "decisions" | "action-items" | null>(null);
   const [transcriptSourceSeq, setTranscriptSourceSeq] = useState<number | null>(null);
+  const [carryOverDismissed, setCarryOverDismissed] = useState(false);
+  const { carryOver, retry: retryCarryOver } = useCarryOver({ code, meetingId });
   const { localParticipant } = useLocalParticipant();
   const participants = useParticipants();
   const {
@@ -371,6 +386,18 @@ function CallStageContent({
       <HandQueue hands={hands} localIdentity={localParticipant.identity} />
 
       {canPublish && <RecordingStatus recording={recording} />}
+
+      {!carryOverDismissed && (
+        <CarryOverNotice
+          carryOver={carryOver}
+          onOpenActionItems={() => {
+            setCarryOverDismissed(true);
+            setRecordPanel("action-items");
+          }}
+          onRetry={retryCarryOver}
+          onDismiss={() => setCarryOverDismissed(true)}
+        />
+      )}
 
       {/* Above the controls rather than inside them: it has to stay visible
           for as long as captions are on, and a control bar is somewhere people

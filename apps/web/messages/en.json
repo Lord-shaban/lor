@@ -418,6 +418,13 @@
         "decision_text_invalid": "Write a decision before saving it."
       }
     },
+    "carryOver": {
+      "summary": "{count, plural, =1 {1 open task from a previous meeting} other {# open tasks from a previous meeting}}",
+      "open": "Open action items",
+      "dismiss": "Dismiss",
+      "failed": "Couldn’t check open tasks from a previous meeting. Your call is still running.",
+      "retry": "Try again"
+    },
     "actionItems": {
       "title": "Action items",
       "intro": "Review each task beside the exact words it came from.",
