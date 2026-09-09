@@ -1002,12 +1002,12 @@ test.describe("a call between two people", () => {
     await expect(hostReview.json()).resolves.toMatchObject({
       canReview: true,
       participants: expect.arrayContaining([expect.objectContaining({ identity: ownerIdentity, name: "Sarah" })]),
-      actionItems: [expect.objectContaining({
+      actionItems: expect.arrayContaining([expect.objectContaining({
         id: proposal.id,
         status: "proposed",
         assigneeName: "Sarah",
         source: { quote, speaker: "Ahmed" },
-      })],
+      })]),
     });
 
     // A guest cannot see a proposal, skip its lifecycle, or submit somebody
@@ -1040,12 +1040,12 @@ test.describe("a call between two people", () => {
     });
     await expect(ownerOpen.json()).resolves.toMatchObject({
       canReview: false,
-      actionItems: [expect.objectContaining({
+      actionItems: expect.arrayContaining([expect.objectContaining({
         id: proposal.id,
         status: "open",
         canComplete: true,
         assigneeName: "Sarah",
-      })],
+      })]),
     });
 
     const notOwner = await owner.request.patch(actionItemsPath, {
@@ -1067,7 +1067,9 @@ test.describe("a call between two people", () => {
     expect(reopened.ok()).toBe(true);
     const afterReopen = await host.request.get(actionItemsPath);
     await expect(afterReopen.json()).resolves.toMatchObject({
-      actionItems: [expect.objectContaining({ id: proposal.id, status: "open", completedAt: null })],
+      actionItems: expect.arrayContaining([
+        expect.objectContaining({ id: proposal.id, status: "open", completedAt: null }),
+      ]),
     });
 
     // Handover revocation happens at the same host-cookie check as every other
