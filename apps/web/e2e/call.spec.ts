@@ -847,7 +847,7 @@ test.describe("a call between two people", () => {
       decisions: [expect.objectContaining({ id: generatedDecision.id, origin: "llm" })],
     });
     await expect(insertDecision(generatedCase.room.id, generatedCase.source, "llm"))
-      .rejects.toMatchObject({ code: "23505" });
+      .rejects.toMatchObject({ cause: expect.objectContaining({ code: "23505" }) });
 
     // Source cascade is the safeguard behind retention: a line cannot vanish
     // while a decision preserves its quotation elsewhere.
