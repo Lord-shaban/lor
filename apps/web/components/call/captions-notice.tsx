@@ -23,10 +23,12 @@ export function CaptionsNotice({
   captions,
   onOpenKeys,
   onOpenTranscript,
+  onOpenDecisions,
 }: {
   captions: Captions;
   onOpenKeys: () => void;
   onOpenTranscript: () => void;
+  onOpenDecisions: () => void;
 }) {
   const t = useTranslations("call.captions");
   const keys = useTranslations("call.keys");
@@ -65,6 +67,16 @@ export function CaptionsNotice({
         className="rounded-md px-2 py-0.5 font-medium text-[#a1a1aa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:text-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
       >
         {keeping("open")}
+      </button>
+
+      {/* Decisions live beside their evidence rather than in the crowded call
+          controls. The panel itself decides whether this person may review. */}
+      <button
+        type="button"
+        onClick={onOpenDecisions}
+        className="rounded-md px-2 py-0.5 font-medium text-[#a1a1aa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:text-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
+      >
+        {keeping("decisions")}
       </button>
 
       <button

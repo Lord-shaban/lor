@@ -782,6 +782,141 @@ test.describe("a call between two people", () => {
     await expect(noKeyExtraction.json()).resolves.toEqual({ error: "no_key" });
   });
 
+  test("a host reviews a model proposal beside its evidence while guests only read confirmed decisions", async () => {
+    const host = await alice.newPage();
+    const guest = await bob.newPage();
+    const code = await createRoom(host);
+    const db = getDb();
+    const sourceQuote = "اتفقنا إن deploy يحصل بعد ما الـ CI ينجح على staging.";
+    const otherQuote = "We will publish after the security review.";
+
+    // Retain real source lines through the route, then seed two candidates as
+    // the extraction route would. The browser is exercising the review UI;
+    // generation itself is covered without an external key in the API test.
+    for (const [text, speaker, identity] of [
+      [sourceQuote, "أحمد", "decision-ui-ar"],
+      [otherQuote, "Sarah", "decision-ui-en"],
+      [
+        "The team recorded enough surrounding context for the review service to distinguish a decision from a passing mention.",
+        "Mina",
+        "decision-ui-context",
+      ],
+    ] as const) {
+      const stored = await host.request.post(`/api/rooms/${code}/transcript`, {
+        data: { text, speaker, identity },
+      });
+      expect(stored.status()).toBe(201);
+    }
+
+    const [room] = await db
+      .select({ id: rooms.id })
+      .from(rooms)
+      .where(eq(rooms.code, code))
+      .limit(1);
+    if (!room) throw new Error("The decision-review room was not stored");
+    const sources = await db
+      .select({
+        id: transcriptLines.id,
+        seq: transcriptLines.seq,
+        speaker: transcriptLines.speakerName,
+        text: transcriptLines.text,
+        createdAt: transcriptLines.createdAt,
+      })
+      .from(transcriptLines)
+      .where(eq(transcriptLines.roomId, room.id));
+    const source = sources.find((line) => line.text === sourceQuote);
+    const otherSource = sources.find((line) => line.text === otherQuote);
+    if (!source || !otherSource) throw new Error("The decision-review evidence was not retained");
+
+    const [proposal] = await db
+      .insert(decisions)
+      .values({
+        roomId: room.id,
+        sourceLineId: source.id,
+        sourceSeq: source.seq,
+        sourceSpeaker: source.speaker,
+        sourceQuote: source.text,
+        sourceCreatedAt: source.createdAt,
+        text: "اعتماد الـ release بعد نجاح الـ CI.",
+        origin: "llm",
+      })
+      .returning({ id: decisions.id });
+    await db.insert(decisions).values({
+      roomId: room.id,
+      sourceLineId: otherSource.id,
+      sourceSeq: otherSource.seq,
+      sourceSpeaker: otherSource.speaker,
+      sourceQuote: otherSource.text,
+      sourceCreatedAt: otherSource.createdAt,
+      text: "Publish after the security review.",
+    });
+    if (!proposal) throw new Error("The model proposal was not stored");
+
+    await join(host, code, "Ahmed");
+    await join(guest, code, "Sarah");
+    await host.setViewportSize({ width: 375, height: 667 });
+
+    // The link is next to the existing meeting record, not squeezed into the
+    // media controls. Turning captions on reveals both record destinations.
+    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
+    await expect(host.getByRole("button", { name: "Decisions", exact: true })).toBeVisible();
+    await host.getByRole("button", { name: "Decisions", exact: true }).click();
+    const panel = host.getByTestId("decision-panel");
+    await expect(panel).toBeVisible();
+    await expect(panel).toHaveCSS("background-color", "rgb(17, 17, 19)");
+    await expect(host.getByText("Written by a model — review before confirming.", { exact: true })).toBeVisible();
+    await expect(panel.getByText(sourceQuote, { exact: true })).toBeVisible();
+    await expect(panel.locator("[data-decision-text]").first()).toHaveAttribute("dir", "rtl");
+    await expect(panel.locator("[data-decision-text]").last()).toHaveAttribute("dir", "ltr");
+    expect(await host.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+    // A configured key is deliberately absent in CI. The control must say why
+    // it cannot extract, rather than leaving the host with a silent no-op.
+    await host.getByRole("button", { name: "Find decisions", exact: true }).click();
+    await expect(host.getByText("No decision-review key is set up on this server. The record is still kept.", { exact: true })).toBeVisible();
+
+    const proposalCard = host.locator(`[data-decision-id="${proposal.id}"]`);
+    await proposalCard.getByRole("button", { name: "Edit wording", exact: true }).click();
+    await host.getByLabel("Decision wording", { exact: true }).fill("اعتماد الـ release بعد نجاح الـ CI النهائي.");
+    await host.getByRole("button", { name: "Save wording", exact: true }).click();
+    await expect(proposalCard.getByText("اعتماد الـ release بعد نجاح الـ CI النهائي.", { exact: true })).toBeVisible();
+    await expect(proposalCard.getByText(sourceQuote, { exact: true })).toBeVisible();
+    await proposalCard.getByRole("button", { name: "Confirm decision", exact: true }).click();
+    await expect(host.getByText("Decision confirmed.", { exact: true })).toBeVisible();
+
+    // The source path is fully usable by keyboard and transfers focus to the
+    // immutable transcript line it highlights.
+    const sourceButton = proposalCard.getByRole("button", { name: "Show source line", exact: true });
+    await sourceButton.focus();
+    await host.keyboard.press("Enter");
+    const transcriptSource = host.locator(`[data-transcript-line="${source.seq}"]`);
+    await expect(transcriptSource).toBeVisible();
+    await expect(transcriptSource).toBeFocused();
+
+    // Captions are a room-level switch. The host's toggle already reached this
+    // guest over LiveKit, so the guest must observe the active state rather
+    // than toggle it back off just to open the shared record.
+    await expect(guest.getByRole("button", { name: "Turn off captions", exact: true })).toBeVisible();
+    await guest.getByRole("button", { name: "Decisions", exact: true }).click();
+    await expect(guest.getByText("اعتماد الـ release بعد نجاح الـ CI النهائي.", { exact: true })).toBeVisible();
+    await expect(guest.getByText("Publish after the security review.", { exact: true })).toHaveCount(0);
+    await expect(guest.getByRole("button", { name: "Edit wording", exact: true })).toHaveCount(0);
+    await expect(guest.getByRole("button", { name: "Confirm decision", exact: true })).toHaveCount(0);
+    await expect(guest.getByRole("button", { name: "Delete", exact: true })).toHaveCount(0);
+
+    // The UI asks the server again after a failed mutation. An old host cookie
+    // must not keep review controls after the seat is handed over.
+    await host.getByRole("button", { name: "Decisions", exact: true }).click();
+    await db
+      .update(rooms)
+      .set({ hostSecretHash: "0".repeat(64) })
+      .where(eq(rooms.id, room.id));
+    await proposalCard.getByRole("button", { name: "Delete", exact: true }).click();
+    await host.getByRole("button", { name: "Delete decision", exact: true }).click();
+    await expect(host.getByText("You are no longer the meeting host, so the review controls were removed.", { exact: true })).toBeVisible();
+    await expect(host.getByRole("button", { name: "Delete", exact: true })).toHaveCount(0);
+  });
+
   test("decision foreign keys remove evidence records when a source or room is erased", async () => {
     const host = await alice.newPage();
     const db = getDb();
