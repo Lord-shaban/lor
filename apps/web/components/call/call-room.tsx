@@ -29,6 +29,7 @@ import { CaptionsNotice } from "@/components/call/captions-notice";
 import { KeysDialog } from "@/components/call/keys-dialog";
 import { TranscriptPanel } from "@/components/call/transcript-panel";
 import { DecisionPanel } from "@/components/call/decision-panel";
+import { ActionItemPanel } from "@/components/call/action-item-panel";
 import { useVideoMode } from "@/components/call/use-video-mode";
 import { useLocalRecording } from "@/components/call/use-local-recording";
 import { RecordingNotice, RecordingStatus } from "@/components/call/recording-notice";
@@ -186,7 +187,7 @@ function CallStageContent({
   // server's cookie check decides anything; this is what the interface shows.
   const [isHost, setIsHost] = useState(startedAsHost);
   const [keysOpen, setKeysOpen] = useState(false);
-  const [recordPanel, setRecordPanel] = useState<"transcript" | "decisions" | null>(null);
+  const [recordPanel, setRecordPanel] = useState<"transcript" | "decisions" | "action-items" | null>(null);
   const [transcriptSourceSeq, setTranscriptSourceSeq] = useState<number | null>(null);
   const { localParticipant } = useLocalParticipant();
   const participants = useParticipants();
@@ -321,6 +322,17 @@ function CallStageContent({
           />
         )}
 
+        {recordPanel === "action-items" && (
+          <ActionItemPanel
+            code={code}
+            onClose={() => setRecordPanel(null)}
+            onShowSource={(seq) => {
+              setTranscriptSourceSeq(seq);
+              setRecordPanel("transcript");
+            }}
+          />
+        )}
+
         {chatOpen && (
           <ChatPanel entries={entries} onSend={sendChat} onClose={toggleChat} />
         )}
@@ -371,6 +383,7 @@ function CallStageContent({
           setRecordPanel("transcript");
         }}
         onOpenDecisions={() => setRecordPanel("decisions")}
+        onOpenActionItems={() => setRecordPanel("action-items")}
       />
 
       <CallControls
