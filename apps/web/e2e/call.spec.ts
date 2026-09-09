@@ -1087,6 +1087,131 @@ test.describe("a call between two people", () => {
     expect(afterExpiry).toHaveLength(0);
   });
 
+  test("keeps Decisions lazy, recoverable, and non-disruptive to a live two-person call", async () => {
+    const host = await alice.newPage();
+    const guest = await bob.newPage();
+    const code = await createRoom(host);
+    const sourceQuote = "اتفقنا إن الـ deploy هيتم الخميس بعد نجاح الـ CI على staging.";
+    const editedDecision = "الـ deploy هيتم الخميس بعد ما الـ CI ينجح على staging.";
+
+    // The discussion and action item are retained too, but the selected
+    // proposal stays anchored to the explicit settlement rather than either.
+    for (const [text, speaker, identity] of [
+      ["ممكن نأجل الـ deploy لو الـ CI اتأخر؟", "أحمد", "flow-discussion"],
+      ["سارة هتراجع الـ pull request وتبعت تحديث.", "سارة", "flow-action"],
+      [sourceQuote, "أحمد", "flow-decision"],
+    ] as const) {
+      const stored = await host.request.post(`/api/rooms/${code}/transcript`, {
+        data: { text, speaker, identity },
+      });
+      expect(stored.status()).toBe(201);
+    }
+    const proposed = await host.request.post(`/api/rooms/${code}/decisions`, {
+      data: { sourceSeq: 2, text: "الـ deploy هيتم الخميس." },
+    });
+    expect(proposed.status()).toBe(201);
+    const proposal = await proposed.json() as { id: string };
+
+    const decisionRequests: string[] = [];
+    host.on("request", (request) => {
+      if (new URL(request.url()).pathname === `/api/rooms/${code}/decisions`) {
+        decisionRequests.push(request.method());
+      }
+    });
+
+    await join(host, code, "Ahmed");
+    await join(guest, code, "سارة");
+    await host.waitForTimeout(250);
+    expect(decisionRequests).toEqual([]);
+    await expect(host.getByTestId("decision-panel")).toHaveCount(0);
+    await expect
+      .poll(() => playingVideos(host), { timeout: MEDIA_TIMEOUT })
+      .toBeGreaterThanOrEqual(2);
+
+    // A real failure has a visible retry path. Only this opening request is
+    // intercepted; retry returns the server's authoritative review queue.
+    let failFirstDecisionLoad = true;
+    await host.route(`**/api/rooms/${code}/decisions`, async (route) => {
+      if (route.request().method() === "GET" && failFirstDecisionLoad) {
+        failFirstDecisionLoad = false;
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({ error: "unavailable" }),
+        });
+        return;
+      }
+      await route.continue();
+    });
+
+    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
+    await host.getByRole("button", { name: "Decisions", exact: true }).click();
+    const panel = host.getByTestId("decision-panel");
+    await expect(panel.getByText("Decisions could not be reached. The meeting and record continue; try again.", { exact: true })).toBeVisible();
+    await panel.getByRole("button", { name: "Try again", exact: true }).click();
+    const proposalCard = panel.locator(`[data-decision-id="${proposal.id}"]`);
+    await expect(proposalCard.getByText(sourceQuote, { exact: true })).toBeVisible();
+    expect(decisionRequests).toEqual(["GET", "GET"]);
+
+    await proposalCard.getByRole("button", { name: "Edit wording", exact: true }).click();
+    await host.getByLabel("Decision wording", { exact: true }).fill(editedDecision);
+    await proposalCard.getByRole("button", { name: "Save wording", exact: true }).click();
+    await proposalCard.getByRole("button", { name: "Confirm decision", exact: true }).click();
+    await expect(proposalCard.getByText(editedDecision, { exact: true })).toBeVisible();
+    await expect(proposalCard.getByText(sourceQuote, { exact: true })).toBeVisible();
+    await expect(panel.getByRole("link", { name: "Download confirmed decisions", exact: true })).toHaveAttribute(
+      "href",
+      `/api/rooms/${code}/decisions/export`,
+    );
+
+    // Confirmation broadcasts through the room state, but only the meeting
+    // host sees its review controls. The other participant gets the settled
+    // record and its immutable evidence.
+    await expect(guest.getByRole("button", { name: "Turn off captions", exact: true })).toBeVisible();
+    await guest.getByRole("button", { name: "Decisions", exact: true }).click();
+    const guestPanel = guest.getByTestId("decision-panel");
+    await expect(guestPanel.getByText(editedDecision, { exact: true })).toBeVisible();
+    await expect(guestPanel.getByText(sourceQuote, { exact: true })).toBeVisible();
+    await expect(guestPanel.getByRole("button", { name: "Edit wording", exact: true })).toHaveCount(0);
+    await expect(guestPanel.getByRole("button", { name: "Confirm decision", exact: true })).toHaveCount(0);
+
+    // Closing the record is strictly an overlay concern. Call data, shared
+    // workspaces, captions, and a local recording continue to operate.
+    await panel.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(panel).toHaveCount(0);
+    await expect
+      .poll(() => playingVideos(host), { timeout: MEDIA_TIMEOUT })
+      .toBeGreaterThanOrEqual(2);
+    await host.getByRole("button", { name: "Turn off captions", exact: true }).click();
+    await expect(host.getByRole("button", { name: "Turn on captions", exact: true })).toBeVisible();
+
+    await host.getByRole("button", { name: /^Open chat/ }).click();
+    await host.getByRole("textbox", { name: "Write a message" }).fill("Decision record is closed and chat still works.");
+    await host.getByRole("button", { name: "Send", exact: true }).click();
+    await guest.getByRole("button", { name: /^Open chat/ }).click();
+    await expect(guest.getByText("Decision record is closed and chat still works.", { exact: true })).toBeVisible();
+
+    await host.getByRole("button", { name: "Open shared whiteboard", exact: true }).click();
+    const board = host.getByRole("region", { name: "Board" });
+    await expect(board.locator("canvas.excalidraw__canvas.interactive")).toBeVisible();
+    await board.getByRole("button", { name: "Close shared whiteboard", exact: true }).click();
+
+    await host.getByRole("button", { name: "Open shared notes", exact: true }).click();
+    const notes = host.getByTestId("shared-notes");
+    const editor = notes.locator(".ProseMirror");
+    await editor.focus();
+    await host.keyboard.insertText("قرار محفوظ بعد إغلاق لوحة القرارات");
+    await expect(editor).toContainText("قرار محفوظ بعد إغلاق لوحة القرارات");
+    await notes.getByRole("button", { name: "Close shared notes", exact: true }).click();
+
+    const record = host.getByRole("button", { name: "Start local recording", exact: true });
+    await expect(record).toBeEnabled();
+    await record.click();
+    await expect(host.getByText(/^Recording locally \(00:0[1-9]\)$/)).toBeVisible({ timeout: 10_000 });
+    await host.getByRole("button", { name: "Stop local recording", exact: true }).click();
+    await expect(host.getByText("Your WebM is ready in this tab. It will not be sent anywhere.", { exact: true })).toBeVisible();
+  });
+
   test("decision foreign keys remove evidence records when a source or room is erased", async () => {
     const host = await alice.newPage();
     const db = getDb();

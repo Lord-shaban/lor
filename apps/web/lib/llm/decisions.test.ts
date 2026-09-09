@@ -93,6 +93,31 @@ describe("parseDecisionCandidates", () => {
 });
 
 describe("extractDecisionCandidates", () => {
+  it("keeps a settled Arabic-English decision separate from nearby discussion and an action item", async () => {
+    const lines = [
+      { seq: 0, speaker: "أحمد", text: "ممكن نأجل الـ deploy لو الـ CI أخد وقت أطول؟" },
+      { seq: 1, speaker: "سارة", text: "هراجع الـ pull request وأبعتلكم النتيجة قبل آخر اليوم." },
+      { seq: 2, speaker: "أحمد", text: "اتفقنا إن الـ deploy هيتم الخميس بعد ما الـ CI ينجح على staging." },
+      { seq: 3, speaker: "Mina", text: "ده قرار نهائي للمجموعة، وأي متابعة هتكون بعد النشر فقط." },
+    ];
+    const decision = "الـ deploy هيتم الخميس بعد نجاح الـ CI على staging.";
+    const { doFetch, calls } = spyFetch(reply(JSON.stringify({
+      decisions: [{ sourceSeq: 2, text: decision }],
+    })));
+
+    await expect(extractDecisionCandidates({
+      lines, endpoint: ENDPOINT, model: "model", key: KEY,
+    }, doFetch)).resolves.toEqual({
+      ok: true,
+      candidates: [{ sourceSeq: 2, text: decision }],
+    });
+
+    const request = JSON.parse(String(calls[0].init.body));
+    expect(request.messages[1].content).toContain("[0] أحمد: ممكن نأجل الـ deploy");
+    expect(request.messages[1].content).toContain("[1] سارة: هراجع الـ pull request");
+    expect(request.messages[1].content).toContain("[2] أحمد: اتفقنا إن الـ deploy");
+  });
+
   it("sends only bounded source sequences and returns validated candidates", async () => {
     const { doFetch, calls } = spyFetch(reply(JSON.stringify({
       decisions: [{ sourceSeq: 4, text: "هيتم deploy على الـ staging server." }],
