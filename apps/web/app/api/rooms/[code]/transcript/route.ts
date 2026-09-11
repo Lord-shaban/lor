@@ -1,11 +1,20 @@
 import { NextResponse } from "next/server";
-import { and, asc, eq, gte, sql } from "drizzle-orm";
-import { actionItems, decisions, getDb, rooms, summaries, transcriptLines } from "@lor/db";
+import { and, asc, eq, gte, isNull, sql } from "drizzle-orm";
+import {
+  actionItems,
+  decisions,
+  getDb,
+  meetingOccurrences,
+  rooms,
+  summaries,
+  transcriptLines,
+} from "@lor/db";
 import { normalizeRoomCode } from "@/lib/room-code";
 import { keptSince, retentionDays } from "@/lib/stt/retention";
 import { MAX_CAPTION_LENGTH } from "@/lib/data-channel";
 import { exportTranscript } from "@/lib/transcript-export";
 import { sweepTranscript } from "@/lib/transcript-retention";
+import { readTranscriptTimingRequest } from "@/lib/transcript-timing";
 
 /**
  * What the meeting said, once it agreed to keep it.
@@ -56,6 +65,8 @@ export async function GET(
       text: transcriptLines.text,
       seq: transcriptLines.seq,
       at: transcriptLines.createdAt,
+      occurrenceId: transcriptLines.occurrenceId,
+      durationMs: transcriptLines.durationMs,
     })
     .from(transcriptLines)
     .where(
@@ -114,7 +125,31 @@ export async function POST(
     return NextResponse.json({ error: "line_missing" }, { status: 400 });
   }
 
+  const timing = readTranscriptTimingRequest(body);
+  if (timing.kind === "invalid") {
+    return NextResponse.json({ error: "timing_invalid" }, { status: 400 });
+  }
+
   const db = getDb();
+
+  // A browser only proposes the occurrence it received with its token. It
+  // cannot define a meeting boundary: this query selects the server's active
+  // occurrence for this room first, then compares it to that proposal. A stale
+  // token or an unavailable presence observation is deliberately a normal
+  // transcript line, not a failed caption and not an invented occurrence.
+  const [activeOccurrence] =
+    timing.kind === "timeline"
+      ? await db
+          .select({ id: meetingOccurrences.id })
+          .from(meetingOccurrences)
+          .where(
+            and(
+              eq(meetingOccurrences.roomId, room.id),
+              isNull(meetingOccurrences.endedAt),
+            ),
+          )
+          .limit(1)
+      : [];
 
   // A ceiling on one room, so a meeting left running does not grow without
   // bound. Five thousand utterances is far longer than any meeting; reaching it
@@ -136,6 +171,12 @@ export async function POST(
     speakerName: (speaker || identity).slice(0, 200),
     text: text.slice(0, MAX_CAPTION_LENGTH),
     seq: count,
+    ...(timing.kind === "timeline" && activeOccurrence?.id === timing.occurrenceId
+      ? {
+          occurrenceId: activeOccurrence.id,
+          durationMs: timing.durationMs,
+        }
+      : {}),
   });
 
   return NextResponse.json({ stored: true }, { status: 201 });

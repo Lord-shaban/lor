@@ -239,6 +239,7 @@ function CallStageContent({
     code,
     locale: localeDirection[locale],
     enabled: canPublish,
+    meetingId,
   });
   const {
     mode: videoMode,
