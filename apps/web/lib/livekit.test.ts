@@ -12,7 +12,12 @@ vi.mock("livekit-server-sdk", async (importOriginal) => {
   return { ...actual, RoomServiceClient: roomService.constructor };
 });
 
-import { createAccessToken, participantIdentity, roomIsEmpty } from "./livekit";
+import {
+  createAccessToken,
+  participantIdentity,
+  participantIsInRoom,
+  roomIsEmpty,
+} from "./livekit";
 
 const ROOM = "lor_mza-krfq-tqn";
 const OTHER_ROOM = "lor_bcd-efgh-jkm";
@@ -145,5 +150,17 @@ describe("roomIsEmpty", () => {
 
     roomService.listParticipants.mockResolvedValue([{ identity: "p_someone" }]);
     await expect(roomIsEmpty(ROOM)).resolves.toBe(false);
+  });
+});
+
+describe("participantIsInRoom", () => {
+  it("accepts only the server-derived identity currently reported by LiveKit", async () => {
+    roomService.listParticipants.mockResolvedValue([
+      { identity: "p_present" },
+      { identity: "p_someone_else" },
+    ]);
+
+    await expect(participantIsInRoom(ROOM, "p_present")).resolves.toBe(true);
+    await expect(participantIsInRoom(ROOM, "p_stale")).resolves.toBe(false);
   });
 });

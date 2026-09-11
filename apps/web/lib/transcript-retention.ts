@@ -1,5 +1,12 @@
-import { and, eq, exists, lt, or } from "drizzle-orm";
-import { actionItems, decisions, getDb, summaries, transcriptLines } from "@lor/db";
+import { and, eq, exists, gte, lt, notExists, or } from "drizzle-orm";
+import {
+  actionItems,
+  decisions,
+  getDb,
+  summaries,
+  timelineManualMoments,
+  transcriptLines,
+} from "@lor/db";
 
 /**
  * Delete every derived copy first; a failed cleanup must leave its transcript
@@ -9,6 +16,25 @@ import { actionItems, decisions, getDb, summaries, transcriptLines } from "@lor/
 export async function sweepTranscript(roomId: string, cutoff: Date) {
   const db = getDb();
   const expired = and(eq(transcriptLines.roomId, roomId), lt(transcriptLines.createdAt, cutoff));
+  // A manual moment has no text source of its own. It expires at the same
+  // boundary as the meeting record, and disappears immediately once its
+  // occurrence no longer has a retained timeline-eligible caption.
+  await db.delete(timelineManualMoments).where(and(
+    eq(timelineManualMoments.roomId, roomId),
+    or(
+      lt(timelineManualMoments.createdAt, cutoff),
+      notExists(
+        db
+          .select({ id: transcriptLines.id })
+          .from(transcriptLines)
+          .where(and(
+            eq(transcriptLines.roomId, roomId),
+            eq(transcriptLines.occurrenceId, timelineManualMoments.occurrenceId),
+            gte(transcriptLines.createdAt, cutoff),
+          )),
+      ),
+    ),
+  ));
   await db.delete(actionItems).where(and(
     eq(actionItems.roomId, roomId),
     exists(db.select({ id: transcriptLines.id }).from(transcriptLines).where(expired)),

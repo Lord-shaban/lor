@@ -324,6 +324,12 @@ export const transcriptLines = pgTable(
       table.occurrenceId,
       table.seq,
     ),
+    // Timeline reads one occurrence inside the transcript retention window.
+    index("transcript_lines_room_occurrence_created_at_idx").on(
+      table.roomId,
+      table.occurrenceId,
+      table.createdAt,
+    ),
     // A composite FK from action items makes a source from another room
     // impossible. Postgres requires the referenced tuple to be unique.
     unique("transcript_lines_room_id_id_key").on(table.roomId, table.id),
@@ -339,6 +345,62 @@ export const transcriptLines = pgTable(
 
 export type TranscriptLine = typeof transcriptLines.$inferSelect;
 export type NewTranscriptLine = typeof transcriptLines.$inferInsert;
+
+/**
+ * A participant-marked point in one occurrence's retained meeting record.
+ *
+ * It has no browser clock, arbitrary occurrence id, or speaker assertion: the
+ * route chooses the active occurrence and lets Postgres assign the timestamp.
+ * A manual mark is not evidence and never copies transcript text, which keeps
+ * its retention surface intentionally small.
+ */
+export const timelineManualMoments = pgTable(
+  "timeline_manual_moments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    roomId: uuid("room_id")
+      .notNull()
+      .references(() => rooms.id, { onDelete: "cascade" }),
+
+    occurrenceId: uuid("occurrence_id").notNull(),
+
+    /** Optional participant wording; it is display text, never instructions. */
+    label: text("label"),
+
+    /** Database time is the moment's timeline position. */
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // The occurrence's composite key makes a cross-room marker impossible.
+    foreignKey({
+      columns: [table.roomId, table.occurrenceId],
+      foreignColumns: [meetingOccurrences.roomId, meetingOccurrences.id],
+    }).onDelete("cascade"),
+    check(
+      "timeline_manual_moments_label_check",
+      sql`${table.label} is null or (
+        char_length(btrim(${table.label})) between 1 and 200
+      )`,
+    ),
+    // Tie-break by id because concurrent server inserts can share a timestamp.
+    index("timeline_manual_moments_room_occurrence_created_at_idx").on(
+      table.roomId,
+      table.occurrenceId,
+      table.createdAt,
+      table.id,
+    ),
+    index("timeline_manual_moments_room_created_at_idx").on(
+      table.roomId,
+      table.createdAt,
+    ),
+  ],
+);
+
+export type TimelineManualMoment = typeof timelineManualMoments.$inferSelect;
+export type NewTimelineManualMoment = typeof timelineManualMoments.$inferInsert;
 
 /**
  * A meeting summarised for somebody who was not there.
