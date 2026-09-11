@@ -117,6 +117,10 @@ export const meetingOccurrences = pgTable(
     endedAt: timestamp("ended_at", { withTimezone: true }),
   },
   (table) => [
+    // Transcript timing references this pair. Keeping the room in the
+    // referenced key makes a cross-room occurrence impossible in Postgres,
+    // not merely unlikely in route code.
+    unique("meeting_occurrences_room_id_id_key").on(table.roomId, table.id),
     index("meeting_occurrences_room_started_at_idx").on(
       table.roomId,
       table.startedAt,
@@ -263,6 +267,21 @@ export const transcriptLines = pgTable(
       .references(() => rooms.id, { onDelete: "cascade" }),
 
     /**
+     * The server-confirmed occurrence current when this settled caption
+     * arrived. Legacy rows stay null: guessing a recurring-meeting boundary
+     * from a browser clock would make the timeline look more certain than it
+     * is.
+     */
+    occurrenceId: uuid("occurrence_id"),
+
+    /**
+     * Captured VAD span, in milliseconds. This is deliberately not talk time
+     * in the attendance sense: it is only the duration of retained captions.
+     * The paired check below keeps a timeline row complete and bounded.
+     */
+    durationMs: integer("duration_ms"),
+
+    /**
      * The media server's identity for the speaker, and the name they chose.
      *
      * Both, because the identity is stable and meaningless to a reader while
@@ -282,8 +301,29 @@ export const transcriptLines = pgTable(
       .defaultNow(),
   },
   (table) => [
+    foreignKey({
+      columns: [table.roomId, table.occurrenceId],
+      foreignColumns: [meetingOccurrences.roomId, meetingOccurrences.id],
+    }),
+    check(
+      "transcript_lines_timeline_timing_check",
+      sql`(
+        (${table.occurrenceId} is null and ${table.durationMs} is null)
+        or (
+          ${table.occurrenceId} is not null
+          and ${table.durationMs} between 250 and 21000
+        )
+      )`,
+    ),
     // Every read is "this room, in order", and every delete is "this room".
     index("transcript_lines_room_seq_idx").on(table.roomId, table.seq),
+    // One occurrence's timeline is always rendered in transcript order. The
+    // same index also supports the composite occurrence foreign key.
+    index("transcript_lines_room_occurrence_seq_idx").on(
+      table.roomId,
+      table.occurrenceId,
+      table.seq,
+    ),
     // A composite FK from action items makes a source from another room
     // impossible. Postgres requires the referenced tuple to be unique.
     unique("transcript_lines_room_id_id_key").on(table.roomId, table.id),

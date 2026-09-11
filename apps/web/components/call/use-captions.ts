@@ -85,11 +85,14 @@ export function useCaptions({
   code,
   locale,
   enabled,
+  meetingId,
 }: {
   code: string;
   locale: Direction;
   /** False before the call is joined, so nothing starts too early. */
   enabled: boolean;
+  /** Null when the token route could not authoritatively observe presence. */
+  meetingId: string | null;
 }): Captions {
   const room = useRoomContext();
   const { localParticipant, microphoneTrack } = useLocalParticipant();
@@ -147,6 +150,37 @@ export function useCaptions({
       publish({ type: "caption", id, text, final });
     },
     [localParticipant, publish, locale],
+  );
+
+  /**
+   * Persist only the accurate, settled line. Timing is sent as one atomic
+   * envelope with the token's server-created occurrence: a browser duration
+   * without that occurrence cannot become a timeline fact. The route still
+   * verifies that the occurrence is active for this room before accepting it.
+   */
+  const storeSettledTranscript = useCallback(
+    (text: string, utterance: { fromMs: number; toMs: number }) => {
+      if (!keeping) return;
+
+      const durationMs = Math.round(utterance.toMs - utterance.fromMs);
+      void fetch(`/api/rooms/${code}/transcript`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          text,
+          speaker: localParticipant.name || localParticipant.identity,
+          identity: localParticipant.identity,
+          // Older/fallback calls still keep the transcript normally. Their
+          // absence here is intentional: no client clock may create an
+          // occurrence or make a line look timeline-ready.
+          ...(meetingId ? { occurrenceId: meetingId, durationMs } : {}),
+        }),
+      }).catch(() => {
+        // A line that failed to store is a gap in the record, not a reason to
+        // interrupt the meeting. The caption still showed.
+      });
+    },
+    [code, keeping, localParticipant, meetingId],
   );
 
   // Everybody else's lines, and the room-level switch.
@@ -322,6 +356,7 @@ export function useCaptions({
                 const direct = await transcribeDirect(utterance.audio);
                 if (direct) {
                   setError(null);
+                  storeSettledTranscript(direct, utterance);
                   mine(id, utterance.fromMs, direct, true);
                 } else {
                   setError("failed");
@@ -374,21 +409,8 @@ export function useCaptions({
               // Only what settled, and only once the room said to keep it. The
               // fast pass never reaches here — a guess is a preview, and a
               // preview does not become a record.
-              if (keeping && typeof text === "string" && text.trim()) {
-                void fetch(`/api/rooms/${code}/transcript`, {
-                  method: "POST",
-                  headers: { "content-type": "application/json" },
-                  body: JSON.stringify({
-                    text,
-                    speaker: localParticipant.name || localParticipant.identity,
-                    identity: localParticipant.identity,
-                  }),
-                }).catch(() => {
-                  // A line that failed to store is a gap in the record, not a
-                  // reason to interrupt the meeting. The caption still showed.
-                });
-              }
               if (typeof text === "string" && text.trim()) {
+                storeSettledTranscript(text, utterance);
                 mine(id, utterance.fromMs, text, true);
               } else {
                 setLog((current) => abandon(current, id));
@@ -445,7 +467,7 @@ export function useCaptions({
     // again. Captions would simply not work, with nothing on screen to say why.
     // Muting and unmuting republishes the track, so the same gap would also
     // have ended captions for good the first time somebody muted themselves.
-  }, [enabled, on, sharing, blocked, keeping, microphoneTrack, localParticipant, code, mine, locale]);
+  }, [enabled, on, sharing, blocked, microphoneTrack, code, mine, locale, storeSettledTranscript]);
 
   return {
     on,
