@@ -91,6 +91,22 @@ export async function roomIsEmpty(livekitRoom: string): Promise<boolean> {
 }
 
 /**
+ * Confirm that a caller's server-derived identity still has a seat in the live
+ * room. Optional meeting actions can fail closed on a stale tab without making
+ * a LiveKit service outage an admission failure.
+ */
+export async function participantIsInRoom(
+  livekitRoom: string,
+  identity: string,
+): Promise<boolean> {
+  const { apiKey, apiSecret } = requireCredentials();
+  const service = new RoomServiceClient(livekitServiceUrl(), apiKey, apiSecret);
+  return (await service.listParticipants(livekitRoom)).some(
+    (participant) => participant.identity === identity,
+  );
+}
+
+/**
  * A participant identity that cannot be guessed by another participant.
  *
  * LiveKit disconnects an existing participant when a second one joins with the
