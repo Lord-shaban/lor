@@ -27,6 +27,17 @@ const binary = customType<{ data: Buffer; driverData: Buffer }>({
 });
 
 /**
+ * `pgvector` is installed in the explicit extensions schema by the v0.6
+ * migration. Keeping the dimension here makes it impossible for an index row
+ * and a query embedding from another model family to compare by accident.
+ */
+const embedding = customType<{ data: number[]; driverData: string }>({
+  dataType() {
+    return "extensions.vector(1536)";
+  },
+});
+
+/**
  * The durable meeting record through v0.3: retained transcript, verified
  * decisions, evidence-backed action items, and recurring-meeting boundaries.
  * Embeddings still wait for their later release.
@@ -636,6 +647,10 @@ export const decisions = pgTable(
     // PostgreSQL does not create this for the source FK; cascading deletion
     // needs it just as much as an explicit source lookup does.
     index("decisions_source_line_id_idx").on(table.sourceLineId),
+    // Search documents use the room-id pair as their foreign-key boundary.
+    // The primary key alone would permit a future query to combine a decision
+    // from another room with an otherwise valid room id.
+    unique("decisions_room_id_id_key").on(table.roomId, table.id),
     // One retained utterance may support only one decision record. Apart from
     // making retries idempotent, the database constraint closes the race
     // between concurrent extraction requests.
@@ -795,3 +810,96 @@ export const canvasSnapshots = pgTable("canvas_snapshots", {
 
 export type CanvasSnapshot = typeof canvasSnapshots.$inferSelect;
 export type NewCanvasSnapshot = typeof canvasSnapshots.$inferInsert;
+
+export const searchDocumentKind = pgEnum("search_document_kind", [
+  "transcript",
+  "decision",
+  "notes",
+]);
+
+/**
+ * One room-scoped, deletable search projection per retained source.
+ *
+ * This is deliberately not an independent meeting archive. The source foreign
+ * keys make transcript expiry/deletion, decision deletion, notes snapshot
+ * deletion, and room deletion the authority over both text and its embedding.
+ * `search_vector` is a generated `tsvector` column added in SQL, rather than
+ * a second application-written text copy.
+ */
+export const searchDocuments = pgTable(
+  "search_documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    roomId: uuid("room_id")
+      .notNull()
+      .references(() => rooms.id, { onDelete: "cascade" }),
+    kind: searchDocumentKind("kind").notNull(),
+
+    transcriptLineId: uuid("transcript_line_id"),
+    decisionId: uuid("decision_id"),
+    /** The snapshot's room key; it cascades whenever Canvas/notes are removed. */
+    notesSnapshotRoomId: uuid("notes_snapshot_room_id"),
+
+    /** Only finished occurrence evidence is eligible for v0.6 search. */
+    occurrenceId: uuid("occurrence_id"),
+    sourceCreatedAt: timestamp("source_created_at", { withTimezone: true }).notNull(),
+    speakerName: text("speaker_name"),
+    content: text("content").notNull(),
+    embedding: embedding("embedding"),
+    embeddingModel: text("embedding_model"),
+    embeddedAt: timestamp("embedded_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      name: "search_documents_room_transcript_line_fk",
+      columns: [table.roomId, table.transcriptLineId],
+      foreignColumns: [transcriptLines.roomId, transcriptLines.id],
+    }).onDelete("cascade"),
+    foreignKey({
+      name: "search_documents_room_decision_fk",
+      columns: [table.roomId, table.decisionId],
+      foreignColumns: [decisions.roomId, decisions.id],
+    }).onDelete("cascade"),
+    foreignKey({
+      name: "search_documents_notes_snapshot_fk",
+      columns: [table.notesSnapshotRoomId],
+      foreignColumns: [canvasSnapshots.roomId],
+    }).onDelete("cascade"),
+    index("search_documents_room_occurred_at_idx").on(table.roomId, table.sourceCreatedAt),
+    index("search_documents_room_kind_idx").on(table.roomId, table.kind),
+    uniqueIndex("search_documents_transcript_line_unique").on(table.transcriptLineId),
+    uniqueIndex("search_documents_decision_unique").on(table.decisionId),
+    uniqueIndex("search_documents_notes_snapshot_unique").on(table.notesSnapshotRoomId),
+    check(
+      "search_documents_source_kind_check",
+      sql`(
+        (${table.kind} = 'transcript'
+          and ${table.transcriptLineId} is not null
+          and ${table.decisionId} is null
+          and ${table.notesSnapshotRoomId} is null)
+        or (${table.kind} = 'decision'
+          and ${table.transcriptLineId} is null
+          and ${table.decisionId} is not null
+          and ${table.notesSnapshotRoomId} is null)
+        or (${table.kind} = 'notes'
+          and ${table.transcriptLineId} is null
+          and ${table.decisionId} is null
+          and ${table.notesSnapshotRoomId} = ${table.roomId})
+      )`,
+    ),
+    check(
+      "search_documents_embedding_state_check",
+      sql`(
+        (${table.embedding} is null and ${table.embeddingModel} is null and ${table.embeddedAt} is null)
+        or (${table.embedding} is not null and ${table.embeddingModel} is not null and ${table.embeddedAt} is not null)
+      )`,
+    ),
+    check("search_documents_nonempty_content_check", sql`char_length(btrim(${table.content})) > 0`),
+  ],
+);
+
+export type SearchDocument = typeof searchDocuments.$inferSelect;
+export type NewSearchDocument = typeof searchDocuments.$inferInsert;
