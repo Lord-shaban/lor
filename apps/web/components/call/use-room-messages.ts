@@ -102,6 +102,9 @@ export function useRoomMessages() {
   const [hands, setHands] = useState<RaisedHand[]>([]);
   const [recordingAnnouncement, setRecordingAnnouncement] =
     useState<RecordingAnnouncement | null>(null);
+  // A marker packet contains no meeting data. This revision is only a signal
+  // for an open Timeline panel to refetch its durable, server-derived record.
+  const [timelineRevision, setTimelineRevision] = useState(0);
 
   // When this participant's own hand went up, on this clock. The announcement
   // sent to somebody who joins later is a duration measured from here.
@@ -123,6 +126,16 @@ export function useRoomMessages() {
     };
   }, []);
 
+  // A peer may send arbitrary data-channel packets. Coalescing refresh signals
+  // keeps a noisy peer from turning an open Timeline panel into a fetch loop;
+  // one refresh still observes every already-committed marker.
+  const timelineRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (timelineRefreshTimerRef.current) clearTimeout(timelineRefreshTimerRef.current);
+    };
+  }, []);
+
   const showRecording = useCallback((announcement: RecordingAnnouncement) => {
     setRecordingAnnouncement(announcement);
     if (recordingTimerRef.current) clearTimeout(recordingTimerRef.current);
@@ -130,6 +143,14 @@ export function useRoomMessages() {
       recordingTimerRef.current = null;
       setRecordingAnnouncement(null);
     }, REACTION_LIFETIME_MS);
+  }, []);
+
+  const refreshTimeline = useCallback(() => {
+    if (timelineRefreshTimerRef.current) return;
+    setTimelineRevision((current) => current + 1);
+    timelineRefreshTimerRef.current = setTimeout(() => {
+      timelineRefreshTimerRef.current = null;
+    }, 300);
   }, []);
 
   const showReaction = useCallback(
@@ -206,6 +227,10 @@ export function useRoomMessages() {
           });
           return;
 
+        case "timeline":
+          refreshTimeline();
+          return;
+
         case "hand":
           setHands((queue) =>
             applyHand(queue, {
@@ -243,6 +268,10 @@ export function useRoomMessages() {
      */
     function onReconnected() {
       announceHand();
+      // A marker made while this browser was offline had no route to its
+      // Timeline panel. One durable refresh signal repairs that view after the
+      // LiveKit connection is back; late joiners use the same GET on open.
+      refreshTimeline();
     }
 
     function announceHand(to?: string[]) {
@@ -281,7 +310,7 @@ export function useRoomMessages() {
       room.off(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
       room.off(RoomEvent.Reconnected, onReconnected);
     };
-  }, [room, localParticipant, showReaction, showRecording]);
+  }, [room, localParticipant, refreshTimeline, showReaction, showRecording]);
 
   /**
    * Publish a message, then show it.
@@ -372,6 +401,15 @@ export function useRoomMessages() {
     [localParticipant, showRecording],
   );
 
+  /**
+   * The server already created the manual marker before this fires. Peers only
+   * receive a compact refetch signal; no meeting time or label travels on the
+   * media channel, and a late join uses the ordinary Timeline GET instead.
+   */
+  const announceTimelineUpdate = useCallback(() => {
+    publishQuietly(localParticipant, { type: "timeline", event: "manual-moment" });
+  }, [localParticipant]);
+
   return {
     entries,
     received,
@@ -383,5 +421,7 @@ export function useRoomMessages() {
     toggleHand,
     recordingAnnouncement,
     announceRecording,
+    timelineRevision,
+    announceTimelineUpdate,
   };
 }
