@@ -21,12 +21,13 @@ No account. No time limit. No download.
 ---
 
 > [!NOTE]
-> **Status: Action items are live.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, and `v0.3` have
+> **Status: Meeting timeline is live.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, `v0.3`, and `v0.4` have
 > shipped and are deployed at [lor-bay.vercel.app](https://lor-bay.vercel.app): open a
 > link, type a name, hold a real meeting with mixed Arabic/English captions, record
 > locally, work together on a shared board or note, confirm decisions against their
 > exact transcript evidence, and turn clear commitments into assigned work that returns
-> at the start of the next meeting.
+> at the start of the next meeting. Retained captions also become an on-demand Timeline
+> with evidence-backed chapters, moments, and talk time.
 > Follow the [milestones](https://github.com/Lord-shaban/lor/milestones) to track progress.
 
 ## What LOR. is
@@ -119,11 +120,25 @@ Open work resurfaces when a recurring room genuinely starts its next meeting. It
 not appear again on a reconnect to the same meeting, and deleting or expiring its source
 removes the task with it.
 
-### Meeting memory roadmap — `v0.4` to `v0.6`
+### Timeline anchored in captions — `v0.4`
+
+Timeline opens on demand for the confirmed active meeting occurrence. Its talk time is
+the sum of voice-activity durations on **retained captions** — not attendance,
+microphone-open time, or an estimate of every word someone spoke. Anyone in the meeting
+can flag a current-occurrence moment; a host can request generated chapters and
+highlights that point only to server-resolved retained transcript lines. Every card
+returns to its source evidence.
+
+If a completed local WebM is still held in this same browser tab, a Timeline moment can
+seek within it. That file is never uploaded, shared, or kept by LOR.; after a reload,
+from another participant or device, or outside the recording window, Timeline links to
+the retained transcript instead. Deleting or expiring that transcript removes its
+Timeline derivatives too.
+
+### Meeting memory roadmap — `v0.5` to `v0.6`
 
 | Release | What it adds |
 |---|---|
-| `v0.4` | **Timeline** — topic chapters, per-person talk time, flagged moments you can jump to |
 | `v0.5` | **Memory** — a recurring room remembers its decisions, open tasks, and vocabulary |
 | `v0.6` | **Semantic search** — *"when did we talk about pricing?"* across every meeting |
 
@@ -193,6 +208,7 @@ hosted demo runs the same code.
 | `LOR_FREE_LLM_TOKENS_PER_USER_PER_DAY` | no | Per-user daily LLM quota |
 | `LOR_FREE_DECISION_EXTRACTIONS_PER_USER_PER_DAY` | no | Host-triggered decision extractions per requester and meeting per day. Default 3; `0` disables the operator-backed extractor |
 | `LOR_FREE_ACTION_ITEM_EXTRACTIONS_PER_USER_PER_DAY` | no | Host-triggered action-item extractions per requester and meeting per day. Default 3; `0` disables the operator-backed extractor |
+| `LOR_FREE_TIMELINE_GENERATIONS_PER_USER_PER_DAY` | no | Host-triggered Timeline generations per requester and meeting per day. Default 3; `0` disables the operator-backed generator |
 | `LOR_CANVAS_RETENTION_DAYS` | no | Shared board and notes retention, 30 days maximum |
 
 See [`.env.example`](.env.example) for the full list.
@@ -250,7 +266,7 @@ Drizzle · Postgres.
 | `v0.1.8` | Canvas | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.2` | Decisions | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.3` | Action items | **shipped** — [live](https://lor-bay.vercel.app) |
-| `v0.4` | Meeting timeline | planned |
+| `v0.4` | Meeting timeline | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.5` | Meeting memory | planned |
 | `v0.6` | Semantic search | planned |
 | `v0.7` | Integrations | planned |

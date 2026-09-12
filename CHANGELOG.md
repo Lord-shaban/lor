@@ -6,6 +6,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] — Meeting timeline
+
+The retained meeting record can now become a navigable timeline without turning
+attendance, microphone state, or a local recording into server-held meeting data.
+
+### Added
+
+- An on-demand Timeline workspace belongs to the confirmed active meeting
+  occurrence. It shows topic chapters, moments, and per-person talk time while
+  leaving the call, captions, chat, Canvas, notes, and recording uninterrupted.
+- Talk time is the sum of voice-activity durations on **retained captions** for
+  that occurrence. It is not attendance time, microphone-open time, or an
+  estimate of every word someone spoke.
+- Every participant can flag a moment in the current occurrence. The server
+  timestamps it and active participants receive it over the meeting's LiveKit
+  data channel.
+- A host can request generated chapters and highlights only from retained
+  caption lines. The server resolves every proposed source reference before it
+  is saved, and each Timeline card returns to that exact transcript evidence.
+- A Timeline moment can seek a completed local WebM only while its Blob remains
+  in the same browser tab. LOR. never uploads, shares, or retains that video;
+  after a reload, from another participant or device, or outside the recording
+  window, the retained transcript source is the available navigation target.
+
+### Fixed
+
+- Timeline derivatives now follow their retained evidence completely: deleting
+  or expiring a transcript, deleting a room, or removing a source line removes
+  its generated chapters and moments; full transcript deletion also removes
+  participant-created moments.
+
 ## [0.3.0] — Action items
 
 Clear meeting commitments can now become assigned work without turning a model

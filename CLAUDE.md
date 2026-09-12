@@ -326,10 +326,10 @@ GitHub is authoritative — issues, milestones, and the
 [board](https://github.com/users/Lord-shaban/projects/8). Update this when a release
 closes.
 
-**Live:** <https://lor-bay.vercel.app>. Everything through `v0.3`, including the
-Action items release, is deployed there on every push to `main`.
+**Live:** <https://lor-bay.vercel.app>. Everything through `v0.4`, including the
+Meeting timeline release, is deployed there on every push to `main`.
 
-**Done.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, and `v0.3` in full, all
+**Done.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, `v0.3`, and `v0.4` in full, all
 [tagged and released](https://github.com/Lord-shaban/lor/releases). The call is
 checked end to end on every pull request. Captions split speech at utterance
 boundaries, preserve mixed Arabic/English terms, require explicit consent, and
@@ -367,6 +367,20 @@ removes occurrence records. The workspace stays lazy and the post-connection
 carry-over reminder stays non-blocking; the two-person suite covers Arabic RTL,
 English LTR, phone width, roles, keyboard operation, error recovery, and the
 full lifecycle.
+
+**Timeline.** `v0.4` gives each confirmed active meeting occurrence an on-demand
+timeline beside its retained transcript. Talk time is the summed VAD duration of
+retained caption spans, not attendance, microphone-open time, or an estimate of
+all speech. Participants can mark current-occurrence moments; a host can generate
+chapters and highlights only from server-resolved retained source lines. A completed
+local WebM can be sought only while its Blob remains in that same browser tab:
+nothing is uploaded to LOR., sent over LiveKit, shared with another participant, or
+retained after reload. When local seek is unavailable, Timeline uses transcript
+evidence; generated cards follow their source evidence, while transcript expiry,
+full transcript deletion, and room deletion remove every Timeline derivative. The
+two-person browser suite verifies English LTR and Arabic RTL phone layouts, keyboard
+focus, reduced motion, lazy loading, occurrence isolation, roles, local-only replay,
+and retention cleanup.
 
 **Cutting a release.** A release is a milestone closing, not a date arriving.
 The steps are in `CONTRIBUTING.md`; the one that is easy to get wrong is the
