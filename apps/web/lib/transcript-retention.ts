@@ -37,11 +37,22 @@ export async function sweepTranscript(roomId: string, cutoff: Date) {
   ));
   await db.delete(actionItems).where(and(
     eq(actionItems.roomId, roomId),
-    exists(db.select({ id: transcriptLines.id }).from(transcriptLines).where(expired)),
+    exists(db.select({ id: transcriptLines.id }).from(transcriptLines).where(and(
+      expired,
+      // An expired caption may delete only the task derived from that caption.
+      // A room can contain years of separate occurrences within the current
+      // retention window; treating one expiry as a reason to erase all its
+      // current tasks would turn retention into data loss.
+      eq(transcriptLines.id, actionItems.sourceLineId),
+    ))),
   ));
   await db.delete(decisions).where(and(
     eq(decisions.roomId, roomId),
-    exists(db.select({ id: transcriptLines.id }).from(transcriptLines).where(expired)),
+    exists(db.select({ id: transcriptLines.id }).from(transcriptLines).where(and(
+      expired,
+      // The same source authority applies to a reviewed decision.
+      eq(transcriptLines.id, decisions.sourceLineId),
+    ))),
   ));
   await db.delete(summaries).where(and(
     eq(summaries.roomId, roomId),
