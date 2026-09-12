@@ -49,6 +49,8 @@ describe("transcript retention", () => {
     expect(calls[1].sql).toContain('"action_items"."room_id" =');
     expect(calls[1].sql).toContain("exists (select");
     expect(calls[1].sql).toContain('"transcript_lines"."created_at" <');
+    expect(calls[1].sql).toContain('"transcript_lines"."id" = "action_items"."source_line_id"');
+    expect(calls[2].sql).toContain('"transcript_lines"."id" = "decisions"."source_line_id"');
     expect(calls[1].params).toEqual(["room-a", "room-a", cutoff.toISOString()]);
     expect(calls[2].params).toEqual(["room-a", "room-a", cutoff.toISOString()]);
     expect(calls[3].params).toEqual(["room-a", cutoff.toISOString(), "room-a", cutoff.toISOString()]);
