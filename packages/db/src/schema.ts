@@ -333,6 +333,13 @@ export const transcriptLines = pgTable(
     // A composite FK from action items makes a source from another room
     // impossible. Postgres requires the referenced tuple to be unique.
     unique("transcript_lines_room_id_id_key").on(table.roomId, table.id),
+    // Generated timeline navigation must point to evidence from this exact
+    // occurrence, not merely another retained row in the same recurring room.
+    unique("transcript_lines_room_occurrence_id_id_key").on(
+      table.roomId,
+      table.occurrenceId,
+      table.id,
+    ),
     // The action-item trigger resolves an assignee's canonical display-name
     // snapshot from retained evidence, never from model or browser input.
     index("transcript_lines_room_speaker_created_at_idx").on(
@@ -401,6 +408,148 @@ export const timelineManualMoments = pgTable(
 
 export type TimelineManualMoment = typeof timelineManualMoments.$inferSelect;
 export type NewTimelineManualMoment = typeof timelineManualMoments.$inferInsert;
+
+/**
+ * A generated topic range, rooted at two retained transcript rows.
+ *
+ * The model may suggest a short title and sequence range, but the server
+ * resolves every source id and timestamp before inserting. Both source foreign
+ * keys cascade, so a chapter can never outlive either piece of evidence.
+ */
+export const timelineChapters = pgTable(
+  "timeline_chapters",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    roomId: uuid("room_id")
+      .notNull()
+      .references(() => rooms.id, { onDelete: "cascade" }),
+    occurrenceId: uuid("occurrence_id").notNull(),
+
+    title: text("title").notNull(),
+
+    sourceStartLineId: uuid("source_start_line_id").notNull(),
+    sourceStartSeq: integer("source_start_seq").notNull(),
+    sourceStartAt: timestamp("source_start_at", { withTimezone: true }).notNull(),
+
+    sourceEndLineId: uuid("source_end_line_id").notNull(),
+    sourceEndSeq: integer("source_end_seq").notNull(),
+    sourceEndAt: timestamp("source_end_at", { withTimezone: true }).notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.roomId, table.occurrenceId],
+      foreignColumns: [meetingOccurrences.roomId, meetingOccurrences.id],
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.roomId, table.occurrenceId, table.sourceStartLineId],
+      foreignColumns: [
+        transcriptLines.roomId,
+        transcriptLines.occurrenceId,
+        transcriptLines.id,
+      ],
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.roomId, table.occurrenceId, table.sourceEndLineId],
+      foreignColumns: [
+        transcriptLines.roomId,
+        transcriptLines.occurrenceId,
+        transcriptLines.id,
+      ],
+    }).onDelete("cascade"),
+    check(
+      "timeline_chapters_title_check",
+      sql`char_length(btrim(${table.title})) between 1 and 200`,
+    ),
+    check(
+      "timeline_chapters_source_range_check",
+      sql`${table.sourceStartSeq} <= ${table.sourceEndSeq}`,
+    ),
+    index("timeline_chapters_room_occurrence_source_start_idx").on(
+      table.roomId,
+      table.occurrenceId,
+      table.sourceStartSeq,
+      table.id,
+    ),
+    // These cover the two evidence FKs when retention deletes a source row.
+    index("timeline_chapters_room_occurrence_source_start_line_idx").on(
+      table.roomId,
+      table.occurrenceId,
+      table.sourceStartLineId,
+    ),
+    index("timeline_chapters_room_occurrence_source_end_line_idx").on(
+      table.roomId,
+      table.occurrenceId,
+      table.sourceEndLineId,
+    ),
+    uniqueIndex("timeline_chapters_room_occurrence_source_range_unique").on(
+      table.roomId,
+      table.occurrenceId,
+      table.sourceStartSeq,
+      table.sourceEndSeq,
+    ),
+  ],
+);
+
+export type TimelineChapter = typeof timelineChapters.$inferSelect;
+export type NewTimelineChapter = typeof timelineChapters.$inferInsert;
+
+/**
+ * An automatically detected interesting point, anchored to one retained line.
+ * It deliberately stores no model-written copy of the meeting words; the UI
+ * reads its evidence from the retained transcript through `sourceLineId`.
+ */
+export const timelineGeneratedMoments = pgTable(
+  "timeline_generated_moments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    roomId: uuid("room_id")
+      .notNull()
+      .references(() => rooms.id, { onDelete: "cascade" }),
+    occurrenceId: uuid("occurrence_id").notNull(),
+
+    sourceLineId: uuid("source_line_id").notNull(),
+    sourceSeq: integer("source_seq").notNull(),
+    sourceAt: timestamp("source_at", { withTimezone: true }).notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.roomId, table.occurrenceId],
+      foreignColumns: [meetingOccurrences.roomId, meetingOccurrences.id],
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.roomId, table.occurrenceId, table.sourceLineId],
+      foreignColumns: [
+        transcriptLines.roomId,
+        transcriptLines.occurrenceId,
+        transcriptLines.id,
+      ],
+    }).onDelete("cascade"),
+    index("timeline_generated_moments_room_occurrence_source_idx").on(
+      table.roomId,
+      table.occurrenceId,
+      table.sourceSeq,
+      table.id,
+    ),
+    uniqueIndex("timeline_generated_moments_room_occurrence_source_unique").on(
+      table.roomId,
+      table.occurrenceId,
+      table.sourceLineId,
+    ),
+  ],
+);
+
+export type TimelineGeneratedMoment = typeof timelineGeneratedMoments.$inferSelect;
+export type NewTimelineGeneratedMoment = typeof timelineGeneratedMoments.$inferInsert;
 
 /**
  * A meeting summarised for somebody who was not there.

@@ -1,0 +1,2 @@
+CREATE INDEX "timeline_chapters_room_occurrence_source_start_line_idx" ON "timeline_chapters" USING btree ("room_id","occurrence_id","source_start_line_id");--> statement-breakpoint
+CREATE INDEX "timeline_chapters_room_occurrence_source_end_line_idx" ON "timeline_chapters" USING btree ("room_id","occurrence_id","source_end_line_id");
