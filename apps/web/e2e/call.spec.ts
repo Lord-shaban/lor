@@ -171,8 +171,16 @@ test.describe("a call between two people", () => {
   let bob: BrowserContext;
 
   test.beforeEach(async ({ browser }) => {
-    alice = await browser.newContext();
-    bob = await browser.newContext();
+    // Playwright reaches Next directly, so every browser would otherwise share
+    // one production token-rate bucket at 127.0.0.1. A real reverse proxy
+    // supplies this header; distinct test clients must do the same or a
+    // later, unrelated call fails after enough genuine reconnect coverage.
+    alice = await browser.newContext({
+      extraHTTPHeaders: { "x-forwarded-for": `playwright-alice-${randomUUID()}` },
+    });
+    bob = await browser.newContext({
+      extraHTTPHeaders: { "x-forwarded-for": `playwright-bob-${randomUUID()}` },
+    });
   });
 
   test.afterEach(async () => {
@@ -2241,6 +2249,402 @@ test.describe("a call between two people", () => {
 
     await db.update(rooms).set({ hostSecretHash: "0".repeat(64) }).where(eq(rooms.id, room.id));
     expect((await host.request.post(`/api/rooms/${code}/timeline/generate`)).status()).toBe(404);
+  });
+
+  test("keeps Meeting memory bounded to retained, ended evidence and makes it usable in both directions", async () => {
+    const host = await alice.newPage();
+    const guest = await bob.newPage();
+    const code = await createRoom(host);
+    const db = getDb();
+
+    await join(host, code, "Ahmed");
+    const [room] = await db
+      .select({ id: rooms.id, livekitRoom: rooms.livekitRoom })
+      .from(rooms)
+      .where(eq(rooms.code, code))
+      .limit(1);
+    if (!room) throw new Error("The Meeting memory room was not stored");
+
+    const [firstOccurrence] = await db
+      .select({ id: meetingOccurrences.id })
+      .from(meetingOccurrences)
+      .where(eq(meetingOccurrences.roomId, room.id))
+      .limit(1);
+    if (!firstOccurrence) throw new Error("The first Meeting memory occurrence was not created");
+
+    async function source(
+      occurrenceId: string | null,
+      seq: number,
+      speaker: string,
+      text: string,
+      createdAt = new Date(),
+    ) {
+      const [line] = await db
+        .insert(transcriptLines)
+        .values({
+          roomId: room.id,
+          occurrenceId,
+          durationMs: occurrenceId ? 1_000 : null,
+          speakerIdentity: `p_memory_${seq}`,
+          speakerName: speaker,
+          text,
+          seq,
+          createdAt,
+        })
+        .returning({
+          id: transcriptLines.id,
+          seq: transcriptLines.seq,
+          createdAt: transcriptLines.createdAt,
+          speakerIdentity: transcriptLines.speakerIdentity,
+        });
+      if (!line) throw new Error("Meeting memory evidence was not stored");
+      return line;
+    }
+
+    async function confirmedDecision(line: Awaited<ReturnType<typeof source>>, text: string) {
+      const [decision] = await db
+        .insert(decisions)
+        .values({
+          roomId: room.id,
+          sourceLineId: line.id,
+          sourceSeq: line.seq,
+          sourceSpeaker: "Ahmed",
+          sourceQuote: "",
+          sourceCreatedAt: line.createdAt,
+          status: "confirmed",
+          origin: "manual",
+          text,
+          confirmedAt: new Date(),
+        })
+        .returning({ id: decisions.id });
+      if (!decision) throw new Error("Confirmed Meeting memory decision was not stored");
+      return decision;
+    }
+
+    async function task(
+      line: Awaited<ReturnType<typeof source>>,
+      text: string,
+      status: "open" | "completed",
+    ) {
+      const [item] = await db
+        .insert(actionItems)
+        .values({
+          roomId: room.id,
+          sourceLineId: line.id,
+          sourceSeq: line.seq,
+          sourceSpeaker: "Sara",
+          sourceQuote: "",
+          sourceCreatedAt: line.createdAt,
+          origin: "manual",
+          text,
+        })
+        .returning({ id: actionItems.id });
+      if (!item) throw new Error("Meeting memory action item was not stored");
+
+      const opened = await host.request.patch(`/api/rooms/${code}/action-items`, {
+        data: {
+          id: item.id,
+          action: "open",
+          text,
+          assigneeIdentity: line.speakerIdentity,
+          dueOn: "2026-09-30",
+        },
+      });
+      expect(opened.status()).toBe(200);
+      if (status === "completed") {
+        const completed = await host.request.patch(`/api/rooms/${code}/action-items`, {
+          data: { id: item.id, action: "complete" },
+        });
+        expect(completed.status()).toBe(200);
+      }
+      return item;
+    }
+
+    const firstDecisionSource = await source(
+      firstOccurrence.id,
+      810,
+      "Ahmed",
+      "We will publish the retained meeting record after the release checklist is approved.",
+    );
+    const firstTaskSource = await source(
+      firstOccurrence.id,
+      811,
+      "Sara",
+      "I will verify the mobile RTL evidence before the release window.",
+    );
+    const proposedSource = await source(firstOccurrence.id, 812, "Ahmed", "This proposal still needs review.");
+    const completedTaskSource = await source(firstOccurrence.id, 813, "Sara", "I completed the old release note.");
+    const firstDecision = await confirmedDecision(firstDecisionSource, "Publish after the release checklist is approved.");
+    await db.insert(decisions).values({
+      roomId: room.id,
+      sourceLineId: proposedSource.id,
+      sourceSeq: proposedSource.seq,
+      sourceSpeaker: "Ahmed",
+      sourceQuote: "This proposal still needs review.",
+      sourceCreatedAt: proposedSource.createdAt,
+      status: "proposed",
+      origin: "manual",
+      text: "This must never appear in Meeting memory.",
+    });
+    const openTask = await task(firstTaskSource, "Verify the mobile RTL evidence.", "open");
+    await task(completedTaskSource, "This completed task must stay absent.", "completed");
+
+    await host.getByRole("button", { name: "Leave", exact: true }).click();
+    await waitForEmptyLiveKitRoom(room.livekitRoom);
+    await join(host, code, "Ahmed");
+
+    const [secondOccurrence] = await db
+      .select({ id: meetingOccurrences.id })
+      .from(meetingOccurrences)
+      .where(and(eq(meetingOccurrences.roomId, room.id), isNull(meetingOccurrences.endedAt)))
+      .limit(1);
+    if (!secondOccurrence || secondOccurrence.id === firstOccurrence.id) {
+      throw new Error("A second Meeting memory occurrence was not created");
+    }
+    const secondDecisionSource = await source(
+      secondOccurrence.id,
+      820,
+      "Ahmed",
+      "The second meeting confirms the same display name in a new retained occurrence.",
+    );
+    await confirmedDecision(secondDecisionSource, "Keep the memory source-grounded.");
+
+    await host.getByRole("button", { name: "Leave", exact: true }).click();
+    await waitForEmptyLiveKitRoom(room.livekitRoom);
+    await join(host, code, "Ahmed");
+
+    const [currentOccurrence] = await db
+      .select({ id: meetingOccurrences.id })
+      .from(meetingOccurrences)
+      .where(and(eq(meetingOccurrences.roomId, room.id), isNull(meetingOccurrences.endedAt)))
+      .limit(1);
+    if (!currentOccurrence) throw new Error("The active Meeting memory occurrence was not created");
+    const currentSource = await source(currentOccurrence.id, 830, "Nadia", "This active meeting must not become memory yet.");
+    await confirmedDecision(currentSource, "Current facts must stay absent.");
+    const legacySource = await source(null, 831, "Legacy", "This unscoped retained line must stay absent.");
+    await confirmedDecision(legacySource, "Legacy facts must stay absent.");
+    const expiredSource = await source(
+      firstOccurrence.id,
+      832,
+      "Expired",
+      "This expired retained text must be swept before Memory responds.",
+      new Date("2026-01-01T00:00:00.000Z"),
+    );
+    await confirmedDecision(expiredSource, "Expired facts must stay absent.");
+    await db.update(rooms).set({ settings: { glossary: ["VAD", "LOR."] } }).where(eq(rooms.id, room.id));
+
+    const otherCode = await createRoom(host);
+    const [otherRoom] = await db.select({ id: rooms.id }).from(rooms).where(eq(rooms.code, otherCode)).limit(1);
+    if (!otherRoom) throw new Error("The cross-room Meeting memory fixture was not stored");
+    const otherOccurrenceEndedAt = new Date();
+    const [otherOccurrence] = await db
+      .insert(meetingOccurrences)
+      .values({
+        roomId: otherRoom.id,
+        startedAt: new Date(otherOccurrenceEndedAt.getTime() - 1_000),
+        endedAt: otherOccurrenceEndedAt,
+      })
+      .returning({ id: meetingOccurrences.id });
+    if (!otherOccurrence) throw new Error("The cross-room occurrence was not stored");
+    const [otherSource] = await db
+      .insert(transcriptLines)
+      .values({
+        roomId: otherRoom.id,
+        occurrenceId: otherOccurrence.id,
+        durationMs: 1_000,
+        speakerIdentity: "p_other_memory",
+        speakerName: "Elsewhere",
+        text: "Cross-room Meeting memory must never leak here.",
+        seq: 1,
+      })
+      .returning({ id: transcriptLines.id, seq: transcriptLines.seq, createdAt: transcriptLines.createdAt });
+    if (!otherSource) throw new Error("Cross-room Meeting memory evidence was not stored");
+    await db.insert(decisions).values({
+      roomId: otherRoom.id,
+      sourceLineId: otherSource.id,
+      sourceSeq: otherSource.seq,
+      sourceSpeaker: "Elsewhere",
+      sourceQuote: "Cross-room Meeting memory must never leak here.",
+      sourceCreatedAt: otherSource.createdAt,
+      status: "confirmed",
+      origin: "manual",
+      text: "Cross-room Meeting memory must never leak here.",
+      confirmedAt: new Date(),
+    });
+
+    const hostMemoryResponse = await host.request.get(`/api/rooms/${code}/memory`);
+    expect(hostMemoryResponse.status()).toBe(200);
+    const memory = await hostMemoryResponse.json();
+    expect(memory).toMatchObject({
+      state: "available",
+      lastOccurrence: { id: secondOccurrence.id },
+      glossary: ["VAD", "LOR."],
+    });
+    expect(memory.decisions.map((decision: { text: string }) => decision.text)).toEqual(expect.arrayContaining([
+      "Publish after the release checklist is approved.",
+      "Keep the memory source-grounded.",
+    ]));
+    expect(memory.actionItems).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: openTask.id, text: "Verify the mobile RTL evidence." }),
+    ]));
+    expect(JSON.stringify(memory)).not.toContain("This proposal still needs review");
+    expect(JSON.stringify(memory)).not.toContain("completed task must stay absent");
+    expect(JSON.stringify(memory)).not.toContain("active meeting must not become memory");
+    expect(JSON.stringify(memory)).not.toContain("unscoped retained line must stay absent");
+    expect(JSON.stringify(memory)).not.toContain("expired retained text must be swept");
+    expect(JSON.stringify(memory)).not.toContain("Cross-room Meeting memory");
+    expect(memory.repeatedSpeakers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "Ahmed", occurrenceCount: 2, kind: "repeated" }),
+    ]));
+    await expect(
+      db.select({ id: decisions.id }).from(decisions).where(eq(decisions.id, firstDecision.id)),
+    ).resolves.toHaveLength(1);
+    await expect(
+      db.select({ id: decisions.id }).from(decisions).where(eq(decisions.sourceLineId, expiredSource.id)),
+    ).resolves.toHaveLength(0);
+
+    await join(guest, code, "سارة", "ar");
+    const guestMemoryResponse = await guest.request.get(`/api/rooms/${code}/memory`);
+    expect(guestMemoryResponse.status()).toBe(200);
+    await expect(guestMemoryResponse.json()).resolves.toMatchObject({ state: "available" });
+
+    let memoryGets = 0;
+    host.on("request", (request) => {
+      if (new URL(request.url()).pathname === `/api/rooms/${code}/memory` && request.method() === "GET") memoryGets += 1;
+    });
+    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
+    await expect(guest.getByRole("button", { name: "اقفل الكابشنز", exact: true })).toBeVisible();
+    await host.waitForTimeout(250);
+    expect(memoryGets).toBe(0);
+
+    let startFailureRequest!: () => void;
+    let releaseFailure!: () => void;
+    const failureRequestStarted = new Promise<void>((resolve) => { startFailureRequest = resolve; });
+    const releaseFailureResponse = new Promise<void>((resolve) => { releaseFailure = resolve; });
+    await host.route(`**/api/rooms/${code}/memory`, async (route) => {
+      startFailureRequest();
+      await releaseFailureResponse;
+      await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "unavailable" }) });
+    });
+    await host.getByRole("button", { name: "Meeting memory", exact: true }).click();
+    const hostPanel = host.getByTestId("memory-panel");
+    await failureRequestStarted;
+    await expect(hostPanel.locator('[aria-busy="true"]')).toBeVisible();
+    releaseFailure();
+    await expect(hostPanel.getByText(
+      "Meeting memory could not be reached. Your call and kept record continue; try again.",
+      { exact: true },
+    )).toBeVisible();
+    await host.unroute(`**/api/rooms/${code}/memory`);
+    await hostPanel.getByRole("button", { name: "Try again", exact: true }).click();
+    await expect(hostPanel.getByText("Last completed meeting", { exact: true })).toBeVisible();
+    await expect(hostPanel.getByText("Keep the memory source-grounded.", { exact: true })).toBeVisible();
+    await expect(hostPanel.getByText("Verify the mobile RTL evidence.", { exact: true })).toBeVisible();
+    await expect(hostPanel.getByText("Ahmed", { exact: true }).first()).toBeVisible();
+    await hostPanel.locator(`[data-memory-decision-id="${firstDecision.id}"]`).getByRole("button", { name: "Show source line", exact: true }).click();
+    const transcriptSource = host.locator(`[data-transcript-line="${firstDecisionSource.seq}"]`);
+    await expect(transcriptSource).toBeVisible();
+    await expect(transcriptSource).toBeFocused();
+
+    await host.getByRole("button", { name: "Meeting memory", exact: true }).click();
+    await hostPanel.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(host.getByRole("button", { name: "Meeting memory", exact: true })).toBeFocused();
+
+    await guest.emulateMedia({ reducedMotion: "reduce" });
+    await guest.setViewportSize({ width: 375, height: 667 });
+    await expect(guest.locator("html")).toHaveAttribute("dir", "rtl");
+    await guest.getByRole("button", { name: "ذاكرة الاجتماعات", exact: true }).click();
+    const guestPanel = guest.getByTestId("memory-panel");
+    const guestClose = guestPanel.getByRole("button", { name: "اقفل", exact: true });
+    await expect(guestClose).toBeFocused();
+    expect(await guest.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await expect(guestPanel.getByText("دي أسماء عرض متطابقة في الكابشنز المحفوظة، مش هويات مؤكدة ولا سجل حضور.", { exact: true })).toBeVisible();
+    await guestClose.click();
+    await expect(guest.getByRole("button", { name: "ذاكرة الاجتماعات", exact: true })).toBeFocused();
+
+    // This test deliberately visits three occurrences. Leave the final one
+    // explicitly so its LiveKit peers cannot bleed into the next real-media
+    // scenario in this serial suite.
+    await host.getByRole("button", { name: "Leave", exact: true }).click();
+    await guest.getByRole("button", { name: "اخرج", exact: true }).click();
+    await waitForEmptyLiveKitRoom(room.livekitRoom);
+  });
+
+  test("removes Meeting memory facts when retained captions expire or are deleted", async () => {
+    const page = await alice.newPage();
+    const db = getDb();
+
+    async function roomWithMemoryFact(createdAt = new Date()) {
+      const code = await createRoom(page);
+      const [room] = await db.select({ id: rooms.id }).from(rooms).where(eq(rooms.code, code)).limit(1);
+      if (!room) throw new Error("The Memory cleanup room was not stored");
+      const endedAt = new Date();
+      const [occurrence] = await db
+        .insert(meetingOccurrences)
+        .values({
+          roomId: room.id,
+          startedAt: new Date(endedAt.getTime() - 1_000),
+          endedAt,
+        })
+        .returning({ id: meetingOccurrences.id });
+      if (!occurrence) throw new Error("The Memory cleanup occurrence was not stored");
+      const [source] = await db
+        .insert(transcriptLines)
+        .values({
+          roomId: room.id,
+          occurrenceId: occurrence.id,
+          durationMs: 1_000,
+          speakerIdentity: "p_memory_cleanup",
+          speakerName: "Ahmed",
+          text: "The retained Memory fact leaves with this exact caption.",
+          seq: 901,
+          createdAt,
+        })
+        .returning({ id: transcriptLines.id, seq: transcriptLines.seq, createdAt: transcriptLines.createdAt });
+      if (!source) throw new Error("The Memory cleanup source was not stored");
+      await db.insert(decisions).values({
+        roomId: room.id,
+        sourceLineId: source.id,
+        sourceSeq: source.seq,
+        sourceSpeaker: "Ahmed",
+        sourceQuote: "The retained Memory fact leaves with this exact caption.",
+        sourceCreatedAt: source.createdAt,
+        status: "confirmed",
+        origin: "manual",
+        text: "Keep no copied Memory text.",
+        confirmedAt: createdAt,
+      });
+      return { code, room, source };
+    }
+
+    const expired = await roomWithMemoryFact(new Date("2026-01-01T00:00:00.000Z"));
+    await expect((await page.request.get(`/api/rooms/${expired.code}/memory`)).json()).resolves.toMatchObject({ state: "empty" });
+    await expect(
+      db.select({ id: transcriptLines.id }).from(transcriptLines).where(eq(transcriptLines.id, expired.source.id)),
+    ).resolves.toHaveLength(0);
+
+    const deleted = await roomWithMemoryFact();
+    await expect((await page.request.get(`/api/rooms/${deleted.code}/memory`)).json()).resolves.toMatchObject({
+      state: "available",
+      decisions: [expect.objectContaining({ text: "Keep no copied Memory text." })],
+    });
+    expect((await page.request.delete(`/api/rooms/${deleted.code}/transcript`)).status()).toBe(200);
+    await expect((await page.request.get(`/api/rooms/${deleted.code}/memory`)).json()).resolves.toMatchObject({ state: "empty" });
+
+    const removedRoom = await roomWithMemoryFact();
+    await db.delete(rooms).where(eq(rooms.id, removedRoom.room.id));
+    expect((await page.request.get(`/api/rooms/${removedRoom.code}/memory`)).status()).toBe(404);
+
+    const emptyCode = await createRoom(page);
+    await join(page, emptyCode, "Ahmed");
+    await page.getByRole("button", { name: "Turn on captions", exact: true }).click();
+    await page.getByRole("button", { name: "Meeting memory", exact: true }).click();
+    const emptyPanel = page.getByTestId("memory-panel");
+    await expect(emptyPanel.getByText("No earlier meeting record", { exact: true })).toBeVisible();
+    await expect(emptyPanel.getByText(
+      "There are no kept captions from an earlier completed meeting in this room.",
+      { exact: true },
+    )).toBeVisible();
   });
 
   test("removes every Timeline derivative when retained captions expire, delete, or lose their room", async () => {
