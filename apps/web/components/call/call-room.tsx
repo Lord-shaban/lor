@@ -373,6 +373,7 @@ function CallStageContent({
             code={code}
             isHost={isHost}
             revision={timelineRevision}
+            recording={recording}
             onClose={() => {
               restoreTimelineFocusRef.current = true;
               setRecordPanel(null);
