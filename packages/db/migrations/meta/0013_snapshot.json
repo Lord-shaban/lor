@@ -953,7 +953,7 @@
         },
         "embedding": {
           "name": "embedding",
-          "type": "extensions.vector(1536)",
+          "type": "vector(1536)",
           "primaryKey": false,
           "notNull": false
         },

@@ -27,13 +27,13 @@ const binary = customType<{ data: Buffer; driverData: Buffer }>({
 });
 
 /**
- * `pgvector` is installed in the explicit extensions schema by the v0.6
- * migration. Keeping the dimension here makes it impossible for an index row
+ * `pgvector` is installed by the v0.6 migration. Keeping the dimension here
+ * makes it impossible for an index row
  * and a query embedding from another model family to compare by accident.
  */
 const embedding = customType<{ data: number[]; driverData: string }>({
   dataType() {
-    return "extensions.vector(1536)";
+    return "vector(1536)";
   },
 });
 

@@ -1,5 +1,4 @@
-CREATE SCHEMA IF NOT EXISTS "extensions";--> statement-breakpoint
-CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA "extensions";--> statement-breakpoint
+CREATE EXTENSION IF NOT EXISTS vector;--> statement-breakpoint
 CREATE TYPE "public"."search_document_kind" AS ENUM('transcript', 'decision', 'notes');--> statement-breakpoint
 CREATE TABLE "search_documents" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -12,7 +11,7 @@ CREATE TABLE "search_documents" (
 	"source_created_at" timestamp with time zone NOT NULL,
 	"speaker_name" text,
 	"content" text NOT NULL,
-	"embedding" extensions.vector(1536),
+	"embedding" vector(1536),
 	"embedding_model" text,
 	"embedded_at" timestamp with time zone,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -45,7 +44,7 @@ ALTER TABLE "search_documents" ADD CONSTRAINT "search_documents_notes_snapshot_f
 CREATE INDEX "search_documents_room_occurred_at_idx" ON "search_documents" USING btree ("room_id","source_created_at");--> statement-breakpoint
 CREATE INDEX "search_documents_room_kind_idx" ON "search_documents" USING btree ("room_id","kind");--> statement-breakpoint
 CREATE INDEX "search_documents_lexical_idx" ON "search_documents" USING gin ("search_vector");--> statement-breakpoint
-CREATE INDEX "search_documents_embedding_hnsw_idx" ON "search_documents" USING hnsw ("embedding" extensions.vector_cosine_ops) WHERE "embedding" IS NOT NULL;--> statement-breakpoint
+CREATE INDEX "search_documents_embedding_hnsw_idx" ON "search_documents" USING hnsw ("embedding" vector_cosine_ops) WHERE "embedding" IS NOT NULL;--> statement-breakpoint
 CREATE UNIQUE INDEX "search_documents_transcript_line_unique" ON "search_documents" USING btree ("transcript_line_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "search_documents_decision_unique" ON "search_documents" USING btree ("decision_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "search_documents_notes_snapshot_unique" ON "search_documents" USING btree ("notes_snapshot_room_id");--> statement-breakpoint
