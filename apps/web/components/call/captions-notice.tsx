@@ -27,7 +27,9 @@ export function CaptionsNotice({
   onOpenDecisions,
   onOpenActionItems,
   onOpenTimeline,
+  onOpenMemory,
   timelineEntryRef,
+  memoryEntryRef,
 }: {
   captions: Captions;
   onOpenKeys: () => void;
@@ -35,7 +37,9 @@ export function CaptionsNotice({
   onOpenDecisions: () => void;
   onOpenActionItems: () => void;
   onOpenTimeline: () => void;
+  onOpenMemory: () => void;
   timelineEntryRef: RefObject<HTMLButtonElement | null>;
+  memoryEntryRef: RefObject<HTMLButtonElement | null>;
 }) {
   const t = useTranslations("call.captions");
   const keys = useTranslations("call.keys");
@@ -103,6 +107,15 @@ export function CaptionsNotice({
         className="rounded-md px-2 py-0.5 font-medium text-[#a1a1aa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:text-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
       >
         {keeping("timeline")}
+      </button>
+
+      <button
+        type="button"
+        ref={memoryEntryRef}
+        onClick={onOpenMemory}
+        className="rounded-md px-2 py-0.5 font-medium text-[#a1a1aa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:text-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
+      >
+        {keeping("memory")}
       </button>
 
       <button

@@ -47,6 +47,12 @@ const TimelinePanel = dynamic(
   { ssr: false },
 );
 
+// Memory is another optional retained-record workspace, never part of joining.
+const MemoryPanel = dynamic(
+  () => import("@/components/call/memory-panel").then((module) => module.MemoryPanel),
+  { ssr: false },
+);
+
 export interface Connection {
   token: string;
   serverUrl: string;
@@ -208,17 +214,25 @@ function CallStageContent({
   // server's cookie check decides anything; this is what the interface shows.
   const [isHost, setIsHost] = useState(startedAsHost);
   const [keysOpen, setKeysOpen] = useState(false);
-  const [recordPanel, setRecordPanel] = useState<"transcript" | "decisions" | "action-items" | "timeline" | null>(null);
+  const [recordPanel, setRecordPanel] = useState<"transcript" | "decisions" | "action-items" | "timeline" | "memory" | null>(null);
   const [transcriptSourceSeq, setTranscriptSourceSeq] = useState<number | null>(null);
   const [carryOverDismissed, setCarryOverDismissed] = useState(false);
   const timelineEntryRef = useRef<HTMLButtonElement>(null);
   const restoreTimelineFocusRef = useRef(false);
+  const memoryEntryRef = useRef<HTMLButtonElement>(null);
+  const restoreMemoryFocusRef = useRef(false);
   const { carryOver, retry: retryCarryOver } = useCarryOver({ code, meetingId });
 
   useEffect(() => {
     if (recordPanel !== null || !restoreTimelineFocusRef.current) return;
     timelineEntryRef.current?.focus();
     restoreTimelineFocusRef.current = false;
+  }, [recordPanel]);
+
+  useEffect(() => {
+    if (recordPanel !== null || !restoreMemoryFocusRef.current) return;
+    memoryEntryRef.current?.focus();
+    restoreMemoryFocusRef.current = false;
   }, [recordPanel]);
 
   const { localParticipant } = useLocalParticipant();
@@ -386,6 +400,20 @@ function CallStageContent({
           />
         )}
 
+        {recordPanel === "memory" && (
+          <MemoryPanel
+            code={code}
+            onClose={() => {
+              restoreMemoryFocusRef.current = true;
+              setRecordPanel(null);
+            }}
+            onShowSource={(seq) => {
+              setTranscriptSourceSeq(seq);
+              setRecordPanel("transcript");
+            }}
+          />
+        )}
+
         {chatOpen && (
           <ChatPanel entries={entries} onSend={sendChat} onClose={toggleChat} />
         )}
@@ -450,7 +478,9 @@ function CallStageContent({
         onOpenDecisions={() => setRecordPanel("decisions")}
         onOpenActionItems={() => setRecordPanel("action-items")}
         onOpenTimeline={() => setRecordPanel("timeline")}
+        onOpenMemory={() => setRecordPanel("memory")}
         timelineEntryRef={timelineEntryRef}
+        memoryEntryRef={memoryEntryRef}
       />
 
       <CallControls
