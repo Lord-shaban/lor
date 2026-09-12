@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
 import { direction as localeDirection, type Locale } from "@/i18n/routing";
 import {
@@ -38,6 +39,13 @@ import { RecordingNotice, RecordingStatus } from "@/components/call/recording-no
 import { YjsRoomLifecycle } from "@/components/call/use-yjs-room";
 import { unreadCount } from "@/lib/chat-log";
 import type { JoinDetails } from "@/components/prejoin/prejoin";
+
+// Timeline opens beside the retained record, not as an initial-call dependency.
+// The chunk is fetched only once somebody asks for this workspace.
+const TimelinePanel = dynamic(
+  () => import("@/components/call/timeline-panel").then((module) => module.TimelinePanel),
+  { ssr: false },
+);
 
 export interface Connection {
   token: string;
@@ -200,10 +208,19 @@ function CallStageContent({
   // server's cookie check decides anything; this is what the interface shows.
   const [isHost, setIsHost] = useState(startedAsHost);
   const [keysOpen, setKeysOpen] = useState(false);
-  const [recordPanel, setRecordPanel] = useState<"transcript" | "decisions" | "action-items" | null>(null);
+  const [recordPanel, setRecordPanel] = useState<"transcript" | "decisions" | "action-items" | "timeline" | null>(null);
   const [transcriptSourceSeq, setTranscriptSourceSeq] = useState<number | null>(null);
   const [carryOverDismissed, setCarryOverDismissed] = useState(false);
+  const timelineEntryRef = useRef<HTMLButtonElement>(null);
+  const restoreTimelineFocusRef = useRef(false);
   const { carryOver, retry: retryCarryOver } = useCarryOver({ code, meetingId });
+
+  useEffect(() => {
+    if (recordPanel !== null || !restoreTimelineFocusRef.current) return;
+    timelineEntryRef.current?.focus();
+    restoreTimelineFocusRef.current = false;
+  }, [recordPanel]);
+
   const { localParticipant } = useLocalParticipant();
   const participants = useParticipants();
   const {
@@ -217,6 +234,8 @@ function CallStageContent({
     toggleHand,
     recordingAnnouncement,
     announceRecording,
+    timelineRevision,
+    announceTimelineUpdate,
   } = useRoomMessages();
 
   // A screen share is the selected video while it is live; otherwise record
@@ -349,6 +368,23 @@ function CallStageContent({
           />
         )}
 
+        {recordPanel === "timeline" && (
+          <TimelinePanel
+            code={code}
+            isHost={isHost}
+            revision={timelineRevision}
+            onClose={() => {
+              restoreTimelineFocusRef.current = true;
+              setRecordPanel(null);
+            }}
+            onShowSource={(seq) => {
+              setTranscriptSourceSeq(seq);
+              setRecordPanel("transcript");
+            }}
+            onTimelineChanged={announceTimelineUpdate}
+          />
+        )}
+
         {chatOpen && (
           <ChatPanel entries={entries} onSend={sendChat} onClose={toggleChat} />
         )}
@@ -412,6 +448,8 @@ function CallStageContent({
         }}
         onOpenDecisions={() => setRecordPanel("decisions")}
         onOpenActionItems={() => setRecordPanel("action-items")}
+        onOpenTimeline={() => setRecordPanel("timeline")}
+        timelineEntryRef={timelineEntryRef}
       />
 
       <CallControls

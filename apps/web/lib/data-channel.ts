@@ -224,6 +224,15 @@ export type RoomMessage =
       started: boolean;
     }
   | {
+      /**
+       * Retained Timeline data changed. It intentionally carries no marker
+       * time, label, identity, or transcript evidence: an open panel refetches
+       * the server record, which is the only authoritative timeline source.
+       */
+      type: "timeline";
+      event: "manual-moment";
+    }
+  | {
       type: "hand";
       raised: boolean;
       /**
@@ -336,6 +345,11 @@ export function decodeMessage(payload: Uint8Array): RoomMessage | null {
       const { started } = envelope;
       if (typeof started !== "boolean") return null;
       return { type: "recording", started };
+    }
+
+    case "timeline": {
+      if (envelope.event !== "manual-moment") return null;
+      return { type: "timeline", event: "manual-moment" };
     }
 
     case "hand": {

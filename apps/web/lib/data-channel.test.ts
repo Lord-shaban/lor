@@ -355,3 +355,28 @@ describe("local recording announcement", () => {
     ).toBeNull();
   });
 });
+
+describe("timeline refresh announcement", () => {
+  const wire = (message: Parameters<typeof encodeMessage>[0]) =>
+    decodeMessage(encodeMessage(message));
+
+  it("asks peers to refresh a manual marker without sending meeting data", () => {
+    expect(wire({ type: "timeline", event: "manual-moment" })).toEqual({
+      type: "timeline",
+      event: "manual-moment",
+    });
+
+    const payload = JSON.parse(
+      new TextDecoder().decode(encodeMessage({ type: "timeline", event: "manual-moment" })),
+    );
+    expect(payload).toEqual({ v: PROTOCOL_VERSION, type: "timeline", event: "manual-moment" });
+  });
+
+  it("rejects unknown timeline events", () => {
+    expect(decodeMessage(new TextEncoder().encode(JSON.stringify({
+      v: PROTOCOL_VERSION,
+      type: "timeline",
+      event: "invented-marker",
+    })))).toBeNull();
+  });
+});
