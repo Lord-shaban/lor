@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { Buffer } from "node:buffer";
 import { readFile, stat } from "node:fs/promises";
 import { expect, test, type Page, type BrowserContext } from "@playwright/test";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { RoomServiceClient } from "livekit-server-sdk";
 import {
   actionItems,
@@ -10,7 +10,9 @@ import {
   getDb,
   meetingOccurrences,
   rooms,
+  timelineChapters,
   timelineGeneratedMoments,
+  timelineManualMoments,
   transcriptLines,
 } from "@lor/db";
 import * as Y from "yjs";
@@ -2033,6 +2035,298 @@ test.describe("a call between two people", () => {
         .from(meetingOccurrences)
         .where(eq(meetingOccurrences.id, occurrence.id)),
     ).resolves.toHaveLength(0);
+  });
+
+  test("keeps Timeline occurrence-scoped, shared, source-grounded, and usable without generation", async () => {
+    const host = await alice.newPage();
+    const guest = await bob.newPage();
+    const code = await createRoom(host);
+    const db = getDb();
+
+    await join(host, code, "Ahmed");
+    const [room] = await db
+      .select({ id: rooms.id, livekitRoom: rooms.livekitRoom })
+      .from(rooms)
+      .where(eq(rooms.code, code))
+      .limit(1);
+    if (!room) throw new Error("The Timeline integration room was not stored");
+    const [firstOccurrence] = await db
+      .select({ id: meetingOccurrences.id, startedAt: meetingOccurrences.startedAt })
+      .from(meetingOccurrences)
+      .where(eq(meetingOccurrences.roomId, room.id))
+      .limit(1);
+    if (!firstOccurrence) throw new Error("The first Timeline occurrence was not created");
+
+    const firstAt = new Date(firstOccurrence.startedAt.getTime() + 1_000);
+    const secondAt = new Date(firstOccurrence.startedAt.getTime() + 5_000);
+    const [firstLine, secondLine] = await db
+      .insert(transcriptLines)
+      .values([
+        {
+          roomId: room.id,
+          occurrenceId: firstOccurrence.id,
+          durationMs: 2_000,
+          speakerIdentity: "p_ahmed_timeline",
+          speakerName: "Ahmed",
+          text: "We will deploy after the final CI check and keep the rollback plan ready for the release window.",
+          seq: 710,
+          createdAt: firstAt,
+        },
+        {
+          roomId: room.id,
+          occurrenceId: firstOccurrence.id,
+          durationMs: 4_000,
+          speakerIdentity: "p_sara_timeline",
+          speakerName: "Sara",
+          text: "I will review the security checklist and confirm that the release evidence is complete before publishing.",
+          seq: 711,
+          createdAt: secondAt,
+        },
+      ])
+      .returning({ id: transcriptLines.id, seq: transcriptLines.seq, createdAt: transcriptLines.createdAt });
+    if (!firstLine || !secondLine) throw new Error("The Timeline evidence was not stored");
+
+    await db.insert(timelineManualMoments).values({
+      roomId: room.id,
+      occurrenceId: firstOccurrence.id,
+      label: "First occurrence cue",
+      createdAt: firstAt,
+    });
+    await db.insert(timelineChapters).values({
+      roomId: room.id,
+      occurrenceId: firstOccurrence.id,
+      title: "Release readiness",
+      sourceStartLineId: firstLine.id,
+      sourceStartSeq: firstLine.seq,
+      sourceStartAt: firstLine.createdAt,
+      sourceEndLineId: secondLine.id,
+      sourceEndSeq: secondLine.seq,
+      sourceEndAt: secondLine.createdAt,
+    });
+    await db.insert(timelineGeneratedMoments).values({
+      roomId: room.id,
+      occurrenceId: firstOccurrence.id,
+      sourceLineId: secondLine.id,
+      sourceSeq: secondLine.seq,
+      sourceAt: secondLine.createdAt,
+    });
+
+    // Sara is a late joiner, then reconnects while Ahmed remains. Neither
+    // transition may create a new occurrence or reorder the retained record.
+    await join(guest, code, "سارة", "ar");
+    await guest.reload();
+    await join(guest, code, "سارة", "ar");
+    await expect.poll(async () => {
+      const rows = await db
+        .select({ id: meetingOccurrences.id })
+        .from(meetingOccurrences)
+        .where(eq(meetingOccurrences.roomId, room.id));
+      return rows.length;
+    }).toBe(1);
+
+    await expect.poll(() => playingVideos(host), { timeout: MEDIA_TIMEOUT }).toBeGreaterThanOrEqual(2);
+    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
+    await expect(guest.getByRole("button", { name: "اقفل الكابشنز", exact: true })).toBeVisible();
+
+    let timelineGets = 0;
+    host.on("request", (request) => {
+      if (new URL(request.url()).pathname === `/api/rooms/${code}/timeline` && request.method() === "GET") {
+        timelineGets += 1;
+      }
+    });
+
+    await host.getByRole("button", { name: "Timeline", exact: true }).click();
+    const hostTimeline = host.getByTestId("timeline-panel");
+    await expect(hostTimeline).toBeVisible();
+    await expect.poll(() => timelineGets).toBeGreaterThan(0);
+    await expect(hostTimeline.getByText("Release readiness", { exact: true })).toBeVisible();
+    await expect(hostTimeline.getByText("Record lines 710–711", { exact: true })).toBeVisible();
+    await expect(hostTimeline.getByText("Ahmed", { exact: true })).toBeVisible();
+    await expect(hostTimeline.getByText("Sara", { exact: true })).toBeVisible();
+    await expect(hostTimeline.getByText("0:02", { exact: true })).toBeVisible();
+    await expect(hostTimeline.getByText("0:04", { exact: true })).toBeVisible();
+    await expect(hostTimeline.getByRole("button", { name: "Generate Timeline", exact: true })).toBeVisible();
+
+    // A chapter stays a navigation aid, not a new copy of the meeting words.
+    await hostTimeline.getByRole("button", { name: "Show chapter end", exact: true }).click();
+    const sourceLine = host.locator(`[data-transcript-line="${secondLine.seq}"]`);
+    await expect(sourceLine).toBeVisible();
+    await expect(sourceLine).toContainText("security checklist");
+    await expect(sourceLine).toBeFocused();
+
+    await host.getByRole("button", { name: "Timeline", exact: true }).click();
+    await expect(hostTimeline).toBeVisible();
+    await hostTimeline.getByRole("button", { name: "Generate Timeline", exact: true }).click();
+    await expect(hostTimeline.getByText(
+      "No Timeline generation key is set on this server. Marking moments still works.",
+      { exact: true },
+    )).toBeVisible();
+
+    // A quota or provider error must affect only generated navigation; calls
+    // and participant-created moments remain available.
+    await host.route(`**/api/rooms/${code}/timeline/generate`, async (route) => {
+      await route.fulfill({ status: 429, contentType: "application/json", body: JSON.stringify({ error: "quota" }) });
+    });
+    await hostTimeline.getByRole("button", { name: "Generate Timeline", exact: true }).click();
+    await expect(hostTimeline.getByText(
+      "That is enough Timeline generation for this meeting today. Marking moments still works.",
+      { exact: true },
+    )).toBeVisible();
+    await host.unroute(`**/api/rooms/${code}/timeline/generate`);
+    await expect(host.getByRole("button", { name: "Leave", exact: true })).toBeVisible();
+
+    await guest.emulateMedia({ reducedMotion: "reduce" });
+    await guest.setViewportSize({ width: 375, height: 667 });
+    await expect(guest.locator("html")).toHaveAttribute("dir", "rtl");
+    await guest.getByRole("button", { name: "التايم لاين", exact: true }).click();
+    const guestTimeline = guest.getByTestId("timeline-panel");
+    const guestClose = guestTimeline.getByRole("button", { name: "اقفل", exact: true });
+    await expect(guestClose).toBeFocused();
+    expect(await guest.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await expect(guestTimeline.getByRole("button", { name: "ولّد التايم لاين", exact: true })).toHaveCount(0);
+    await guestClose.click();
+    await expect(guest.getByRole("button", { name: "التايم لاين", exact: true })).toBeFocused();
+    await guest.getByRole("button", { name: "التايم لاين", exact: true }).click();
+    await expect(guestTimeline).toBeVisible();
+
+    await hostTimeline.getByRole("button", { name: "Mark moment", exact: true }).click();
+    await expect(hostTimeline.getByText("Moment marked for everyone in this call.", { exact: true })).toBeVisible();
+    await expect(guestTimeline.getByText("لحظة متعلّمة", { exact: true })).toBeVisible();
+
+    // A guest and a revoked former host have no generation authority, even
+    // though both can still participate in the active call.
+    expect((await guest.request.post(`/api/rooms/${code}/timeline/generate`)).status()).toBe(404);
+
+    await hostTimeline.getByRole("button", { name: "Close", exact: true }).click();
+    await guestTimeline.getByRole("button", { name: "اقفل", exact: true }).click();
+    await host.getByRole("button", { name: "Leave", exact: true }).click();
+    await guest.getByRole("button", { name: "اخرج", exact: true }).click();
+    await waitForEmptyLiveKitRoom(room.livekitRoom);
+
+    await join(host, code, "Ahmed");
+    const [secondOccurrence] = await db
+      .select({ id: meetingOccurrences.id })
+      .from(meetingOccurrences)
+      .where(and(eq(meetingOccurrences.roomId, room.id), isNull(meetingOccurrences.endedAt)))
+      .limit(1);
+    if (!secondOccurrence || secondOccurrence.id === firstOccurrence.id) {
+      throw new Error("A later Timeline visit did not create a distinct occurrence");
+    }
+    const [currentLine] = await db
+      .insert(transcriptLines)
+      .values({
+        roomId: room.id,
+        occurrenceId: secondOccurrence.id,
+        durationMs: 3_000,
+        speakerIdentity: "p_nadia_timeline",
+        speakerName: "Nadia",
+        text: "This is evidence from the later occurrence only.",
+        seq: 712,
+      })
+      .returning({ id: transcriptLines.id });
+    if (!currentLine) throw new Error("The later Timeline evidence was not stored");
+    await db.insert(timelineManualMoments).values({
+      roomId: room.id,
+      occurrenceId: secondOccurrence.id,
+      label: "Current occurrence cue",
+    });
+
+    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
+    await host.getByRole("button", { name: "Timeline", exact: true }).click();
+    const laterTimeline = host.getByTestId("timeline-panel");
+    await expect(laterTimeline.getByText("Current occurrence cue", { exact: true })).toBeVisible();
+    await expect(laterTimeline.getByText("First occurrence cue", { exact: true })).toHaveCount(0);
+    await expect(laterTimeline.getByText("Nadia", { exact: true })).toBeVisible();
+    await expect(laterTimeline.getByText("0:03", { exact: true })).toBeVisible();
+
+    await db.update(rooms).set({ hostSecretHash: "0".repeat(64) }).where(eq(rooms.id, room.id));
+    expect((await host.request.post(`/api/rooms/${code}/timeline/generate`)).status()).toBe(404);
+  });
+
+  test("removes every Timeline derivative when retained captions expire, delete, or lose their room", async () => {
+    const page = await alice.newPage();
+    const db = getDb();
+
+    async function timelineCase(createdAt?: Date) {
+      const code = await createRoom(page);
+      const [room] = await db
+        .select({ id: rooms.id })
+        .from(rooms)
+        .where(eq(rooms.code, code))
+        .limit(1);
+      if (!room) throw new Error("The Timeline retention room was not stored");
+      const [occurrence] = await db
+        .insert(meetingOccurrences)
+        .values({ roomId: room.id })
+        .returning({ id: meetingOccurrences.id });
+      if (!occurrence) throw new Error("The Timeline retention occurrence was not stored");
+      const stored = await page.request.post(`/api/rooms/${code}/transcript`, {
+        data: {
+          text: "A retained caption that has Timeline chapters and highlights rooted in this exact source.",
+          speaker: "Ahmed",
+          identity: `timeline-retention-${randomUUID()}`,
+          occurrenceId: occurrence.id,
+          durationMs: 1_000,
+        },
+      });
+      expect(stored.status()).toBe(201);
+      if (createdAt) {
+        await db
+          .update(transcriptLines)
+          .set({ createdAt })
+          .where(eq(transcriptLines.roomId, room.id));
+      }
+      const [source] = await db
+        .select({ id: transcriptLines.id, seq: transcriptLines.seq, createdAt: transcriptLines.createdAt })
+        .from(transcriptLines)
+        .where(eq(transcriptLines.roomId, room.id))
+        .limit(1);
+      if (!source) throw new Error("The Timeline retention source was not stored");
+      await db.insert(timelineManualMoments).values({ roomId: room.id, occurrenceId: occurrence.id });
+      await db.insert(timelineChapters).values({
+        roomId: room.id,
+        occurrenceId: occurrence.id,
+        title: "Retention evidence",
+        sourceStartLineId: source.id,
+        sourceStartSeq: source.seq,
+        sourceStartAt: source.createdAt,
+        sourceEndLineId: source.id,
+        sourceEndSeq: source.seq,
+        sourceEndAt: source.createdAt,
+      });
+      await db.insert(timelineGeneratedMoments).values({
+        roomId: room.id,
+        occurrenceId: occurrence.id,
+        sourceLineId: source.id,
+        sourceSeq: source.seq,
+        sourceAt: source.createdAt,
+      });
+      return { code, room };
+    }
+
+    async function expectTimelineGone(roomId: string) {
+      await expect(
+        db.select({ id: timelineManualMoments.id }).from(timelineManualMoments).where(eq(timelineManualMoments.roomId, roomId)),
+      ).resolves.toHaveLength(0);
+      await expect(
+        db.select({ id: timelineChapters.id }).from(timelineChapters).where(eq(timelineChapters.roomId, roomId)),
+      ).resolves.toHaveLength(0);
+      await expect(
+        db.select({ id: timelineGeneratedMoments.id }).from(timelineGeneratedMoments).where(eq(timelineGeneratedMoments.roomId, roomId)),
+      ).resolves.toHaveLength(0);
+    }
+
+    const deleted = await timelineCase();
+    expect((await page.request.delete(`/api/rooms/${deleted.code}/transcript`)).ok()).toBe(true);
+    await expectTimelineGone(deleted.room.id);
+
+    const expired = await timelineCase(new Date("2026-01-01T00:00:00.000Z"));
+    expect((await page.request.get(`/api/rooms/${expired.code}/transcript`)).ok()).toBe(true);
+    await expectTimelineGone(expired.room.id);
+
+    const roomDeleted = await timelineCase();
+    await db.delete(rooms).where(eq(rooms.id, roomDeleted.room.id));
+    await expectTimelineGone(roomDeleted.room.id);
   });
 
   test("a tile that is not painting yet shows the avatar, not a black rectangle", async () => {

@@ -7,6 +7,7 @@ import {
   meetingOccurrences,
   rooms,
   summaries,
+  timelineManualMoments,
   transcriptLines,
 } from "@lor/db";
 import { normalizeRoomCode } from "@/lib/room-code";
@@ -199,8 +200,12 @@ export async function DELETE(
 
   const db = getDb();
 
-  // Derived records first. If cleanup fails, source lines stay available for a
-  // retry rather than leaving a quote or summary with no deletion path.
+  // Derived records first. Generated Timeline records cascade from their
+  // evidence rows, but a manual cue deliberately has no source line of its
+  // own, so it must be removed explicitly with the whole kept record.
+  // If cleanup fails, source lines stay available for a retry rather than
+  // leaving a quote, marker, or summary with no deletion path.
+  await db.delete(timelineManualMoments).where(eq(timelineManualMoments.roomId, room.id));
   await db.delete(actionItems).where(eq(actionItems.roomId, room.id));
   await db.delete(decisions).where(eq(decisions.roomId, room.id));
   await db.delete(summaries).where(eq(summaries.roomId, room.id));
