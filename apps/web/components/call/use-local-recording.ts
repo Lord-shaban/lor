@@ -12,6 +12,15 @@ export type RecordingError =
   | "source-ended"
   | "source-changed";
 
+/** A short-lived object URL for the completed WebM in this browser tab only. */
+export interface LocalRecordingPlayback {
+  url: string;
+  startedAt: number;
+  endedAt: number;
+  generation: number;
+  release: () => void;
+}
+
 export interface LocalRecording {
   supported: boolean;
   status: "idle" | "recording" | "stopping" | "ready" | "failed";
@@ -22,11 +31,18 @@ export interface LocalRecording {
   start: () => void;
   stop: () => void;
   download: () => void;
+  /** Creates one local object URL on demand; it never enters room state or a request. */
+  openPlayback: () => LocalRecordingPlayback | null;
+  /** Lets a local player discard itself as soon as a different file replaces it. */
+  playbackGeneration: number | null;
 }
 
 interface RecordingFile {
   blob: Blob;
   createdAt: Date;
+  startedAt: number;
+  endedAt: number;
+  generation: number;
 }
 
 interface AudioConnection {
@@ -41,6 +57,8 @@ interface RecordingSession {
   videoTrack: MediaStreamTrack;
   mimeType: string;
   chunks: Blob[];
+  startedAt: number;
+  stoppedAt: number | null;
   connections: Map<string, AudioConnection>;
   reason: StopReason;
   ended: () => void;
@@ -86,6 +104,7 @@ export function useLocalRecording({
   const [state, setState] = useState<RecordingState>(EMPTY_STATE);
   const sessionRef = useRef<RecordingSession | null>(null);
   const announcementRef = useRef(onRoomAnnouncement);
+  const playbackGenerationRef = useRef(0);
 
   useEffect(() => {
     announcementRef.current = onRoomAnnouncement;
@@ -151,7 +170,15 @@ export function useLocalRecording({
               : session.reason === "source-changed"
                 ? "source-changed"
                 : null,
-          file: { blob, createdAt: new Date() },
+          file: {
+            blob,
+            createdAt: new Date(),
+            startedAt: session.startedAt,
+            // `stop()` is the boundary of captured media; `onstop` can arrive
+            // later while the browser finalises the container.
+            endedAt: session.stoppedAt ?? Date.now(),
+            generation: ++playbackGenerationRef.current,
+          },
         });
       }
       announcementRef.current(false);
@@ -165,6 +192,7 @@ export function useLocalRecording({
       if (!session || session.completed) return;
 
       session.reason = reason;
+      session.stoppedAt ??= Date.now();
       session.discarded ||= reason === "pagehide";
 
       if (!session.discarded) {
@@ -236,6 +264,8 @@ export function useLocalRecording({
         videoTrack,
         mimeType,
         chunks: [],
+        startedAt: Date.now(),
+        stoppedAt: null,
         connections: new Map(),
         reason: "manual",
         ended: () => stopWithReason("source-ended"),
@@ -256,7 +286,7 @@ export function useLocalRecording({
       recorder.start(1_000);
       setState({
         status: "recording",
-        startedAt: Date.now(),
+        startedAt: activeSession.startedAt,
         audioTrackCount: activeSession.connections.size,
         error: null,
         file: null,
@@ -325,6 +355,27 @@ export function useLocalRecording({
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
   }, [state.file]);
 
+  const openPlayback = useCallback((): LocalRecordingPlayback | null => {
+    const file = state.file;
+    if (!file) return null;
+
+    // The URL points only at a Blob already held in this browser's memory.
+    // It is intentionally created on demand, and its owner must release it.
+    const url = URL.createObjectURL(file.blob);
+    let released = false;
+    return {
+      url,
+      startedAt: file.startedAt,
+      endedAt: file.endedAt,
+      generation: file.generation,
+      release: () => {
+        if (released) return;
+        released = true;
+        URL.revokeObjectURL(url);
+      },
+    };
+  }, [state.file]);
+
   return {
     supported,
     status: state.status,
@@ -335,6 +386,8 @@ export function useLocalRecording({
     start,
     stop: () => stopWithReason("manual"),
     download,
+    openPlayback,
+    playbackGeneration: state.file?.generation ?? null,
   };
 }
 

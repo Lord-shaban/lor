@@ -4,7 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { direction as localeDirection, type Locale } from "@/i18n/routing";
 import { lineDirection } from "@/lib/bidi";
+import { recordingOffsetAt } from "@/lib/recording-seek";
 import { sessionId } from "@/lib/session-id";
+import { TimelineRecordingPlayer } from "./timeline-recording-player";
+import type { LocalRecording, LocalRecordingPlayback } from "./use-local-recording";
 
 interface Occurrence {
   id: string;
@@ -54,6 +57,22 @@ interface TimelineUnavailable {
 
 type Timeline = TimelineAvailable | TimelineUnavailable;
 type BusyAction = "mark" | "generate" | null;
+type PlaybackUnavailable =
+  | "no-local-recording"
+  | "recording-in-progress"
+  | "before-recording"
+  | "after-recording"
+  | "invalid"
+  | "media-unavailable";
+type PlaybackState =
+  | {
+      kind: "open";
+      playback: LocalRecordingPlayback;
+      offsetMs: number;
+      selectedTime: string;
+    }
+  | { kind: "unavailable"; reason: PlaybackUnavailable }
+  | null;
 
 type NavigationItem =
   | { kind: "chapter"; at: string; item: Chapter }
@@ -107,6 +126,7 @@ export function TimelinePanel({
   code,
   isHost,
   revision,
+  recording,
   onClose,
   onShowSource,
   onTimelineChanged,
@@ -115,6 +135,7 @@ export function TimelinePanel({
   isHost: boolean;
   /** A peer committed a marker; refetch durable state while this panel is open. */
   revision: number;
+  recording: LocalRecording;
   onClose: () => void;
   onShowSource: (seq: number) => void;
   onTimelineChanged: () => void;
@@ -126,7 +147,10 @@ export function TimelinePanel({
   const [busy, setBusy] = useState<BusyAction>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [playback, setPlayback] = useState<PlaybackState>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const playbackRef = useRef<LocalRecordingPlayback | null>(null);
+  const playbackTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   // The trigger sits after this lazy panel in DOM order. Moving focus into the
   // visible workspace keeps Tab navigation aligned with what has just opened.
@@ -152,7 +176,63 @@ export function TimelinePanel({
     return () => clearTimeout(timer);
   }, [load, revision]);
 
+  const releasePlayback = useCallback((restoreFocus = false) => {
+    playbackRef.current?.release();
+    playbackRef.current = null;
+    setPlayback(null);
+    if (restoreFocus) requestAnimationFrame(() => playbackTriggerRef.current?.focus());
+  }, []);
+
+  const showPlaybackUnavailable = useCallback((reason: PlaybackUnavailable, restoreFocus = false) => {
+    playbackRef.current?.release();
+    playbackRef.current = null;
+    setPlayback({ kind: "unavailable", reason });
+    if (restoreFocus) requestAnimationFrame(() => playbackTriggerRef.current?.focus());
+  }, []);
+
+  useEffect(() => {
+    return () => playbackRef.current?.release();
+  }, []);
+
+  const openLocalPlayback = useCallback((at: string, selectedTime: string, trigger: HTMLButtonElement) => {
+    playbackTriggerRef.current = trigger;
+    if (recording.status === "recording" || recording.status === "stopping") {
+      showPlaybackUnavailable("recording-in-progress");
+      return;
+    }
+
+    const candidate = recording.openPlayback();
+    if (!candidate) {
+      showPlaybackUnavailable("no-local-recording");
+      return;
+    }
+
+    const offset = recordingOffsetAt({
+      startedAt: candidate.startedAt,
+      endedAt: candidate.endedAt,
+      momentAt: new Date(at).getTime(),
+    });
+    if (offset.kind !== "seekable") {
+      candidate.release();
+      showPlaybackUnavailable(offset.kind);
+      return;
+    }
+
+    playbackRef.current?.release();
+    playbackRef.current = candidate;
+    setPlayback({ kind: "open", playback: candidate, offsetMs: offset.offsetMs, selectedTime });
+  }, [recording, showPlaybackUnavailable]);
+
+  const handleMediaUnavailable = useCallback(
+    () => showPlaybackUnavailable("media-unavailable", true),
+    [showPlaybackUnavailable],
+  );
+
   const available = timeline?.state === "available" ? timeline : null;
+  const activePlayback = playback?.kind === "open"
+    && playback.playback.generation === recording.playbackGeneration
+    ? playback
+    : null;
   const entries = useMemo(
     () => (available ? navigationItems(available) : []),
     [available],
@@ -254,6 +334,11 @@ export function TimelinePanel({
           {failure && timeline !== null && (
             <p role="alert" className="text-sm leading-relaxed text-[#fca5a5]">{t(`error.${failure}`)}</p>
           )}
+          {playback?.kind === "unavailable" && (
+            <p role="alert" className="text-sm leading-relaxed text-[#fbbf24]">
+              {t(`localRecording.unavailable.${playback.reason}`)}
+            </p>
+          )}
         </div>
 
         {timeline === null && !failure && (
@@ -285,6 +370,16 @@ export function TimelinePanel({
 
         {available && (
           <>
+            {activePlayback && (
+              <TimelineRecordingPlayer
+                playback={activePlayback.playback}
+                offsetMs={activePlayback.offsetMs}
+                selectedTime={activePlayback.selectedTime}
+                onClose={() => releasePlayback(true)}
+                onUnavailable={handleMediaUnavailable}
+              />
+            )}
+
             <section className="mb-5 rounded-lg border border-[#3f3f46] bg-[#18181b] p-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -336,6 +431,7 @@ export function TimelinePanel({
                       fallback={fallback}
                       t={t}
                       onShowSource={onShowSource}
+                      onOpenLocalPlayback={openLocalPlayback}
                     />
                   ))}
                 </ol>
@@ -380,6 +476,7 @@ function TimelineEntry({
   fallback,
   t,
   onShowSource,
+  onOpenLocalPlayback,
 }: {
   entry: NavigationItem;
   startedAt: string;
@@ -387,6 +484,7 @@ function TimelineEntry({
   fallback: "rtl" | "ltr";
   t: ReturnType<typeof useTranslations>;
   onShowSource: (seq: number) => void;
+  onOpenLocalPlayback: (at: string, selectedTime: string, trigger: HTMLButtonElement) => void;
 }) {
   const time = elapsed(entry.at, startedAt, locale);
   const label = entry.kind === "chapter"
@@ -439,6 +537,14 @@ function TimelineEntry({
             </button>
           </>
         )}
+
+        <button
+          type="button"
+          onClick={(event) => onOpenLocalPlayback(entry.at, `+${time}`, event.currentTarget)}
+          className="mt-2 min-h-11 rounded-md px-2 text-sm font-medium text-[#d4d4d8] underline decoration-[#71717a] underline-offset-4 transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f5] motion-reduce:transition-none"
+        >
+          {t("localRecording.open")}
+        </button>
       </article>
     </li>
   );

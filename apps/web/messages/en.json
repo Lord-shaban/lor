@@ -396,6 +396,22 @@
       "generated": "Generated moment",
       "manualUntitled": "Marked moment",
       "generatedMoment": "Important moment from the kept record",
+      "localRecording": {
+        "title": "Local recording",
+        "intro": "This file is only in this browser tab. LOR. does not upload or share it.",
+        "close": "Close player",
+        "loading": "Preparing the local recording at the selected moment…",
+        "selected": "Positioned at {time} in this local recording. Playback is still paused.",
+        "open": "Open local recording",
+        "unavailable": {
+          "no-local-recording": "No completed local recording is available in this browser tab. You can still open the kept record.",
+          "recording-in-progress": "Finish this local recording before seeking in it.",
+          "before-recording": "This moment happened before this local recording started. Open the kept record for its source.",
+          "after-recording": "This moment happened after this local recording stopped. Open the kept record for its source.",
+          "invalid": "This local recording could not be matched to the selected moment. Open the kept record for its source.",
+          "media-unavailable": "This local file could not seek to the selected moment. Your downloaded recording is unchanged."
+        }
+      },
       "chapterRange": "Record lines {start}–{end}",
       "showStart": "Show chapter start",
       "showEnd": "Show chapter end",

@@ -10,6 +10,7 @@ import {
   getDb,
   meetingOccurrences,
   rooms,
+  timelineGeneratedMoments,
   transcriptLines,
 } from "@lor/db";
 import * as Y from "yjs";
@@ -2140,8 +2141,120 @@ test.describe("a call between two people", () => {
       timeout: 10_000,
     });
 
+    // Put one grounded Timeline point inside this actual local recording. The
+    // browser and the database share the runner clock, so the source timestamp
+    // is a real seek target rather than a mocked video position.
+    const db = getDb();
+    const [room] = await db
+      .select({ id: rooms.id })
+      .from(rooms)
+      .where(eq(rooms.code, code))
+      .limit(1);
+    if (!room) throw new Error("The recording test room was not stored");
+    await expect.poll(async () => {
+      const rows = await db
+        .select({ id: meetingOccurrences.id })
+        .from(meetingOccurrences)
+        .where(eq(meetingOccurrences.roomId, room.id));
+      return rows.length;
+    }).toBe(1);
+    const [occurrence] = await db
+      .select({ id: meetingOccurrences.id })
+      .from(meetingOccurrences)
+      .where(eq(meetingOccurrences.roomId, room.id))
+      .limit(1);
+    if (!occurrence) throw new Error("The recording test occurrence was not created");
+
+    await first.waitForTimeout(1_250);
+    const sourceAt = new Date();
+    const [source] = await db
+      .insert(transcriptLines)
+      .values({
+        roomId: room.id,
+        occurrenceId: occurrence.id,
+        durationMs: 1_000,
+        speakerIdentity: "p_recording_test",
+        speakerName: "Ahmed",
+        text: "Review the local recording from this source line.",
+        seq: 701,
+        createdAt: sourceAt,
+      })
+      .returning({ id: transcriptLines.id, seq: transcriptLines.seq });
+    if (!source) throw new Error("The recording Timeline source was not stored");
+    await db.insert(timelineGeneratedMoments).values({
+      roomId: room.id,
+      occurrenceId: occurrence.id,
+      sourceLineId: source.id,
+      sourceSeq: source.seq,
+      sourceAt,
+    });
+
     await first.getByRole("button", { name: "Stop local recording", exact: true }).click();
     await expect(second.getByText("Ahmed stopped a local recording.", { exact: true })).toBeVisible();
+    await expect(first.getByText("Your WebM is ready in this tab. It will not be sent anywhere.", { exact: true })).toBeVisible();
+
+    await first.getByRole("button", { name: "Turn on captions", exact: true }).click();
+    await first.getByRole("button", { name: "Timeline", exact: true }).click();
+    const timeline = first.getByTestId("timeline-panel");
+    await expect(timeline).toBeVisible();
+    const localRecording = timeline.getByRole("button", { name: "Open local recording", exact: true });
+    await expect(localRecording).toBeVisible();
+
+    // Track URLs only in this browser test. It proves that the player releases
+    // the transient local URL on both player close and panel unmount.
+    await first.evaluate(() => {
+      const storageKey = "__lor_recording_urls";
+      const created = URL.createObjectURL.bind(URL);
+      const revoked = URL.revokeObjectURL.bind(URL);
+      URL.createObjectURL = (value) => {
+        const url = created(value);
+        const state = JSON.parse(sessionStorage.getItem(storageKey) ?? '{"created":[],"revoked":[]}');
+        state.created.push(url);
+        sessionStorage.setItem(storageKey, JSON.stringify(state));
+        return url;
+      };
+      URL.revokeObjectURL = (url) => {
+        const state = JSON.parse(sessionStorage.getItem(storageKey) ?? '{"created":[],"revoked":[]}');
+        state.revoked.push(url);
+        sessionStorage.setItem(storageKey, JSON.stringify(state));
+        revoked(url);
+      };
+    });
+
+    await localRecording.click();
+    const player = first.getByTestId("timeline-local-recording");
+    const playerVideo = player.locator("video");
+    await expect(player).toBeVisible();
+    await first.setViewportSize({ width: 375, height: 667 });
+    expect(await first.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+    const playerClose = player.getByRole("button", { name: "Close player", exact: true });
+    const playerCloseBox = await playerClose.boundingBox();
+    expect(playerCloseBox?.width).toBeGreaterThanOrEqual(44);
+    expect(playerCloseBox?.height).toBeGreaterThanOrEqual(44);
+    await first.setViewportSize({ width: 667, height: 375 });
+    await expect(player).toBeVisible();
+    await expect.poll(
+      () => playerVideo.evaluate((node) => (node as HTMLVideoElement).currentTime),
+      { timeout: 15_000 },
+    ).toBeGreaterThan(0);
+    await expect(playerVideo).toHaveJSProperty("paused", true);
+    await expect(player.getByText(/^Positioned at \+/)).toBeVisible();
+
+    await playerClose.click();
+    await expect(player).toHaveCount(0);
+    await expect.poll(() => first.evaluate(() => {
+      const state = JSON.parse(sessionStorage.getItem("__lor_recording_urls") ?? '{"created":[],"revoked":[]}');
+      return state.created.length === 1 && state.revoked.includes(state.created[0]);
+    })).toBe(true);
+
+    await localRecording.click();
+    await expect(player).toBeVisible();
+    await timeline.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(timeline).toHaveCount(0);
+    await expect.poll(() => first.evaluate(() => {
+      const state = JSON.parse(sessionStorage.getItem("__lor_recording_urls") ?? '{"created":[],"revoked":[]}');
+      return state.created.length === 2 && state.revoked.includes(state.created[1]);
+    })).toBe(true);
 
     const downloadPromise = first.waitForEvent("download");
     await first.getByRole("button", { name: "Download WebM", exact: true }).click();
@@ -2150,5 +2263,25 @@ test.describe("a call between two people", () => {
     const path = await download.path();
     expect(path).not.toBeNull();
     expect((await stat(path!)).size).toBeGreaterThan(0);
+
+    // A completed Blob lives only in the old document. After a reload, this
+    // browser can still navigate to retained evidence but must not promise a
+    // cloud replay or reopen that former local file.
+    await first.reload();
+    await join(first, code, "Ahmed");
+    await first.getByRole("button", { name: "Turn on captions", exact: true }).click();
+    await first.getByRole("button", { name: "Timeline", exact: true }).click();
+    const reloadedTimeline = first.getByTestId("timeline-panel");
+    const unavailablePlayer = reloadedTimeline.getByRole("button", { name: "Open local recording", exact: true });
+    await expect(unavailablePlayer).toBeVisible();
+    await unavailablePlayer.click();
+    await expect(reloadedTimeline.getByText(
+      "No completed local recording is available in this browser tab. You can still open the kept record.",
+      { exact: true },
+    )).toBeVisible();
+    await reloadedTimeline.getByRole("button", { name: "Show source line", exact: true }).click();
+    const sourceLine = first.locator(`[data-transcript-line="${source.seq}"]`);
+    await expect(sourceLine).toBeVisible();
+    await expect(sourceLine).toBeFocused();
   });
 });
