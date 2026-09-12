@@ -4,6 +4,8 @@ import {
   getDb,
   meetingOccurrences,
   rooms,
+  timelineChapters,
+  timelineGeneratedMoments,
   timelineManualMoments,
   transcriptLines,
 } from "@lor/db";
@@ -57,6 +59,8 @@ function unavailable(reason: "occurrence_unavailable" | "record_unavailable") {
     reason,
     occurrence: null,
     moments: [],
+    chapters: [],
+    generatedMoments: [],
     // This is deliberately not attendance or microphone-on time. There is no
     // useful value to return until an occurrence has retained caption spans.
     talkTime: { kind: "retained_caption_vad_span" as const, unit: "ms" as const, speakers: [] },
@@ -92,7 +96,7 @@ export async function GET(
   }
 
   const db = getDb();
-  const [moments, lines] = await Promise.all([
+  const [moments, lines, chapters, generatedMoments] = await Promise.all([
     db
       .select({
         id: timelineManualMoments.id,
@@ -122,6 +126,37 @@ export async function GET(
         gte(transcriptLines.createdAt, cutoff),
       ))
       .orderBy(asc(transcriptLines.createdAt), asc(transcriptLines.id)),
+    db
+      .select({
+        id: timelineChapters.id,
+        title: timelineChapters.title,
+        startSeq: timelineChapters.sourceStartSeq,
+        startAt: timelineChapters.sourceStartAt,
+        endSeq: timelineChapters.sourceEndSeq,
+        endAt: timelineChapters.sourceEndAt,
+      })
+      .from(timelineChapters)
+      .where(and(
+        eq(timelineChapters.roomId, room.id),
+        eq(timelineChapters.occurrenceId, occurrence.id),
+      ))
+      .orderBy(
+        asc(timelineChapters.sourceStartSeq),
+        asc(timelineChapters.sourceEndSeq),
+        asc(timelineChapters.id),
+      ),
+    db
+      .select({
+        id: timelineGeneratedMoments.id,
+        sourceSeq: timelineGeneratedMoments.sourceSeq,
+        sourceAt: timelineGeneratedMoments.sourceAt,
+      })
+      .from(timelineGeneratedMoments)
+      .where(and(
+        eq(timelineGeneratedMoments.roomId, room.id),
+        eq(timelineGeneratedMoments.occurrenceId, occurrence.id),
+      ))
+      .orderBy(asc(timelineGeneratedMoments.sourceSeq), asc(timelineGeneratedMoments.id)),
   ]);
 
   return NextResponse.json(
@@ -129,6 +164,16 @@ export async function GET(
       state: "available",
       occurrence,
       moments,
+      chapters: chapters.map((chapter) => ({
+        id: chapter.id,
+        title: chapter.title,
+        start: { seq: chapter.startSeq, at: chapter.startAt },
+        end: { seq: chapter.endSeq, at: chapter.endAt },
+      })),
+      generatedMoments: generatedMoments.map((moment) => ({
+        id: moment.id,
+        source: { seq: moment.sourceSeq, at: moment.sourceAt },
+      })),
       talkTime: {
         // A fixed name makes the distinction consumable by a future UI and
         // export: this is not attendance, call length, or microphone-on time.
