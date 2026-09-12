@@ -1,0 +1,2058 @@
+{
+  "id": "5186451e-c68c-46be-bd76-cd93e865ca23",
+  "prevId": "c1ded6a7-f53d-4569-aa4a-c7c3e492f3d8",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.action_items": {
+      "name": "action_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_line_id": {
+          "name": "source_line_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_seq": {
+          "name": "source_seq",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_speaker": {
+          "name": "source_speaker",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_quote": {
+          "name": "source_quote",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_created_at": {
+          "name": "source_created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assignee_identity": {
+          "name": "assignee_identity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assignee_name": {
+          "name": "assignee_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "due_on": {
+          "name": "due_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "action_item_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'proposed'"
+        },
+        "origin": {
+          "name": "origin",
+          "type": "action_item_origin",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'manual'"
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "opened_at": {
+          "name": "opened_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "action_items_room_source_seq_idx": {
+          "name": "action_items_room_source_seq_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "action_items_source_line_id_idx": {
+          "name": "action_items_source_line_id_idx",
+          "columns": [
+            {
+              "expression": "source_line_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "action_items_room_opened_at_idx": {
+          "name": "action_items_room_opened_at_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "opened_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"action_items\".\"status\" = 'open'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "action_items_room_source_text_unique": {
+          "name": "action_items_room_source_text_unique",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_line_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "text",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "action_items_room_id_rooms_id_fk": {
+          "name": "action_items_room_id_rooms_id_fk",
+          "tableFrom": "action_items",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "action_items_room_source_line_transcript_lines_fk": {
+          "name": "action_items_room_source_line_transcript_lines_fk",
+          "tableFrom": "action_items",
+          "tableTo": "transcript_lines",
+          "columnsFrom": [
+            "room_id",
+            "source_line_id"
+          ],
+          "columnsTo": [
+            "room_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "action_items_nonempty_text_check": {
+          "name": "action_items_nonempty_text_check",
+          "value": "char_length(btrim(\"action_items\".\"text\")) > 0"
+        },
+        "action_items_assignee_pair_check": {
+          "name": "action_items_assignee_pair_check",
+          "value": "(\n        (\"action_items\".\"assignee_identity\" is null and \"action_items\".\"assignee_name\" is null)\n        or (\n          \"action_items\".\"assignee_identity\" is not null\n          and \"action_items\".\"assignee_name\" is not null\n          and char_length(btrim(\"action_items\".\"assignee_identity\")) > 0\n          and char_length(btrim(\"action_items\".\"assignee_name\")) > 0\n        )\n      )"
+        },
+        "action_items_lifecycle_state_check": {
+          "name": "action_items_lifecycle_state_check",
+          "value": "(\n        \"action_items\".\"status\" = 'proposed'\n        and \"action_items\".\"opened_at\" is null\n        and \"action_items\".\"completed_at\" is null\n      ) or (\n        \"action_items\".\"status\" = 'open'\n        and \"action_items\".\"assignee_identity\" is not null\n        and \"action_items\".\"assignee_name\" is not null\n        and \"action_items\".\"due_on\" is not null\n        and \"action_items\".\"opened_at\" is not null\n        and \"action_items\".\"completed_at\" is null\n      ) or (\n        \"action_items\".\"status\" = 'completed'\n        and \"action_items\".\"assignee_identity\" is not null\n        and \"action_items\".\"assignee_name\" is not null\n        and \"action_items\".\"due_on\" is not null\n        and \"action_items\".\"opened_at\" is not null\n        and \"action_items\".\"completed_at\" is not null\n      )"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.canvas_snapshots": {
+      "name": "canvas_snapshots",
+      "schema": "",
+      "columns": {
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "document": {
+          "name": "document",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "canvas_snapshots_room_id_rooms_id_fk": {
+          "name": "canvas_snapshots_room_id_rooms_id_fk",
+          "tableFrom": "canvas_snapshots",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.decisions": {
+      "name": "decisions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_line_id": {
+          "name": "source_line_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_seq": {
+          "name": "source_seq",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_speaker": {
+          "name": "source_speaker",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_quote": {
+          "name": "source_quote",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_created_at": {
+          "name": "source_created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "decision_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'proposed'"
+        },
+        "origin": {
+          "name": "origin",
+          "type": "decision_origin",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'manual'"
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "confirmed_at": {
+          "name": "confirmed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "decisions_room_source_seq_idx": {
+          "name": "decisions_room_source_seq_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "decisions_source_line_id_idx": {
+          "name": "decisions_source_line_id_idx",
+          "columns": [
+            {
+              "expression": "source_line_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "decisions_room_source_line_unique": {
+          "name": "decisions_room_source_line_unique",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_line_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "decisions_room_id_rooms_id_fk": {
+          "name": "decisions_room_id_rooms_id_fk",
+          "tableFrom": "decisions",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "decisions_source_line_id_transcript_lines_id_fk": {
+          "name": "decisions_source_line_id_transcript_lines_id_fk",
+          "tableFrom": "decisions",
+          "tableTo": "transcript_lines",
+          "columnsFrom": [
+            "source_line_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "decisions_room_id_id_key": {
+          "name": "decisions_room_id_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "room_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.knocks": {
+      "name": "knocks",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "claim_secret_hash": {
+          "name": "claim_secret_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "participant_identity": {
+          "name": "participant_identity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "knock_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "knocks_room_status_idx": {
+          "name": "knocks_room_status_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "knocks_room_identity_key": {
+          "name": "knocks_room_identity_key",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "participant_identity",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "knocks_created_at_idx": {
+          "name": "knocks_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "knocks_room_id_rooms_id_fk": {
+          "name": "knocks_room_id_rooms_id_fk",
+          "tableFrom": "knocks",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.meeting_occurrences": {
+      "name": "meeting_occurrences",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ended_at": {
+          "name": "ended_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "meeting_occurrences_room_started_at_idx": {
+          "name": "meeting_occurrences_room_started_at_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "started_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "meeting_occurrences_room_active_unique": {
+          "name": "meeting_occurrences_room_active_unique",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"meeting_occurrences\".\"ended_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "meeting_occurrences_room_id_rooms_id_fk": {
+          "name": "meeting_occurrences_room_id_rooms_id_fk",
+          "tableFrom": "meeting_occurrences",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "meeting_occurrences_room_id_id_key": {
+          "name": "meeting_occurrences_room_id_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "room_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "meeting_occurrences_end_after_start_check": {
+          "name": "meeting_occurrences_end_after_start_check",
+          "value": "\"meeting_occurrences\".\"ended_at\" is null or \"meeting_occurrences\".\"ended_at\" >= \"meeting_occurrences\".\"started_at\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.rate_limits": {
+      "name": "rate_limits",
+      "schema": "",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "window_start": {
+          "name": "window_start",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.rooms": {
+      "name": "rooms",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "livekit_room": {
+          "name": "livekit_room",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "host_secret_hash": {
+          "name": "host_secret_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locale": {
+          "name": "locale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ar'"
+        },
+        "waiting_room_enabled": {
+          "name": "waiting_room_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "locked": {
+          "name": "locked",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "settings": {
+          "name": "settings",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "last_seen_at": {
+          "name": "last_seen_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "rooms_code_key": {
+          "name": "rooms_code_key",
+          "columns": [
+            {
+              "expression": "code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "rooms_last_seen_at_idx": {
+          "name": "rooms_last_seen_at_idx",
+          "columns": [
+            {
+              "expression": "last_seen_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.search_documents": {
+      "name": "search_documents",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "search_document_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transcript_line_id": {
+          "name": "transcript_line_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decision_id": {
+          "name": "decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes_snapshot_room_id": {
+          "name": "notes_snapshot_room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "occurrence_id": {
+          "name": "occurrence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_created_at": {
+          "name": "source_created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "speaker_name": {
+          "name": "speaker_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "embedding": {
+          "name": "embedding",
+          "type": "vector(1536)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "embedding_model": {
+          "name": "embedding_model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "embedded_at": {
+          "name": "embedded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "search_documents_room_occurred_at_idx": {
+          "name": "search_documents_room_occurred_at_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "search_documents_room_kind_idx": {
+          "name": "search_documents_room_kind_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "search_documents_transcript_line_unique": {
+          "name": "search_documents_transcript_line_unique",
+          "columns": [
+            {
+              "expression": "transcript_line_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "search_documents_decision_unique": {
+          "name": "search_documents_decision_unique",
+          "columns": [
+            {
+              "expression": "decision_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "search_documents_notes_snapshot_unique": {
+          "name": "search_documents_notes_snapshot_unique",
+          "columns": [
+            {
+              "expression": "notes_snapshot_room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "search_documents_room_id_rooms_id_fk": {
+          "name": "search_documents_room_id_rooms_id_fk",
+          "tableFrom": "search_documents",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "search_documents_room_transcript_line_fk": {
+          "name": "search_documents_room_transcript_line_fk",
+          "tableFrom": "search_documents",
+          "tableTo": "transcript_lines",
+          "columnsFrom": [
+            "room_id",
+            "transcript_line_id"
+          ],
+          "columnsTo": [
+            "room_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "search_documents_room_decision_fk": {
+          "name": "search_documents_room_decision_fk",
+          "tableFrom": "search_documents",
+          "tableTo": "decisions",
+          "columnsFrom": [
+            "room_id",
+            "decision_id"
+          ],
+          "columnsTo": [
+            "room_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "search_documents_notes_snapshot_fk": {
+          "name": "search_documents_notes_snapshot_fk",
+          "tableFrom": "search_documents",
+          "tableTo": "canvas_snapshots",
+          "columnsFrom": [
+            "notes_snapshot_room_id"
+          ],
+          "columnsTo": [
+            "room_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "search_documents_source_kind_check": {
+          "name": "search_documents_source_kind_check",
+          "value": "(\n        (\"search_documents\".\"kind\" = 'transcript'\n          and \"search_documents\".\"transcript_line_id\" is not null\n          and \"search_documents\".\"decision_id\" is null\n          and \"search_documents\".\"notes_snapshot_room_id\" is null)\n        or (\"search_documents\".\"kind\" = 'decision'\n          and \"search_documents\".\"transcript_line_id\" is null\n          and \"search_documents\".\"decision_id\" is not null\n          and \"search_documents\".\"notes_snapshot_room_id\" is null)\n        or (\"search_documents\".\"kind\" = 'notes'\n          and \"search_documents\".\"transcript_line_id\" is null\n          and \"search_documents\".\"decision_id\" is null\n          and \"search_documents\".\"notes_snapshot_room_id\" = \"search_documents\".\"room_id\")\n      )"
+        },
+        "search_documents_embedding_state_check": {
+          "name": "search_documents_embedding_state_check",
+          "value": "(\n        (\"search_documents\".\"embedding\" is null and \"search_documents\".\"embedding_model\" is null and \"search_documents\".\"embedded_at\" is null)\n        or (\"search_documents\".\"embedding\" is not null and \"search_documents\".\"embedding_model\" is not null and \"search_documents\".\"embedded_at\" is not null)\n      )"
+        },
+        "search_documents_nonempty_content_check": {
+          "name": "search_documents_nonempty_content_check",
+          "value": "char_length(btrim(\"search_documents\".\"content\")) > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.summaries": {
+      "name": "summaries",
+      "schema": "",
+      "columns": {
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from_lines": {
+          "name": "from_lines",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "summaries_room_id_rooms_id_fk": {
+          "name": "summaries_room_id_rooms_id_fk",
+          "tableFrom": "summaries",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.timeline_chapters": {
+      "name": "timeline_chapters",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "occurrence_id": {
+          "name": "occurrence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_start_line_id": {
+          "name": "source_start_line_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_start_seq": {
+          "name": "source_start_seq",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_start_at": {
+          "name": "source_start_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_end_line_id": {
+          "name": "source_end_line_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_end_seq": {
+          "name": "source_end_seq",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_end_at": {
+          "name": "source_end_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "timeline_chapters_room_occurrence_source_start_idx": {
+          "name": "timeline_chapters_room_occurrence_source_start_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurrence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_start_seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "timeline_chapters_room_occurrence_source_start_line_idx": {
+          "name": "timeline_chapters_room_occurrence_source_start_line_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurrence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_start_line_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "timeline_chapters_room_occurrence_source_end_line_idx": {
+          "name": "timeline_chapters_room_occurrence_source_end_line_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurrence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_end_line_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "timeline_chapters_room_occurrence_source_range_unique": {
+          "name": "timeline_chapters_room_occurrence_source_range_unique",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurrence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_start_seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_end_seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "timeline_chapters_room_id_rooms_id_fk": {
+          "name": "timeline_chapters_room_id_rooms_id_fk",
+          "tableFrom": "timeline_chapters",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "timeline_chapters_room_id_occurrence_id_meeting_occurrences_room_id_id_fk": {
+          "name": "timeline_chapters_room_id_occurrence_id_meeting_occurrences_room_id_id_fk",
+          "tableFrom": "timeline_chapters",
+          "tableTo": "meeting_occurrences",
+          "columnsFrom": [
+            "room_id",
+            "occurrence_id"
+          ],
+          "columnsTo": [
+            "room_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "timeline_chapters_room_id_occurrence_id_source_start_line_id_transcript_lines_room_id_occurrence_id_id_fk": {
+          "name": "timeline_chapters_room_id_occurrence_id_source_start_line_id_transcript_lines_room_id_occurrence_id_id_fk",
+          "tableFrom": "timeline_chapters",
+          "tableTo": "transcript_lines",
+          "columnsFrom": [
+            "room_id",
+            "occurrence_id",
+            "source_start_line_id"
+          ],
+          "columnsTo": [
+            "room_id",
+            "occurrence_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "timeline_chapters_room_id_occurrence_id_source_end_line_id_transcript_lines_room_id_occurrence_id_id_fk": {
+          "name": "timeline_chapters_room_id_occurrence_id_source_end_line_id_transcript_lines_room_id_occurrence_id_id_fk",
+          "tableFrom": "timeline_chapters",
+          "tableTo": "transcript_lines",
+          "columnsFrom": [
+            "room_id",
+            "occurrence_id",
+            "source_end_line_id"
+          ],
+          "columnsTo": [
+            "room_id",
+            "occurrence_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "timeline_chapters_title_check": {
+          "name": "timeline_chapters_title_check",
+          "value": "char_length(btrim(\"timeline_chapters\".\"title\")) between 1 and 200"
+        },
+        "timeline_chapters_source_range_check": {
+          "name": "timeline_chapters_source_range_check",
+          "value": "\"timeline_chapters\".\"source_start_seq\" <= \"timeline_chapters\".\"source_end_seq\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.timeline_generated_moments": {
+      "name": "timeline_generated_moments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "occurrence_id": {
+          "name": "occurrence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_line_id": {
+          "name": "source_line_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_seq": {
+          "name": "source_seq",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_at": {
+          "name": "source_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "timeline_generated_moments_room_occurrence_source_idx": {
+          "name": "timeline_generated_moments_room_occurrence_source_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurrence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "timeline_generated_moments_room_occurrence_source_unique": {
+          "name": "timeline_generated_moments_room_occurrence_source_unique",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurrence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_line_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "timeline_generated_moments_room_id_rooms_id_fk": {
+          "name": "timeline_generated_moments_room_id_rooms_id_fk",
+          "tableFrom": "timeline_generated_moments",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "timeline_generated_moments_room_id_occurrence_id_meeting_occurrences_room_id_id_fk": {
+          "name": "timeline_generated_moments_room_id_occurrence_id_meeting_occurrences_room_id_id_fk",
+          "tableFrom": "timeline_generated_moments",
+          "tableTo": "meeting_occurrences",
+          "columnsFrom": [
+            "room_id",
+            "occurrence_id"
+          ],
+          "columnsTo": [
+            "room_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "timeline_generated_moments_room_id_occurrence_id_source_line_id_transcript_lines_room_id_occurrence_id_id_fk": {
+          "name": "timeline_generated_moments_room_id_occurrence_id_source_line_id_transcript_lines_room_id_occurrence_id_id_fk",
+          "tableFrom": "timeline_generated_moments",
+          "tableTo": "transcript_lines",
+          "columnsFrom": [
+            "room_id",
+            "occurrence_id",
+            "source_line_id"
+          ],
+          "columnsTo": [
+            "room_id",
+            "occurrence_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.timeline_manual_moments": {
+      "name": "timeline_manual_moments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "occurrence_id": {
+          "name": "occurrence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "timeline_manual_moments_room_occurrence_created_at_idx": {
+          "name": "timeline_manual_moments_room_occurrence_created_at_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurrence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "timeline_manual_moments_room_created_at_idx": {
+          "name": "timeline_manual_moments_room_created_at_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "timeline_manual_moments_room_id_rooms_id_fk": {
+          "name": "timeline_manual_moments_room_id_rooms_id_fk",
+          "tableFrom": "timeline_manual_moments",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "timeline_manual_moments_room_id_occurrence_id_meeting_occurrences_room_id_id_fk": {
+          "name": "timeline_manual_moments_room_id_occurrence_id_meeting_occurrences_room_id_id_fk",
+          "tableFrom": "timeline_manual_moments",
+          "tableTo": "meeting_occurrences",
+          "columnsFrom": [
+            "room_id",
+            "occurrence_id"
+          ],
+          "columnsTo": [
+            "room_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "timeline_manual_moments_label_check": {
+          "name": "timeline_manual_moments_label_check",
+          "value": "\"timeline_manual_moments\".\"label\" is null or (\n        char_length(btrim(\"timeline_manual_moments\".\"label\")) between 1 and 200\n      )"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.transcript_lines": {
+      "name": "transcript_lines",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "occurrence_id": {
+          "name": "occurrence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_ms": {
+          "name": "duration_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "speaker_identity": {
+          "name": "speaker_identity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "speaker_name": {
+          "name": "speaker_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seq": {
+          "name": "seq",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "transcript_lines_room_seq_idx": {
+          "name": "transcript_lines_room_seq_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "transcript_lines_room_occurrence_seq_idx": {
+          "name": "transcript_lines_room_occurrence_seq_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurrence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "transcript_lines_room_occurrence_created_at_idx": {
+          "name": "transcript_lines_room_occurrence_created_at_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurrence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "transcript_lines_room_speaker_created_at_idx": {
+          "name": "transcript_lines_room_speaker_created_at_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "speaker_identity",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "transcript_lines_room_id_rooms_id_fk": {
+          "name": "transcript_lines_room_id_rooms_id_fk",
+          "tableFrom": "transcript_lines",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "transcript_lines_room_id_occurrence_id_meeting_occurrences_room_id_id_fk": {
+          "name": "transcript_lines_room_id_occurrence_id_meeting_occurrences_room_id_id_fk",
+          "tableFrom": "transcript_lines",
+          "tableTo": "meeting_occurrences",
+          "columnsFrom": [
+            "room_id",
+            "occurrence_id"
+          ],
+          "columnsTo": [
+            "room_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "transcript_lines_room_id_id_key": {
+          "name": "transcript_lines_room_id_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "room_id",
+            "id"
+          ]
+        },
+        "transcript_lines_room_occurrence_id_id_key": {
+          "name": "transcript_lines_room_occurrence_id_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "room_id",
+            "occurrence_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "transcript_lines_timeline_timing_check": {
+          "name": "transcript_lines_timeline_timing_check",
+          "value": "(\n        (\"transcript_lines\".\"occurrence_id\" is null and \"transcript_lines\".\"duration_ms\" is null)\n        or (\n          \"transcript_lines\".\"occurrence_id\" is not null\n          and \"transcript_lines\".\"duration_ms\" between 250 and 21000\n        )\n      )"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.action_item_origin": {
+      "name": "action_item_origin",
+      "schema": "public",
+      "values": [
+        "manual",
+        "llm"
+      ]
+    },
+    "public.action_item_status": {
+      "name": "action_item_status",
+      "schema": "public",
+      "values": [
+        "proposed",
+        "open",
+        "completed"
+      ]
+    },
+    "public.decision_origin": {
+      "name": "decision_origin",
+      "schema": "public",
+      "values": [
+        "manual",
+        "llm"
+      ]
+    },
+    "public.decision_status": {
+      "name": "decision_status",
+      "schema": "public",
+      "values": [
+        "proposed",
+        "confirmed"
+      ]
+    },
+    "public.knock_status": {
+      "name": "knock_status",
+      "schema": "public",
+      "values": [
+        "pending",
+        "admitted",
+        "denied"
+      ]
+    },
+    "public.search_document_kind": {
+      "name": "search_document_kind",
+      "schema": "public",
+      "values": [
+        "transcript",
+        "decision",
+        "notes"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

@@ -58,7 +58,10 @@ jobs:
     # point of the check is that it fails when media stops flowing.
     services:
       postgres:
-        image: postgres:17-alpine
+        # v0.6 needs the same pgvector extension that production uses. The
+        # stock Postgres image keeps application code green while silently
+        # skipping the migration that makes Semantic search possible.
+        image: pgvector/pgvector:pg17
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: lor
