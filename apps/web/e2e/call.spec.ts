@@ -171,8 +171,16 @@ test.describe("a call between two people", () => {
   let bob: BrowserContext;
 
   test.beforeEach(async ({ browser }) => {
-    alice = await browser.newContext();
-    bob = await browser.newContext();
+    // Playwright reaches Next directly, so every browser would otherwise share
+    // one production token-rate bucket at 127.0.0.1. A real reverse proxy
+    // supplies this header; distinct test clients must do the same or a
+    // later, unrelated call fails after enough genuine reconnect coverage.
+    alice = await browser.newContext({
+      extraHTTPHeaders: { "x-forwarded-for": `playwright-alice-${randomUUID()}` },
+    });
+    bob = await browser.newContext({
+      extraHTTPHeaders: { "x-forwarded-for": `playwright-bob-${randomUUID()}` },
+    });
   });
 
   test.afterEach(async () => {
