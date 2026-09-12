@@ -37,6 +37,7 @@ CREATE TABLE "search_documents" (
 );
 --> statement-breakpoint
 ALTER TABLE "search_documents" ADD COLUMN "search_vector" tsvector GENERATED ALWAYS AS (to_tsvector('simple', "content")) STORED;--> statement-breakpoint
+ALTER TABLE "decisions" ADD CONSTRAINT "decisions_room_id_id_key" UNIQUE("room_id","id");--> statement-breakpoint
 ALTER TABLE "search_documents" ADD CONSTRAINT "search_documents_room_id_rooms_id_fk" FOREIGN KEY ("room_id") REFERENCES "public"."rooms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "search_documents" ADD CONSTRAINT "search_documents_room_transcript_line_fk" FOREIGN KEY ("room_id","transcript_line_id") REFERENCES "public"."transcript_lines"("room_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "search_documents" ADD CONSTRAINT "search_documents_room_decision_fk" FOREIGN KEY ("room_id","decision_id") REFERENCES "public"."decisions"("room_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -48,4 +49,3 @@ CREATE INDEX "search_documents_embedding_hnsw_idx" ON "search_documents" USING h
 CREATE UNIQUE INDEX "search_documents_transcript_line_unique" ON "search_documents" USING btree ("transcript_line_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "search_documents_decision_unique" ON "search_documents" USING btree ("decision_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "search_documents_notes_snapshot_unique" ON "search_documents" USING btree ("notes_snapshot_room_id");--> statement-breakpoint
-ALTER TABLE "decisions" ADD CONSTRAINT "decisions_room_id_id_key" UNIQUE("room_id","id");
