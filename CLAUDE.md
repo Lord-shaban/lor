@@ -326,10 +326,10 @@ GitHub is authoritative — issues, milestones, and the
 [board](https://github.com/users/Lord-shaban/projects/8). Update this when a release
 closes.
 
-**Live:** <https://lor-bay.vercel.app>. Everything through `v0.4`, including the
-Meeting timeline release, is deployed there on every push to `main`.
+**Live:** <https://lor-bay.vercel.app>. Everything through `v0.5`, including the
+Meeting memory release, is deployed there on every push to `main`.
 
-**Done.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, `v0.3`, and `v0.4` in full, all
+**Done.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, `v0.3`, `v0.4`, and `v0.5` in full, all
 [tagged and released](https://github.com/Lord-shaban/lor/releases). The call is
 checked end to end on every pull request. Captions split speech at utterance
 boundaries, preserve mixed Arabic/English terms, require explicit consent, and
@@ -381,6 +381,19 @@ full transcript deletion, and room deletion remove every Timeline derivative. Th
 two-person browser suite verifies English LTR and Arabic RTL phone layouts, keyboard
 focus, reduced motion, lazy loading, occurrence isolation, roles, local-only replay,
 and retention cleanup.
+
+**Memory.** `v0.5` gives a recurring room an on-demand, evidence-led view of
+confirmed decisions, open action items, its glossary, and exact display names
+that recur in retained captions from at least two completed occurrences. It
+never reads the current occurrence, attendance, identity, proposals, completed
+tasks, unscoped legacy records, another room, or expired/deleted evidence. A
+repeated name means only that the same caption label occurred again; it is not
+attendance or identity. Every fact navigates to its server-resolved caption
+quote, speaker label, and UTC time. Retention cleanup is scoped to each source,
+so expiring one caption cannot remove unrelated decision or task records. The
+two-person suite covers the bounded response, the lazy workspace, retry and
+source navigation, focus restoration, reduced motion, English LTR, Arabic RTL
+phone use, empty state, and full retention cleanup.
 
 **Cutting a release.** A release is a milestone closing, not a date arriving.
 The steps are in `CONTRIBUTING.md`; the one that is easy to get wrong is the

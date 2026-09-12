@@ -6,6 +6,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] — Meeting memory
+
+Recurring rooms can now carry a small, evidence-backed meeting record forward
+without turning the current call, attendance, or inferred identities into
+memory.
+
+### Added
+
+- An on-demand Meeting memory workspace shows confirmed decisions and open
+  action items from server-confirmed, completed occurrences only. Each fact
+  keeps its original retained caption quote, speaker label, and UTC time, and
+  returns to that transcript evidence.
+- Memory also brings forward the room glossary and exact display names that
+  appear in retained captions from at least two completed occurrences. A
+  repeated name is only a repeated caption label: it is neither attendance,
+  verified identity, nor a person lookup.
+- The workspace loads only when a participant opens it, keeps the call
+  uninterrupted, and is usable with source navigation, retry, keyboard focus,
+  reduced motion, English LTR, and Arabic RTL phone layouts.
+
+### Fixed
+
+- Retention cleanup now scopes expired-caption removal to the matching source,
+  so expiring one caption cannot remove unrelated decisions or action items.
+- Memory never exposes facts from the current occurrence, unscoped legacy
+  records, another room, proposals, completed tasks, expired captions, or
+  deleted caption evidence.
+
 ## [0.4.0] — Meeting timeline
 
 The retained meeting record can now become a navigable timeline without turning

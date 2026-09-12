@@ -21,13 +21,15 @@ No account. No time limit. No download.
 ---
 
 > [!NOTE]
-> **Status: Meeting timeline is live.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, `v0.3`, and `v0.4` have
+> **Status: Meeting memory is live.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, `v0.3`, `v0.4`, and `v0.5` have
 > shipped and are deployed at [lor-bay.vercel.app](https://lor-bay.vercel.app): open a
 > link, type a name, hold a real meeting with mixed Arabic/English captions, record
 > locally, work together on a shared board or note, confirm decisions against their
 > exact transcript evidence, and turn clear commitments into assigned work that returns
 > at the start of the next meeting. Retained captions also become an on-demand Timeline
-> with evidence-backed chapters, moments, and talk time.
+> with evidence-backed chapters, moments, and talk time — and a bounded Memory of
+> confirmed decisions, open work, vocabulary, and repeated caption labels from past
+> completed meetings.
 > Follow the [milestones](https://github.com/Lord-shaban/lor/milestones) to track progress.
 
 ## What LOR. is
@@ -55,7 +57,7 @@ afterthought.
 | **Mixed Arabic/English captions** | **yes** | no | no | no |
 | Grounded decision proposals | yes | no | paid | no |
 | Action items | yes | no | paid | no |
-| Memory across meetings | not yet | no | no | no |
+| Memory across meetings | yes, bounded | no | no | no |
 | Semantic search of past meetings | not yet | no | paid | no |
 | Plugin API | not yet | no | yes | no |
 | Self-hostable | not yet | no | no | yes |
@@ -135,12 +137,19 @@ from another participant or device, or outside the recording window, Timeline li
 the retained transcript instead. Deleting or expiring that transcript removes its
 Timeline derivatives too.
 
-### Meeting memory roadmap — `v0.5` to `v0.6`
+### Meeting memory anchored in evidence — `v0.5`
 
-| Release | What it adds |
-|---|---|
-| `v0.5` | **Memory** — a recurring room remembers its decisions, open tasks, and vocabulary |
-| `v0.6` | **Semantic search** — *"when did we talk about pricing?"* across every meeting |
+Meeting memory opens on demand in a recurring room and reads only
+server-confirmed, completed occurrences. It brings forward confirmed decisions,
+open action items, and the room glossary when each has retained caption evidence;
+every fact returns to its exact quote, speaker label, and UTC time in the
+transcript.
+
+Memory can also show an exact display name repeated in retained captions from at
+least two completed occurrences. That label is not attendance, verified identity,
+or a people directory. The current occurrence, proposals, completed tasks,
+expired or deleted captions, unscoped legacy records, and another room's data do
+not enter memory. Deleting or expiring a source removes its derived fact too.
 
 ### Integrations and plugins — `v0.7`, `v1.0`
 
@@ -267,7 +276,7 @@ Drizzle · Postgres.
 | `v0.2` | Decisions | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.3` | Action items | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.4` | Meeting timeline | **shipped** — [live](https://lor-bay.vercel.app) |
-| `v0.5` | Meeting memory | planned |
+| `v0.5` | Meeting memory | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.6` | Semantic search | planned |
 | `v0.7` | Integrations | planned |
 | `v0.8` | Hardening and self-hosting | planned |
