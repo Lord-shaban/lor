@@ -372,7 +372,8 @@
       "open": "What was said",
       "decisions": "Decisions",
       "actionItems": "Action items",
-      "timeline": "Timeline"
+      "timeline": "Timeline",
+      "memory": "Meeting memory"
     },
     "timeline": {
       "title": "Timeline",
@@ -439,6 +440,34 @@
         "timeout": "Timeline generation took too long. The existing Timeline is unchanged; try again.",
         "invalid_response": "Timeline generation could not verify its sources. The existing Timeline is unchanged; try again."
       }
+    },
+    "memory": {
+      "title": "Meeting memory",
+      "intro": "Facts from kept captions in earlier completed meetings.",
+      "close": "Close",
+      "loading": "Loading Meeting memory…",
+      "retry": "Try again",
+      "error": {
+        "unavailable": "Meeting memory could not be reached. Your call and kept record continue; try again."
+      },
+      "emptyTitle": "No earlier meeting record",
+      "empty": "There are no kept captions from an earlier completed meeting in this room.",
+      "retention": "Only kept captions from the last {days} days are used.",
+      "lastMeeting": "Last completed meeting",
+      "endedAt": "Ended {time}",
+      "decisions": "Confirmed decisions",
+      "decisionsEmpty": "No confirmed decisions were kept from earlier meetings.",
+      "actionItems": "Open tasks",
+      "actionItemsEmpty": "No open tasks from earlier meetings.",
+      "vocabulary": "Saved vocabulary",
+      "vocabularyEmpty": "No vocabulary has been saved for this room.",
+      "repeatedSpeakers": "Repeated retained speaker names",
+      "repeatedSpeakersEmpty": "No exact display name appears in more than one kept meeting.",
+      "repeatedSpeakersHint": "These are exact display names in kept captions, not verified people or attendance.",
+      "repeatedSpeakerCount": "{count, plural, one {# completed meeting} other {# completed meetings}}",
+      "showSource": "Show source line",
+      "assignee": "Assigned to",
+      "dueOn": "Due"
     },
     "decisions": {
       "title": "Decisions",
