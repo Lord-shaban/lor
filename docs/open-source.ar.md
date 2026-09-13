@@ -43,10 +43,10 @@ open-source بتجربة أوضح:
 
 1. [#215](https://github.com/Lord-shaban/lor/issues/215): مراجعة رحلة المستخدم وتثبيت
    [عقد تجربة المنتج](product-ux-audit.md) قبل أي تغيير بصري واسع.
-2. [#214](https://github.com/Lord-shaban/lor/issues/214): الصفحة الأولى للمنتج تبقى
-   طريق واضح لبدء أو دخول ميتنج، ثم
-   [#216](https://github.com/Lord-shaban/lor/issues/216) ينفذ إصلاحات مساحة وأدوات
-   الميتنج المؤكدة.
+2. [#216](https://github.com/Lord-shaban/lor/issues/216): ينفذ إصلاحات مساحة وأدوات
+   الميتنج المؤكدة ومهامها الصغيرة، ثم
+   [#214](https://github.com/Lord-shaban/lor/issues/214) يجعل الصفحة الأولى طريقًا واضحًا
+   لبدء أو دخول ميتنج.
 3. [#212](https://github.com/Lord-shaban/lor/issues/212): ترتيب قصة الـlanding بالنسختين
    وقائمة media مبنية على الديزاين الجديد بعد دمجه.
 4. [#213](https://github.com/Lord-shaban/lor/issues/213): landing page عامة بعد اعتماد

@@ -119,12 +119,12 @@ settled.
 
 The evidence changes the release sequence:
 
-1. **#214:** replace the release-list-first home with the approved launcher model.
-2. **#216:** implement M1–M3 together because they share panel and control state.
-3. Follow up with [#224](https://github.com/Lord-shaban/lor/issues/224) for M4 and
+1. **#216:** implement M1–M3 together because they share panel and control state.
+2. Follow up with [#224](https://github.com/Lord-shaban/lor/issues/224) for M4 and
    [#225](https://github.com/Lord-shaban/lor/issues/225) for M5 only after the new shell
    is verified; they are independent enough to keep out of the first meeting-workspace
    PR.
+3. **#214:** replace the release-list-first home with the approved launcher model.
 4. **#212:** write the landing story and media brief from screenshots of the merged
    product experience.
 5. **#213:** build the public landing page from that approved content.

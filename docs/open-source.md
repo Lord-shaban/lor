@@ -62,10 +62,10 @@ clear actions. The release is planned, not shipped.
 
 1. [#215](https://github.com/Lord-shaban/lor/issues/215) audits the journey and fixes the
    shared [product experience contract](product-ux-audit.md).
-2. [#214](https://github.com/Lord-shaban/lor/issues/214) makes the existing home screen a
-   product entry point instead of a release list; then
-   [#216](https://github.com/Lord-shaban/lor/issues/216) applies the validated meeting
-   workspace fixes.
+2. [#216](https://github.com/Lord-shaban/lor/issues/216) applies the validated meeting
+   workspace fixes and its focused follow-ups; then
+   [#214](https://github.com/Lord-shaban/lor/issues/214) makes the existing home screen a
+   product entry point instead of a release list.
 3. [#212](https://github.com/Lord-shaban/lor/issues/212) establishes truthful English and
    Arabic landing copy plus a media inventory from the merged product design.
 4. [#213](https://github.com/Lord-shaban/lor/issues/213) builds the accessible, localised
