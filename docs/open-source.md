@@ -60,15 +60,16 @@ clear actions. The release is planned, not shipped.
 
 ### Work sequence
 
-1. [#212](https://github.com/Lord-shaban/lor/issues/212) establishes truthful English and
-   Arabic copy plus an approved, privacy-safe media inventory.
-2. [#213](https://github.com/Lord-shaban/lor/issues/213) builds the accessible, localised
+1. [#215](https://github.com/Lord-shaban/lor/issues/215) audits the journey and fixes the
+   shared [product experience contract](product-ux-audit.md).
+2. [#214](https://github.com/Lord-shaban/lor/issues/214) makes the existing home screen a
+   product entry point instead of a release list; then
+   [#216](https://github.com/Lord-shaban/lor/issues/216) applies the validated meeting
+   workspace fixes.
+3. [#212](https://github.com/Lord-shaban/lor/issues/212) establishes truthful English and
+   Arabic landing copy plus a media inventory from the merged product design.
+4. [#213](https://github.com/Lord-shaban/lor/issues/213) builds the accessible, localised
    public landing page from that brief.
-3. [#214](https://github.com/Lord-shaban/lor/issues/214) makes the existing home screen a
-   product entry point instead of a release list.
-4. [#215](https://github.com/Lord-shaban/lor/issues/215) audits the journey; then
-   [#216](https://github.com/Lord-shaban/lor/issues/216) implements only its
-   high-confidence fixes.
 5. [#220](https://github.com/Lord-shaban/lor/issues/220) is a small, supervised media
    contribution after the inventory is approved.
 
