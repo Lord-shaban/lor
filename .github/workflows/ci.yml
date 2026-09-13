@@ -95,8 +95,30 @@ jobs:
       - run: npm ci
 
       - name: Start LiveKit
+        env:
+          # Keep CI independent of GitHub's unauthenticated `latest release`
+          # endpoint. Bump deliberately after checking a new server release.
+          LIVEKIT_E2E_VERSION: v1.12.0
         run: |
-          curl -sSL https://get.livekit.io | bash
+          # LiveKit's official installer discovers the latest release through
+          # GitHub's API. That API can rate-limit an Actions runner, leaving the
+          # installer with an empty version and causing `Invalid version:`
+          # before any media test begins. Prefer the official path, but fall
+          # back to a reviewed, pinned official archive when discovery fails.
+          if curl --fail --silent --show-error --location --retry 3 --retry-all-errors https://get.livekit.io | bash \
+            && command -v livekit-server >/dev/null; then
+            echo "Installed LiveKit with the official installer."
+          else
+            echo "::warning::LiveKit release discovery failed; using ${LIVEKIT_E2E_VERSION}."
+            archive="livekit_${LIVEKIT_E2E_VERSION#v}_linux_amd64.tar.gz"
+            curl --fail --silent --show-error --location --retry 3 --retry-all-errors \
+              "https://github.com/livekit/livekit/releases/download/${LIVEKIT_E2E_VERSION}/${archive}" \
+              --output /tmp/livekit.tar.gz
+            mkdir -p /tmp/livekit-bin
+            tar -xzf /tmp/livekit.tar.gz -C /tmp/livekit-bin --wildcards --no-anchored livekit-server
+            install -m 0755 "$(find /tmp/livekit-bin -type f -name livekit-server -print -quit)" /usr/local/bin/livekit-server
+          fi
+          livekit-server --version
 
           # use_external_ip is the line that matters. Left on, LiveKit discovers
           # the runner's public address over STUN and offers it as an ICE
