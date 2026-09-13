@@ -173,6 +173,21 @@
     "sharingLabel": "شاشة <n>{name}</n>",
     "youAreSharing": "بتشارك شاشتك دلوقتي",
     "someoneElseSharing": "فيه حد تاني بيشارك شاشته",
+    "controls": {
+      "workspaces": "المساحات",
+      "openWorkspaces": "افتح مساحات الاجتماع",
+      "closeWorkspaces": "اقفل مساحات الاجتماع",
+      "workspacesWithUnread": "افتح مساحات الاجتماع، فيه {count} رسالة شات جديدة",
+      "more": "المزيد",
+      "openMore": "افتح باقي الأدوات",
+      "closeMore": "اقفل باقي الأدوات",
+      "moreWithWaiting": "افتح باقي الأدوات، فيه {count} مستني",
+      "together": "مع بعض دلوقتي",
+      "after": "سجل الاجتماع",
+      "callSettings": "إعدادات المكالمة",
+      "participate": "شارك",
+      "host": "أدوات المضيف"
+    },
     "chat": {
       "title": "الشات",
       "open": "افتح الشات",
@@ -306,8 +321,12 @@
       "stillListening": "لسه بيسمع",
       "noticeOn": "الكابشنز شغّالة. اللي بتقوله بيتفرّغ نص وبيتبعت لخدمة تفريغ.",
       "noticeNotYou": "الكابشنز شغّالة. المايك بتاعك مش بيتفرّغ.",
+      "noticeShortOn": "الكابشنز شغّالة وبتفرّغ كلامك.",
+      "noticeShortNotYou": "الكابشنز شغّالة، وكلامك مش بيتفرّغ.",
       "stopMine": "بطّل تفريغ كلامي",
       "startMine": "فرّغ كلامي أنا كمان",
+      "stopMineShort": "وقّف كلامي",
+      "startMineShort": "ضيف كلامي",
       "error": {
         "no_key": "مفيش مفتاح تفريغ متظبّط على السيرفر ده.",
         "rate_limited": "كتير مرة واحدة — الكابشنز هتلحق بعد شوية.",
@@ -369,6 +388,8 @@
     "keeping": {
       "on": "احفظ سجل",
       "off": "بطّل حفظ السجل",
+      "onShort": "احفظ",
+      "offShort": "بيتحفظ",
       "notice": "اللي بيتقال بيتحفظ بعد الاجتماع ده.",
       "open": "اللي اتقال",
       "decisions": "القرارات",

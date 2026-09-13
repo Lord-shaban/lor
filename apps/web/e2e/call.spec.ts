@@ -155,6 +155,55 @@ async function join(page: Page, code: string, name: string, locale = "en") {
   await expect(page.getByRole("button", { name: locale === "ar" ? "اخرج" : "Leave", exact: true })).toBeVisible();
 }
 
+type TestLocale = "en" | "ar";
+
+async function openWorkspace(
+  page: Page,
+  name: string,
+  locale: TestLocale = "en",
+) {
+  const triggerName =
+    locale === "ar" ? /^افتح مساحات الاجتماع/ : /^Open workspaces/;
+  const dialogName = locale === "ar" ? "المساحات" : "Workspaces";
+  await page.getByRole("button", { name: triggerName }).click();
+  const dialog = page.getByRole("dialog", { name: dialogName, exact: true });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name, exact: true }).click();
+}
+
+async function revealMoreControl(
+  page: Page,
+  name: string,
+  locale: TestLocale = "en",
+) {
+  const triggerName =
+    locale === "ar" ? /^افتح باقي الأدوات/ : /^Open more controls/;
+  const dialogName = locale === "ar" ? "المزيد" : "More";
+  await page.getByRole("button", { name: triggerName }).click();
+  const dialog = page.getByRole("dialog", { name: dialogName, exact: true });
+  await expect(dialog).toBeVisible();
+  const control = dialog.getByRole("button", { name, exact: true });
+  await expect(control).toBeVisible();
+  return control;
+}
+
+async function useMoreControl(
+  page: Page,
+  name: string,
+  locale: TestLocale = "en",
+) {
+  await (await revealMoreControl(page, name, locale)).click();
+}
+
+async function expectMoreControl(
+  page: Page,
+  name: string,
+  locale: TestLocale = "en",
+) {
+  await revealMoreControl(page, name, locale);
+  await page.keyboard.press("Escape");
+}
+
 /** Wait for the same LiveKit presence fact the token route uses for recurrence. */
 async function waitForEmptyLiveKitRoom(livekitRoom: string) {
   const service = new RoomServiceClient(
@@ -219,7 +268,7 @@ test.describe("a call between two people", () => {
     // And the data channel, which everything else in the meeting rides on.
     // Anchored to the start of the label: the same control reads "Open chat,
     // 1 unread" once a message is waiting.
-    await first.getByRole("button", { name: /^Open chat/ }).click();
+    await openWorkspace(first, "Chat");
     const composer = first.getByRole("textbox", { name: "Write a message" });
     await expect(composer).toBeVisible();
 
@@ -232,11 +281,61 @@ test.describe("a call between two people", () => {
     // "Send a reaction" is also on this screen.
     await first.getByRole("button", { name: "Send", exact: true }).click();
 
-    await second.getByRole("button", { name: /^Open chat/ }).click();
+    await openWorkspace(second, "Chat");
     await expect(second.getByText(message)).toBeVisible();
     // Attributed to the sender, which comes from the media server rather than
     // from anything in the message.
     await expect(second.getByText("Ahmed").first()).toBeVisible();
+  });
+
+  test("keeps one workspace and a one-row call dock on a phone", async () => {
+    const page = await alice.newPage();
+    const code = await createRoom(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await join(page, code, "Ahmed");
+
+    const dock = page.getByTestId("call-dock");
+    await expect(dock).toBeVisible();
+    expect((await dock.boundingBox())?.height).toBeLessThanOrEqual(72);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+
+    const workspaceTrigger = page.getByRole("button", {
+      name: /^Open workspaces/,
+    });
+    await workspaceTrigger.click();
+    await expect(
+      page.getByRole("dialog", { name: "Workspaces", exact: true }),
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(workspaceTrigger).toBeFocused();
+
+    await openWorkspace(page, "Chat");
+    await expect(
+      page.getByRole("complementary", { name: "Chat", exact: true }),
+    ).toBeVisible();
+    await openWorkspace(page, "What was said");
+    await expect(
+      page.getByRole("complementary", { name: "What was said", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("complementary", { name: "Chat", exact: true }),
+    ).toHaveCount(0);
+    await expect(page.getByRole("complementary")).toHaveCount(1);
+
+    await page
+      .getByRole("complementary", { name: "What was said", exact: true })
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
+    await expect(workspaceTrigger).toBeFocused();
+
+    await useMoreControl(page, "Turn on captions");
+    const captionsNotice = page.getByTestId("captions-notice");
+    await expect(captionsNotice).toBeVisible();
+    expect((await captionsNotice.boundingBox())?.height).toBeLessThanOrEqual(60);
   });
 
   test("a second person joining does not evict the first", async () => {
@@ -272,7 +371,7 @@ test.describe("a call between two people", () => {
     const saraNote = "سارة هتراجع الـ PR";
 
     await join(first, code, "Ahmed");
-    await first.getByRole("button", { name: "Open shared notes" }).click();
+    await openWorkspace(first, "Notes");
     const firstNotes = first.getByTestId("shared-notes");
     const firstEditor = firstNotes.locator(".ProseMirror");
     await expect(firstEditor).toBeVisible();
@@ -294,7 +393,7 @@ test.describe("a call between two people", () => {
     // Sara joins after the first note exists. Her Yjs state-vector request must
     // get the existing fragment without either person reloading the call.
     await join(second, code, "سارة");
-    await second.getByRole("button", { name: "Open shared notes" }).click();
+    await openWorkspace(second, "Notes");
     const secondNotes = second.getByTestId("shared-notes");
     await expect(secondNotes.locator(".ProseMirror")).toContainText(decision);
     await expect(secondNotes.locator(".ProseMirror")).toContainText(followUp);
@@ -317,7 +416,7 @@ test.describe("a call between two people", () => {
     await first.getByRole("button", { name: "Leave", exact: true }).click();
     await second.getByRole("button", { name: "Leave", exact: true }).click();
     await join(first, code, "Ahmed");
-    await first.getByRole("button", { name: "Open shared notes" }).click();
+    await openWorkspace(first, "Notes");
     await expect(first.getByTestId("shared-notes").locator(".ProseMirror")).toContainText(decision);
     await expect(first.getByTestId("shared-notes").locator(".ProseMirror")).toContainText(saraNote);
   });
@@ -347,8 +446,8 @@ test.describe("a call between two people", () => {
 
     await join(first, code, "Ahmed");
     await join(second, code, "سارة");
-    await first.getByRole("button", { name: "Open shared notes" }).click();
-    await second.getByRole("button", { name: "Open shared notes" }).click();
+    await openWorkspace(first, "Notes");
+    await openWorkspace(second, "Notes");
 
     const firstEditor = first.getByTestId("shared-notes").locator(".ProseMirror");
     const secondEditor = second.getByTestId("shared-notes").locator(".ProseMirror");
@@ -394,7 +493,7 @@ test.describe("a call between two people", () => {
     await join(first, code, "Ahmed");
     const beforeCanvas = await loadedResourceNames(first);
 
-    await first.getByRole("button", { name: "Open shared whiteboard" }).click();
+    await openWorkspace(first, "Board");
     await expect(first.locator("canvas.excalidraw__canvas.interactive")).toBeVisible();
     const boardResources = await resourcesSince(first, beforeCanvas);
 
@@ -410,7 +509,7 @@ test.describe("a call between two people", () => {
       .getByRole("region", { name: "Board" })
       .getByRole("button", { name: "Close shared whiteboard", exact: true })
       .click();
-    await first.getByRole("button", { name: "Open shared notes" }).click();
+    await openWorkspace(first, "Notes");
     await expect(first.getByTestId("shared-notes").locator(".ProseMirror")).toBeVisible();
     const notesResources = await resourcesSince(first, beforeNotes);
 
@@ -424,7 +523,7 @@ test.describe("a call between two people", () => {
     const code = await createRoom(first);
 
     await join(first, code, "أحمد", "ar");
-    await first.getByRole("button", { name: "افتح النوتس المشتركة" }).click();
+    await openWorkspace(first, "النوتس", "ar");
     const notes = first.getByRole("region", { name: "النوتس" });
     const editor = notes.locator(".ProseMirror");
     await expect(editor).toBeVisible();
@@ -451,11 +550,11 @@ test.describe("a call between two people", () => {
     await join(first, code, "Ahmed");
     await join(second, code, "سارة");
 
-    await first.getByRole("button", { name: "Open shared whiteboard" }).click();
+    await openWorkspace(first, "Board");
     await expect(first.getByRole("heading", { name: "Board" })).toBeVisible();
     const firstCanvas = first.locator("canvas.excalidraw__canvas.interactive");
     await expect(firstCanvas).toBeVisible();
-    await second.getByRole("button", { name: "Open shared whiteboard" }).click();
+    await openWorkspace(second, "Board");
     await expect(second.locator("canvas.excalidraw__canvas.interactive")).toBeVisible();
 
     // Do not interact yet. The original report reproduces after the Canvas
@@ -521,7 +620,7 @@ test.describe("a call between two people", () => {
     await first.getByRole("button", { name: "Leave", exact: true }).click();
     await second.getByRole("button", { name: "Leave", exact: true }).click();
     await join(first, code, "Ahmed");
-    await first.getByRole("button", { name: "Open shared whiteboard" }).click();
+    await openWorkspace(first, "Board");
     await expect.poll(() => boardInk(first)).toBeGreaterThan(100);
   });
 
@@ -543,7 +642,7 @@ test.describe("a call between two people", () => {
       await route.fulfill({ response, headers });
     });
     await join(first, code, "Ahmed");
-    await first.getByRole("button", { name: "Open shared whiteboard" }).click();
+    await openWorkspace(first, "Board");
     const canvas = first.locator("canvas.excalidraw__canvas.interactive");
     await expect(canvas).toBeVisible();
     const box = (await canvas.boundingBox())!;
@@ -572,7 +671,7 @@ test.describe("a call between two people", () => {
     const code = await createRoom(first);
 
     await join(first, code, "Ahmed");
-    await first.getByRole("button", { name: "Open shared whiteboard" }).click();
+    await openWorkspace(first, "Board");
     const board = first.getByRole("region", { name: "Board" });
     await expect(board.locator("canvas.excalidraw__canvas.interactive")).toBeVisible();
     const close = board.getByRole("button", { name: "Close shared whiteboard" });
@@ -904,9 +1003,8 @@ test.describe("a call between two people", () => {
 
     // The link is next to the existing meeting record, not squeezed into the
     // media controls. Turning captions on reveals both record destinations.
-    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
-    await expect(host.getByRole("button", { name: "Decisions", exact: true })).toBeVisible();
-    await host.getByRole("button", { name: "Decisions", exact: true }).click();
+    await useMoreControl(host, "Turn on captions");
+    await openWorkspace(host, "Decisions");
     const panel = host.getByTestId("decision-panel");
     await expect(panel).toBeVisible();
     await expect(panel).toHaveCSS("background-color", "rgb(17, 17, 19)");
@@ -942,8 +1040,8 @@ test.describe("a call between two people", () => {
     // Captions are a room-level switch. The host's toggle already reached this
     // guest over LiveKit, so the guest must observe the active state rather
     // than toggle it back off just to open the shared record.
-    await expect(guest.getByRole("button", { name: "Turn off captions", exact: true })).toBeVisible();
-    await guest.getByRole("button", { name: "Decisions", exact: true }).click();
+    await expectMoreControl(guest, "Turn off captions");
+    await openWorkspace(guest, "Decisions");
     await expect(guest.getByText("اعتماد الـ release بعد نجاح الـ CI النهائي.", { exact: true })).toBeVisible();
     await expect(guest.getByText("Publish after the security review.", { exact: true })).toHaveCount(0);
     await expect(guest.getByRole("button", { name: "Edit wording", exact: true })).toHaveCount(0);
@@ -952,7 +1050,7 @@ test.describe("a call between two people", () => {
 
     // The UI asks the server again after a failed mutation. An old host cookie
     // must not keep review controls after the seat is handed over.
-    await host.getByRole("button", { name: "Decisions", exact: true }).click();
+    await openWorkspace(host, "Decisions");
     await expect(proposalCard.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
     await db
       .update(rooms)
@@ -1169,12 +1267,11 @@ test.describe("a call between two people", () => {
     if (!proposal) throw new Error("The action-item UI proposal was not stored");
 
     await host.setViewportSize({ width: 375, height: 667 });
-    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
-    await expect(host.getByRole("button", { name: "Action items", exact: true })).toBeVisible();
+    await useMoreControl(host, "Turn on captions");
     const beforeOpen = await loadedResourceNames(host);
     expect([...beforeOpen].some((name) => new URL(name).pathname.endsWith("/action-items"))).toBe(false);
 
-    await host.getByRole("button", { name: "Action items", exact: true }).click();
+    await openWorkspace(host, "Action items");
     const panel = host.getByTestId("action-item-panel");
     await expect(panel).toBeVisible();
     await expect(panel).toHaveCSS("background-color", "rgb(17, 17, 19)");
@@ -1258,8 +1355,8 @@ test.describe("a call between two people", () => {
     await expect(transcriptSource).toBeVisible();
     await expect(transcriptSource).toBeFocused();
 
-    await expect(owner.getByRole("button", { name: "Turn off captions", exact: true })).toBeVisible();
-    await owner.getByRole("button", { name: "Action items", exact: true }).click();
+    await expectMoreControl(owner, "Turn off captions");
+    await openWorkspace(owner, "Action items");
     const ownerPanel = owner.getByTestId("action-item-panel");
     await expect(ownerPanel.getByText("مراجعة الـ pull request وإرسال النتيجة النهائية.", { exact: true })).toBeVisible();
     await expect(ownerPanel.getByRole("button", { name: "Review proposal", exact: true })).toHaveCount(0);
@@ -1428,14 +1525,14 @@ test.describe("a call between two people", () => {
 
     // The host can reopen later work after refreshing its record, and the call
     // controls remain usable while both participants see the reminder.
-    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
-    await host.getByRole("button", { name: "Action items", exact: true }).click();
+    await useMoreControl(host, "Turn on captions");
+    await openWorkspace(host, "Action items");
     await host
       .locator(`[data-action-item-id="${completedProposal.id}"]`)
       .getByRole("button", { name: "Reopen task", exact: true })
       .click();
     await expect(host.getByText("Action item reopened.", { exact: true })).toBeVisible();
-    await host.getByRole("button", { name: /^Open chat/ }).click();
+    await openWorkspace(host, "Chat");
     await expect(host.getByRole("textbox", { name: "Write a message" })).toBeVisible();
 
     // Keep this identifier exercised so a future refactor cannot quietly turn
@@ -1562,8 +1659,8 @@ test.describe("a call between two people", () => {
     // affordance on both desktop and touch devices.
     await join(host, code, "Ahmed");
     await host.setViewportSize({ width: 375, height: 667 });
-    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
-    await host.getByRole("button", { name: "Decisions", exact: true }).click();
+    await useMoreControl(host, "Turn on captions");
+    await openWorkspace(host, "Decisions");
     const exportLink = host.getByRole("link", { name: "Download confirmed decisions", exact: true });
     await expect(exportLink).toBeVisible();
     await exportLink.focus();
@@ -1581,8 +1678,8 @@ test.describe("a call between two people", () => {
     // an explicit click event cannot turn it into a request or empty download.
     const emptyCode = await createRoom(host);
     await join(host, emptyCode, "Ahmed");
-    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
-    await host.getByRole("button", { name: "Decisions", exact: true }).click();
+    await useMoreControl(host, "Turn on captions");
+    await openWorkspace(host, "Decisions");
     const disabledExport = host.getByRole("button", { name: "Download confirmed decisions", exact: true });
     await expect(disabledExport).toBeDisabled();
     await expect(host.getByText("Confirm a decision before there is anything to download.", { exact: true })).toBeVisible();
@@ -1701,8 +1798,8 @@ test.describe("a call between two people", () => {
       await route.continue();
     });
 
-    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
-    await host.getByRole("button", { name: "Decisions", exact: true }).click();
+    await useMoreControl(host, "Turn on captions");
+    await openWorkspace(host, "Decisions");
     const panel = host.getByTestId("decision-panel");
     await expect(panel.getByText("Decisions could not be reached. The meeting and record continue; try again.", { exact: true })).toBeVisible();
     await panel.getByRole("button", { name: "Try again", exact: true }).click();
@@ -1724,8 +1821,8 @@ test.describe("a call between two people", () => {
     // Confirmation broadcasts through the room state, but only the meeting
     // host sees its review controls. The other participant gets the settled
     // record and its immutable evidence.
-    await expect(guest.getByRole("button", { name: "Turn off captions", exact: true })).toBeVisible();
-    await guest.getByRole("button", { name: "Decisions", exact: true }).click();
+    await expectMoreControl(guest, "Turn off captions");
+    await openWorkspace(guest, "Decisions");
     const guestPanel = guest.getByTestId("decision-panel");
     await expect(guestPanel.getByText(editedDecision, { exact: true })).toBeVisible();
     await expect(guestPanel.getByText(sourceQuote, { exact: true })).toBeVisible();
@@ -1739,21 +1836,21 @@ test.describe("a call between two people", () => {
     await expect
       .poll(() => playingVideos(host), { timeout: MEDIA_TIMEOUT })
       .toBeGreaterThanOrEqual(2);
-    await host.getByRole("button", { name: "Turn off captions", exact: true }).click();
-    await expect(host.getByRole("button", { name: "Turn on captions", exact: true })).toBeVisible();
+    await useMoreControl(host, "Turn off captions");
+    await expectMoreControl(host, "Turn on captions");
 
-    await host.getByRole("button", { name: /^Open chat/ }).click();
+    await openWorkspace(host, "Chat");
     await host.getByRole("textbox", { name: "Write a message" }).fill("Decision record is closed and chat still works.");
     await host.getByRole("button", { name: "Send", exact: true }).click();
-    await guest.getByRole("button", { name: /^Open chat/ }).click();
+    await openWorkspace(guest, "Chat");
     await expect(guest.getByText("Decision record is closed and chat still works.", { exact: true })).toBeVisible();
 
-    await host.getByRole("button", { name: "Open shared whiteboard", exact: true }).click();
+    await openWorkspace(host, "Board");
     const board = host.getByRole("region", { name: "Board" });
     await expect(board.locator("canvas.excalidraw__canvas.interactive")).toBeVisible();
     await board.getByRole("button", { name: "Close shared whiteboard", exact: true }).click();
 
-    await host.getByRole("button", { name: "Open shared notes", exact: true }).click();
+    await openWorkspace(host, "Notes");
     const notes = host.getByTestId("shared-notes");
     const editor = notes.locator(".ProseMirror");
     await editor.focus();
@@ -1761,11 +1858,11 @@ test.describe("a call between two people", () => {
     await expect(editor).toContainText("قرار محفوظ بعد إغلاق لوحة القرارات");
     await notes.getByRole("button", { name: "Close shared notes", exact: true }).click();
 
-    const record = host.getByRole("button", { name: "Start local recording", exact: true });
+    const record = await revealMoreControl(host, "Start local recording");
     await expect(record).toBeEnabled();
     await record.click();
     await expect(host.getByText(/^Recording locally \(00:0[1-9]\)$/)).toBeVisible({ timeout: 10_000 });
-    await host.getByRole("button", { name: "Stop local recording", exact: true }).click();
+    await useMoreControl(host, "Stop local recording");
     await expect(host.getByText("Your WebM is ready in this tab. It will not be sent anywhere.", { exact: true })).toBeVisible();
   });
 
@@ -2135,8 +2232,8 @@ test.describe("a call between two people", () => {
     }).toBe(1);
 
     await expect.poll(() => playingVideos(host), { timeout: MEDIA_TIMEOUT }).toBeGreaterThanOrEqual(2);
-    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
-    await expect(guest.getByRole("button", { name: "اقفل الكابشنز", exact: true })).toBeVisible();
+    await useMoreControl(host, "Turn on captions");
+    await expectMoreControl(guest, "اقفل الكابشنز", "ar");
 
     let timelineGets = 0;
     host.on("request", (request) => {
@@ -2145,7 +2242,7 @@ test.describe("a call between two people", () => {
       }
     });
 
-    await host.getByRole("button", { name: "Timeline", exact: true }).click();
+    await openWorkspace(host, "Timeline");
     const hostTimeline = host.getByTestId("timeline-panel");
     await expect(hostTimeline).toBeVisible();
     await expect.poll(() => timelineGets).toBeGreaterThan(0);
@@ -2164,7 +2261,7 @@ test.describe("a call between two people", () => {
     await expect(sourceLine).toContainText("security checklist");
     await expect(sourceLine).toBeFocused();
 
-    await host.getByRole("button", { name: "Timeline", exact: true }).click();
+    await openWorkspace(host, "Timeline");
     await expect(hostTimeline).toBeVisible();
     await hostTimeline.getByRole("button", { name: "Generate Timeline", exact: true }).click();
     await expect(hostTimeline.getByText(
@@ -2188,15 +2285,15 @@ test.describe("a call between two people", () => {
     await guest.emulateMedia({ reducedMotion: "reduce" });
     await guest.setViewportSize({ width: 375, height: 667 });
     await expect(guest.locator("html")).toHaveAttribute("dir", "rtl");
-    await guest.getByRole("button", { name: "التايم لاين", exact: true }).click();
+    await openWorkspace(guest, "التايم لاين", "ar");
     const guestTimeline = guest.getByTestId("timeline-panel");
     const guestClose = guestTimeline.getByRole("button", { name: "اقفل", exact: true });
     await expect(guestClose).toBeFocused();
     expect(await guest.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await expect(guestTimeline.getByRole("button", { name: "ولّد التايم لاين", exact: true })).toHaveCount(0);
     await guestClose.click();
-    await expect(guest.getByRole("button", { name: "التايم لاين", exact: true })).toBeFocused();
-    await guest.getByRole("button", { name: "التايم لاين", exact: true }).click();
+    await expect(guest.getByRole("button", { name: /^افتح مساحات الاجتماع/ })).toBeFocused();
+    await openWorkspace(guest, "التايم لاين", "ar");
     await expect(guestTimeline).toBeVisible();
 
     await hostTimeline.getByRole("button", { name: "Mark moment", exact: true }).click();
@@ -2241,8 +2338,8 @@ test.describe("a call between two people", () => {
       label: "Current occurrence cue",
     });
 
-    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
-    await host.getByRole("button", { name: "Timeline", exact: true }).click();
+    await useMoreControl(host, "Turn on captions");
+    await openWorkspace(host, "Timeline");
     const laterTimeline = host.getByTestId("timeline-panel");
     await expect(laterTimeline.getByText("Current occurrence cue", { exact: true })).toBeVisible();
     await expect(laterTimeline.getByText("First occurrence cue", { exact: true })).toHaveCount(0);
@@ -2514,8 +2611,8 @@ test.describe("a call between two people", () => {
     host.on("request", (request) => {
       if (new URL(request.url()).pathname === `/api/rooms/${code}/memory` && request.method() === "GET") memoryGets += 1;
     });
-    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
-    await expect(guest.getByRole("button", { name: "اقفل الكابشنز", exact: true })).toBeVisible();
+    await useMoreControl(host, "Turn on captions");
+    await expectMoreControl(guest, "اقفل الكابشنز", "ar");
     await host.waitForTimeout(250);
     expect(memoryGets).toBe(0);
 
@@ -2528,7 +2625,7 @@ test.describe("a call between two people", () => {
       await releaseFailureResponse;
       await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "unavailable" }) });
     });
-    await host.getByRole("button", { name: "Meeting memory", exact: true }).click();
+    await openWorkspace(host, "Meeting memory");
     const hostPanel = host.getByTestId("memory-panel");
     await failureRequestStarted;
     await expect(hostPanel.locator('[aria-busy="true"]')).toBeVisible();
@@ -2548,21 +2645,21 @@ test.describe("a call between two people", () => {
     await expect(transcriptSource).toBeVisible();
     await expect(transcriptSource).toBeFocused();
 
-    await host.getByRole("button", { name: "Meeting memory", exact: true }).click();
+    await openWorkspace(host, "Meeting memory");
     await hostPanel.getByRole("button", { name: "Close", exact: true }).click();
-    await expect(host.getByRole("button", { name: "Meeting memory", exact: true })).toBeFocused();
+    await expect(host.getByRole("button", { name: /^Open workspaces/ })).toBeFocused();
 
     await guest.emulateMedia({ reducedMotion: "reduce" });
     await guest.setViewportSize({ width: 375, height: 667 });
     await expect(guest.locator("html")).toHaveAttribute("dir", "rtl");
-    await guest.getByRole("button", { name: "ذاكرة الاجتماعات", exact: true }).click();
+    await openWorkspace(guest, "ذاكرة الاجتماعات", "ar");
     const guestPanel = guest.getByTestId("memory-panel");
     const guestClose = guestPanel.getByRole("button", { name: "اقفل", exact: true });
     await expect(guestClose).toBeFocused();
     expect(await guest.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await expect(guestPanel.getByText("دي أسماء عرض متطابقة في الكابشنز المحفوظة، مش هويات مؤكدة ولا سجل حضور.", { exact: true })).toBeVisible();
     await guestClose.click();
-    await expect(guest.getByRole("button", { name: "ذاكرة الاجتماعات", exact: true })).toBeFocused();
+    await expect(guest.getByRole("button", { name: /^افتح مساحات الاجتماع/ })).toBeFocused();
 
     // This test deliberately visits three occurrences. Leave the final one
     // explicitly so its LiveKit peers cannot bleed into the next real-media
@@ -2734,11 +2831,11 @@ test.describe("a call between two people", () => {
       }
     });
 
-    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
+    await useMoreControl(host, "Turn on captions");
     await host.waitForTimeout(250);
     expect(searchPosts).toBe(0);
 
-    await host.getByRole("button", { name: "Search record", exact: true }).click();
+    await openWorkspace(host, "Search record");
     const searchPanel = host.getByTestId("search-panel");
     const query = searchPanel.getByRole("searchbox", { name: "What are you looking for?" });
     await expect(query).toBeFocused();
@@ -2799,7 +2896,7 @@ test.describe("a call between two people", () => {
     await expect(captionSource).toBeVisible();
     await expect(captionSource).toBeFocused();
 
-    await host.getByRole("button", { name: "Search record", exact: true }).click();
+    await openWorkspace(host, "Search record");
     const decisionPanel = host.getByTestId("search-panel");
     const decisionQuery = decisionPanel.getByRole("searchbox", { name: "What are you looking for?" });
     await decisionQuery.fill("bilingual release checklist");
@@ -2812,7 +2909,7 @@ test.describe("a call between two people", () => {
     await expect(decisionCaptionSource).toBeVisible();
     await expect(decisionCaptionSource).toBeFocused();
 
-    await host.getByRole("button", { name: "Search record", exact: true }).click();
+    await openWorkspace(host, "Search record");
     const notesPanel = host.getByTestId("search-panel");
     const notesQuery = notesPanel.getByRole("searchbox", { name: "What are you looking for?" });
     await notesQuery.fill("shared notes contain");
@@ -2828,11 +2925,11 @@ test.describe("a call between two people", () => {
     ).click();
 
     await join(guest, code, "سارة", "ar");
-    await expect(guest.getByRole("button", { name: "اقفل الكابشنز", exact: true })).toBeVisible();
+    await expectMoreControl(guest, "اقفل الكابشنز", "ar");
     await guest.emulateMedia({ reducedMotion: "reduce" });
     await guest.setViewportSize({ width: 375, height: 667 });
     await expect(guest.locator("html")).toHaveAttribute("dir", "rtl");
-    await guest.getByRole("button", { name: "دوّر في السجل", exact: true }).click();
+    await openWorkspace(guest, "دوّر في السجل", "ar");
     const arabicPanel = guest.getByTestId("search-panel");
     const arabicQuery = arabicPanel.getByRole("searchbox", { name: "بتدور على إيه؟" });
     await expect(arabicQuery).toBeFocused();
@@ -2841,7 +2938,7 @@ test.describe("a call between two people", () => {
     await expect(arabicPanel.getByText(arabicCaption.text, { exact: true })).toBeVisible();
     expect(await guest.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await arabicPanel.getByRole("button", { name: "اقفل", exact: true }).click();
-    await expect(guest.getByRole("button", { name: "دوّر في السجل", exact: true })).toBeFocused();
+    await expect(guest.getByRole("button", { name: /^افتح مساحات الاجتماع/ })).toBeFocused();
 
     await host.getByRole("button", { name: "Leave", exact: true }).click();
     await guest.getByRole("button", { name: "اخرج", exact: true }).click();
@@ -2931,8 +3028,8 @@ test.describe("a call between two people", () => {
 
     const emptyCode = await createRoom(page);
     await join(page, emptyCode, "Ahmed");
-    await page.getByRole("button", { name: "Turn on captions", exact: true }).click();
-    await page.getByRole("button", { name: "Meeting memory", exact: true }).click();
+    await useMoreControl(page, "Turn on captions");
+    await openWorkspace(page, "Meeting memory");
     const emptyPanel = page.getByTestId("memory-panel");
     await expect(emptyPanel.getByText("No earlier meeting record", { exact: true })).toBeVisible();
     await expect(emptyPanel.getByText(
@@ -3120,10 +3217,7 @@ test.describe("a call between two people", () => {
       .poll(() => playingVideos(first), { timeout: MEDIA_TIMEOUT })
       .toBeGreaterThanOrEqual(2);
 
-    const start = first.getByRole("button", {
-      name: "Start local recording",
-      exact: true,
-    });
+    const start = await revealMoreControl(first, "Start local recording");
     await expect(start).toBeEnabled();
     await start.click();
 
@@ -3181,12 +3275,12 @@ test.describe("a call between two people", () => {
       sourceAt,
     });
 
-    await first.getByRole("button", { name: "Stop local recording", exact: true }).click();
+    await useMoreControl(first, "Stop local recording");
     await expect(second.getByText("Ahmed stopped a local recording.", { exact: true })).toBeVisible();
     await expect(first.getByText("Your WebM is ready in this tab. It will not be sent anywhere.", { exact: true })).toBeVisible();
 
-    await first.getByRole("button", { name: "Turn on captions", exact: true }).click();
-    await first.getByRole("button", { name: "Timeline", exact: true }).click();
+    await useMoreControl(first, "Turn on captions");
+    await openWorkspace(first, "Timeline");
     const timeline = first.getByTestId("timeline-panel");
     await expect(timeline).toBeVisible();
     const localRecording = timeline.getByRole("button", { name: "Open local recording", exact: true });
@@ -3261,8 +3355,8 @@ test.describe("a call between two people", () => {
     // cloud replay or reopen that former local file.
     await first.reload();
     await join(first, code, "Ahmed");
-    await first.getByRole("button", { name: "Turn on captions", exact: true }).click();
-    await first.getByRole("button", { name: "Timeline", exact: true }).click();
+    await useMoreControl(first, "Turn on captions");
+    await openWorkspace(first, "Timeline");
     const reloadedTimeline = first.getByTestId("timeline-panel");
     const unavailablePlayer = reloadedTimeline.getByRole("button", { name: "Open local recording", exact: true });
     await expect(unavailablePlayer).toBeVisible();

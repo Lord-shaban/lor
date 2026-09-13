@@ -173,6 +173,21 @@
     "sharingLabel": "<n>{name}</n>'s screen",
     "youAreSharing": "You are sharing your screen",
     "someoneElseSharing": "Someone else is already sharing",
+    "controls": {
+      "workspaces": "Workspaces",
+      "openWorkspaces": "Open workspaces",
+      "closeWorkspaces": "Close workspaces",
+      "workspacesWithUnread": "Open workspaces, {count} unread chat messages",
+      "more": "More",
+      "openMore": "Open more controls",
+      "closeMore": "Close more controls",
+      "moreWithWaiting": "Open more controls, {count} waiting",
+      "together": "Together now",
+      "after": "Meeting record",
+      "callSettings": "Call settings",
+      "participate": "Participate",
+      "host": "Host controls"
+    },
     "chat": {
       "title": "Chat",
       "open": "Open chat",
@@ -306,8 +321,12 @@
       "stillListening": "still listening",
       "noticeOn": "Captions are on. What you say is transcribed and sent to a transcription service.",
       "noticeNotYou": "Captions are on. Your microphone is not being transcribed.",
+      "noticeShortOn": "Captions are live and transcribing you.",
+      "noticeShortNotYou": "Captions are live; you are not transcribed.",
       "stopMine": "Stop transcribing me",
       "startMine": "Transcribe me too",
+      "stopMineShort": "Stop mine",
+      "startMineShort": "Include me",
       "error": {
         "no_key": "No transcription key is set up on this server.",
         "rate_limited": "Too much at once — captions will catch up shortly.",
@@ -369,6 +388,8 @@
     "keeping": {
       "on": "Keep a record",
       "off": "Stop keeping a record",
+      "onShort": "Keep",
+      "offShort": "Keeping",
       "notice": "What is said is being kept after this meeting.",
       "open": "What was said",
       "decisions": "Decisions",
