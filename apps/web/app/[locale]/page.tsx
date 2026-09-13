@@ -24,6 +24,7 @@ const RELEASES = [
   { tag: "v0.6", key: "v0_6" },
   { tag: "v0.7", key: "v0_7" },
   { tag: "v0.8", key: "v0_8" },
+  { tag: "v0.9", key: "v0_9" },
   { tag: "v1.0", key: "v1_0" },
 ] as const;
 

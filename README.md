@@ -14,7 +14,7 @@ No account. No time limit. No download.
 [![Roadmap](https://img.shields.io/badge/roadmap-v0.0%20%E2%86%92%20v1.0-6366f1)](https://github.com/Lord-shaban/lor/milestones)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-[العربية](README.ar.md) · [Roadmap](#roadmap) · [Self-hosting](#self-hosting) · [Contributing](CONTRIBUTING.md)
+[العربية](README.ar.md) · [Roadmap](#roadmap) · [Self-hosting](#self-hosting) · [Contributing](CONTRIBUTING.md) · [Open-source map](docs/open-source.md)
 
 </div>
 
@@ -167,7 +167,7 @@ results available and never interrupts the call. The two-person browser suite
 covers lazy loading, English LTR, Arabic RTL phone use, source navigation,
 room isolation, fallback, and deletion/retention cleanup.
 
-### Integrations and plugins — `v0.7`, `v1.0`
+### Integrations and plugins — `v0.8`, `v1.0`
 
 Signed outgoing webhooks, calendar and note-taking integrations, task export, and a
 documented plugin API with a permission model so the community can extend LOR. without
@@ -207,15 +207,12 @@ and neither requires a card.
 
 ## Self-hosting
 
-> Ships in `v0.8`.
+> Planned for `v0.9`; no Compose command is published yet.
 
-```bash
-docker compose -f docker/docker-compose.yml up -d
-```
-
-Brings up the web app, a LiveKit SFU, a TURN server, and Postgres. A single small VPS
-handles a real team. Self-hosting is a first-class path, not an afterthought — the
-hosted demo runs the same code.
+The intended stack is the web app, a LiveKit SFU, a TURN server, and Postgres.
+[#218](https://github.com/Lord-shaban/lor/issues/218) defines the deployment and
+verification contract before implementation. Self-hosting is a first-class future path,
+not an afterthought — it must run the same code as the hosted demo.
 
 ## Configuration
 
@@ -304,8 +301,9 @@ Drizzle · Postgres.
 | `v0.4` | Meeting timeline | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.5` | Meeting memory | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.6` | Semantic search | **shipped** — [live](https://lor-bay.vercel.app) |
-| `v0.7` | Integrations | planned |
-| `v0.8` | Hardening and self-hosting | planned |
+| `v0.7` | Open-source launch and product experience | planned — [contribution map](docs/open-source.md) |
+| `v0.8` | Integrations | planned |
+| `v0.9` | Hardening and self-hosting | planned |
 | `v1.0` | Plugin ecosystem | planned |
 
 Tracked in [milestones](https://github.com/Lord-shaban/lor/milestones) and on the
@@ -317,8 +315,9 @@ contained.
 ## Contributing
 
 Every change goes through an issue and a pull request — including small ones. Start with
-[`good first issue`](https://github.com/Lord-shaban/lor/labels/good%20first%20issue), and
-read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+[`good first issue`](https://github.com/Lord-shaban/lor/labels/good%20first%20issue), read
+[CONTRIBUTING.md](CONTRIBUTING.md), then choose a scoped task from the
+[open-source contribution map](docs/open-source.md).
 
 Bilingual speech examples that LOR. gets wrong are genuinely useful even without a fix.
 Open a [caption accuracy issue](https://github.com/Lord-shaban/lor/issues/new?template=captions_accuracy.yml)
