@@ -3343,7 +3343,7 @@ test.describe("a call between two people", () => {
     })).toBe(true);
 
     const downloadPromise = first.waitForEvent("download");
-    await first.getByRole("button", { name: "Download WebM", exact: true }).click();
+    await useMoreControl(first, "Download WebM");
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toMatch(/^lor-recording-.+\.webm$/);
     const path = await download.path();
