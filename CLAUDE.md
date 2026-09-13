@@ -326,10 +326,10 @@ GitHub is authoritative — issues, milestones, and the
 [board](https://github.com/users/Lord-shaban/projects/8). Update this when a release
 closes.
 
-**Live:** <https://lor-bay.vercel.app>. Everything through `v0.5`, including the
-Meeting memory release, is deployed there on every push to `main`.
+**Live:** <https://lor-bay.vercel.app>. Everything through `v0.6`, including the
+Semantic search release, is deployed there on every push to `main`.
 
-**Done.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, `v0.3`, `v0.4`, and `v0.5` in full, all
+**Done.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, `v0.3`, `v0.4`, `v0.5`, and `v0.6` in full, all
 [tagged and released](https://github.com/Lord-shaban/lor/releases). The call is
 checked end to end on every pull request. Captions split speech at utterance
 boundaries, preserve mixed Arabic/English terms, require explicit consent, and
@@ -394,6 +394,18 @@ so expiring one caption cannot remove unrelated decision or task records. The
 two-person suite covers the bounded response, the lazy workspace, retry and
 source navigation, focus restoration, reduced motion, English LTR, Arabic RTL
 phone use, empty state, and full retention cleanup.
+
+**Search.** `v0.6` adds an on-demand, room-scoped evidence search. It indexes
+only retained captions from completed occurrences, host-confirmed decisions,
+and the current shared-notes snapshot; it never admits the live occurrence,
+unreviewed proposals or their source caption, another room, legacy unscoped
+text, or expired/deleted evidence. Exact-word search is always local to the
+retained projection. Jina's optional `jina-embeddings-v3` model adds semantic
+matches at a fixed 1024 dimensions, while provider trouble degrades to exact
+results and never interrupts the call. Every result returns to its server-owned
+caption or notes source. The real two-person suite covers English LTR, Arabic
+RTL phone layout, lazy loading, source navigation, room isolation, fallback,
+and deletion/retention cleanup.
 
 **Cutting a release.** A release is a milestone closing, not a date arriving.
 The steps are in `CONTRIBUTING.md`; the one that is easy to get wrong is the
