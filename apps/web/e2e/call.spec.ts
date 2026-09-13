@@ -6,10 +6,12 @@ import { and, eq, isNull } from "drizzle-orm";
 import { RoomServiceClient } from "livekit-server-sdk";
 import {
   actionItems,
+  canvasSnapshots,
   decisions,
   getDb,
   meetingOccurrences,
   rooms,
+  searchDocuments,
   timelineChapters,
   timelineGeneratedMoments,
   timelineManualMoments,
@@ -2568,6 +2570,295 @@ test.describe("a call between two people", () => {
     await host.getByRole("button", { name: "Leave", exact: true }).click();
     await guest.getByRole("button", { name: "اخرج", exact: true }).click();
     await waitForEmptyLiveKitRoom(room.livekitRoom);
+  });
+
+  test("searches only retained ended evidence and returns to its original source", async () => {
+    const host = await alice.newPage();
+    const guest = await bob.newPage();
+    const code = await createRoom(host);
+    const db = getDb();
+
+    const [room] = await db
+      .select({ id: rooms.id, livekitRoom: rooms.livekitRoom })
+      .from(rooms)
+      .where(eq(rooms.code, code))
+      .limit(1);
+    if (!room) throw new Error("The Semantic search room was not stored");
+
+    async function endedOccurrence() {
+      const endedAt = new Date();
+      const [occurrence] = await db
+        .insert(meetingOccurrences)
+        .values({
+          roomId: room.id,
+          startedAt: new Date(endedAt.getTime() - 1_000),
+          endedAt,
+        })
+        .returning({ id: meetingOccurrences.id });
+      if (!occurrence) throw new Error("The completed search occurrence was not stored");
+      return occurrence;
+    }
+
+    async function source(
+      occurrenceId: string | null,
+      seq: number,
+      text: string,
+      createdAt = new Date(),
+    ) {
+      const [line] = await db
+        .insert(transcriptLines)
+        .values({
+          roomId: room.id,
+          occurrenceId,
+          durationMs: occurrenceId ? 1_000 : null,
+          speakerIdentity: `p_search_${seq}`,
+          speakerName: "Ahmed",
+          text,
+          seq,
+          createdAt,
+        })
+        .returning({
+          id: transcriptLines.id,
+          seq: transcriptLines.seq,
+          createdAt: transcriptLines.createdAt,
+          text: transcriptLines.text,
+        });
+      if (!line) throw new Error("The Semantic search caption was not stored");
+      return line;
+    }
+
+    async function confirmedDecision(
+      line: Awaited<ReturnType<typeof source>>,
+      text: string,
+      status: "confirmed" | "proposed" = "confirmed",
+    ) {
+      const [decision] = await db
+        .insert(decisions)
+        .values({
+          roomId: room.id,
+          sourceLineId: line.id,
+          sourceSeq: line.seq,
+          sourceSpeaker: "Ahmed",
+          sourceQuote: line.text,
+          sourceCreatedAt: line.createdAt,
+          status,
+          origin: "manual",
+          text,
+          ...(status === "confirmed" ? { confirmedAt: new Date() } : {}),
+        })
+        .returning({ id: decisions.id, text: decisions.text });
+      if (!decision) throw new Error("The Semantic search decision was not stored");
+      return decision;
+    }
+
+    // Make two ended occurrences before anyone joins the current call. Search
+    // is deliberately about these retained records, never the live meeting.
+    const firstOccurrence = await endedOccurrence();
+    const secondOccurrence = await endedOccurrence();
+    const caption = await source(
+      firstOccurrence.id,
+      910,
+      "Search evidence: the retained caption confirms Thursday's launch window.",
+    );
+    const decisionSource = await source(
+      secondOccurrence.id,
+      911,
+      "The reviewed release checklist is the source for this confirmed decision.",
+    );
+    const arabicCaption = await source(
+      secondOccurrence.id,
+      912,
+      "دليل البحث: الكابشن المحفوظ يؤكد موعد الإطلاق يوم الخميس.",
+    );
+    const decision = await confirmedDecision(
+      decisionSource,
+      "Search evidence: publish the bilingual release checklist.",
+    );
+    const proposedSource = await source(
+      firstOccurrence.id,
+      913,
+      "Search evidence: a proposed decision must not be visible.",
+    );
+    await confirmedDecision(proposedSource, "Search evidence: never show this proposal.", "proposed");
+    await source(null, 914, "Search evidence: unscoped legacy text must not be visible.");
+    await source(
+      firstOccurrence.id,
+      915,
+      "Search evidence: expired retained text must not be visible.",
+      new Date("2026-01-01T00:00:00.000Z"),
+    );
+
+    const notes = new Y.Doc();
+    addNoteParagraph(notes, "Search evidence: the shared notes contain the release owner.");
+    await db.insert(canvasSnapshots).values({
+      roomId: room.id,
+      document: Buffer.from(Y.encodeStateAsUpdate(notes)),
+    });
+    notes.destroy();
+
+    const otherCode = await createRoom(host);
+    const [otherRoom] = await db
+      .select({ id: rooms.id })
+      .from(rooms)
+      .where(eq(rooms.code, otherCode))
+      .limit(1);
+    if (!otherRoom) throw new Error("The cross-room search fixture was not stored");
+    const [otherOccurrence] = await db
+      .insert(meetingOccurrences)
+      .values({ roomId: otherRoom.id, startedAt: new Date(Date.now() - 1_000), endedAt: new Date() })
+      .returning({ id: meetingOccurrences.id });
+    if (!otherOccurrence) throw new Error("The cross-room search occurrence was not stored");
+    await db.insert(transcriptLines).values({
+      roomId: otherRoom.id,
+      occurrenceId: otherOccurrence.id,
+      durationMs: 1_000,
+      speakerIdentity: "p_other_search",
+      speakerName: "Elsewhere",
+      text: "Search evidence: cross-room text must never leak here.",
+      seq: 1,
+    });
+
+    await join(host, code, "Ahmed");
+    const [currentOccurrence] = await db
+      .select({ id: meetingOccurrences.id })
+      .from(meetingOccurrences)
+      .where(and(eq(meetingOccurrences.roomId, room.id), isNull(meetingOccurrences.endedAt)))
+      .limit(1);
+    if (!currentOccurrence) throw new Error("The active Semantic search occurrence was not stored");
+    await source(currentOccurrence.id, 916, "Search evidence: the active meeting must not be visible.");
+
+    let searchPosts = 0;
+    host.on("request", (request) => {
+      if (new URL(request.url()).pathname === `/api/rooms/${code}/search` && request.method() === "POST") {
+        searchPosts += 1;
+      }
+    });
+
+    await host.getByRole("button", { name: "Turn on captions", exact: true }).click();
+    await host.waitForTimeout(250);
+    expect(searchPosts).toBe(0);
+
+    await host.getByRole("button", { name: "Search record", exact: true }).click();
+    const searchPanel = host.getByTestId("search-panel");
+    const query = searchPanel.getByRole("searchbox", { name: "What are you looking for?" });
+    await expect(query).toBeFocused();
+    await searchPanel.getByRole("button", { name: "Search", exact: true }).click();
+    await expect(searchPanel.getByText(
+      "Write a search of up to 400 characters, then try again.",
+      { exact: true },
+    )).toBeVisible();
+    expect(searchPosts).toBe(0);
+
+    let startFailureRequest!: () => void;
+    let releaseFailure!: () => void;
+    const failureRequestStarted = new Promise<void>((resolve) => { startFailureRequest = resolve; });
+    const releaseFailureResponse = new Promise<void>((resolve) => { releaseFailure = resolve; });
+    await host.route(`**/api/rooms/${code}/search`, async (route) => {
+      if (route.request().method() !== "POST") return route.continue();
+      startFailureRequest();
+      await releaseFailureResponse;
+      await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "unavailable" }) });
+    });
+    await query.fill("Search evidence");
+    await searchPanel.getByRole("button", { name: "Search", exact: true }).click();
+    await failureRequestStarted;
+    await expect(searchPanel.locator('[aria-busy="true"]')).toBeVisible();
+    releaseFailure();
+    await expect(searchPanel.getByText(
+      "The kept record could not be searched. Your call continues; try again.",
+      { exact: true },
+    )).toBeVisible();
+    await host.unroute(`**/api/rooms/${code}/search`);
+
+    await searchPanel.getByRole("button", { name: "Try again", exact: true }).click();
+    await expect(searchPanel.getByText("Semantic matching is not configured", { exact: true })).toBeVisible();
+    await expect(searchPanel.getByText(caption.text, { exact: true })).toBeVisible();
+    await expect(searchPanel.getByText(decision.text, { exact: true })).toBeVisible();
+    await expect(searchPanel.getByText("Search evidence: the shared notes contain the release owner.", { exact: true })).toBeVisible();
+    expect(searchPosts).toBe(2);
+
+    const indexed = await host.request.get(`/api/rooms/${code}/search?q=Search%20evidence`);
+    expect(indexed.status()).toBe(200);
+    const indexedBody = await indexed.json();
+    expect(indexedBody.results).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: "transcript", source: expect.objectContaining({ transcriptLineId: caption.id }) }),
+      expect.objectContaining({ kind: "decision", source: expect.objectContaining({ transcriptLineId: decisionSource.id }) }),
+      expect.objectContaining({ kind: "notes" }),
+    ]));
+    expect(JSON.stringify(indexedBody)).not.toContain("proposed decision must not be visible");
+    expect(JSON.stringify(indexedBody)).not.toContain("unscoped legacy text must not be visible");
+    expect(JSON.stringify(indexedBody)).not.toContain("expired retained text must not be visible");
+    expect(JSON.stringify(indexedBody)).not.toContain("active meeting must not be visible");
+    expect(JSON.stringify(indexedBody)).not.toContain("cross-room text must never leak");
+
+    await searchPanel.locator("article").filter({ hasText: caption.text }).getByRole(
+      "button",
+      { name: "Open original caption", exact: true },
+    ).click();
+    const captionSource = host.locator(`[data-transcript-line="${caption.seq}"]`);
+    await expect(captionSource).toBeVisible();
+    await expect(captionSource).toBeFocused();
+
+    await host.getByRole("button", { name: "Search record", exact: true }).click();
+    const decisionPanel = host.getByTestId("search-panel");
+    const decisionQuery = decisionPanel.getByRole("searchbox", { name: "What are you looking for?" });
+    await decisionQuery.fill("bilingual release checklist");
+    await decisionPanel.getByRole("button", { name: "Search", exact: true }).click();
+    await decisionPanel.locator("article").filter({ hasText: decision.text }).getByRole(
+      "button",
+      { name: "Open original caption", exact: true },
+    ).click();
+    const decisionCaptionSource = host.locator(`[data-transcript-line="${decisionSource.seq}"]`);
+    await expect(decisionCaptionSource).toBeVisible();
+    await expect(decisionCaptionSource).toBeFocused();
+
+    await host.getByRole("button", { name: "Search record", exact: true }).click();
+    const notesPanel = host.getByTestId("search-panel");
+    const notesQuery = notesPanel.getByRole("searchbox", { name: "What are you looking for?" });
+    await notesQuery.fill("shared notes contain");
+    await notesPanel.getByRole("button", { name: "Search", exact: true }).click();
+    await notesPanel.locator("article").filter({ hasText: "shared notes contain the release owner" }).getByRole(
+      "button",
+      { name: "Open shared notes", exact: true },
+    ).click();
+    await expect(host.getByTestId("shared-notes").locator(".ProseMirror")).toContainText("release owner");
+    await host.getByRole("button", { name: "Close shared notes", exact: true }).click();
+
+    await join(guest, code, "سارة", "ar");
+    await expect(guest.getByRole("button", { name: "اقفل الكابشنز", exact: true })).toBeVisible();
+    await guest.emulateMedia({ reducedMotion: "reduce" });
+    await guest.setViewportSize({ width: 375, height: 667 });
+    await expect(guest.locator("html")).toHaveAttribute("dir", "rtl");
+    await guest.getByRole("button", { name: "دوّر في السجل", exact: true }).click();
+    const arabicPanel = guest.getByTestId("search-panel");
+    const arabicQuery = arabicPanel.getByRole("searchbox", { name: "بتدور على إيه؟" });
+    await expect(arabicQuery).toBeFocused();
+    await arabicQuery.fill("دليل البحث");
+    await arabicPanel.getByRole("button", { name: "دَوّر", exact: true }).click();
+    await expect(arabicPanel.getByText(arabicCaption.text, { exact: true })).toBeVisible();
+    expect(await guest.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await arabicPanel.getByRole("button", { name: "اقفل", exact: true }).click();
+    await expect(guest.getByRole("button", { name: "دوّر في السجل", exact: true })).toBeFocused();
+
+    await host.getByRole("button", { name: "Leave", exact: true }).click();
+    await guest.getByRole("button", { name: "اخرج", exact: true }).click();
+    await waitForEmptyLiveKitRoom(room.livekitRoom);
+
+    // Source deletion owns the projection: neither captions nor confirmed
+    // decisions can survive after their transcript is removed, and deleting
+    // the Canvas snapshot removes the final notes-only search document.
+    expect((await host.request.delete(`/api/rooms/${code}/transcript`)).status()).toBe(200);
+    const afterTranscriptDelete = await host.request.get(`/api/rooms/${code}/search?q=Search%20evidence`);
+    const afterTranscriptBody = JSON.stringify(await afterTranscriptDelete.json());
+    expect(afterTranscriptBody).not.toContain("retained caption confirms");
+    expect(afterTranscriptBody).not.toContain("bilingual release checklist");
+    expect((await host.request.delete(`/api/rooms/${code}/canvas`)).status()).toBe(200);
+    await expect(
+      (async () => (await host.request.get(`/api/rooms/${code}/search?q=Search%20evidence`)).json())(),
+    ).resolves.toMatchObject({ state: "empty", results: [] });
+    await expect(
+      db.select({ id: searchDocuments.id }).from(searchDocuments).where(eq(searchDocuments.roomId, room.id)),
+    ).resolves.toHaveLength(0);
   });
 
   test("removes Meeting memory facts when retained captions expire or are deleted", async () => {
