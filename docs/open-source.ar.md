@@ -38,17 +38,19 @@ LOR.‎ مشروع اجتماعات فيديو open-source، عربي أولاً
 
 ## المرحلة القادمة: v0.7
 
-المرحلة دي **لم تبدأ بعد**. هدفها إطلاق LOR.‎ كمشروع open-source بتجربة أوضح:
+المرحلة دي بدأت بمراجعة تجربة المنتج قبل صفحة الـlanding. هدفها إطلاق LOR.‎ كمشروع
+open-source بتجربة أوضح:
 
-1. [#212](https://github.com/Lord-shaban/lor/issues/212): ترتيب القصة، النسختين عربي
-   وإنجليزي، وقائمة media حقيقية وآمنة.
-2. [#213](https://github.com/Lord-shaban/lor/issues/213): landing page عامة بعد اعتماد
+1. [#215](https://github.com/Lord-shaban/lor/issues/215): مراجعة رحلة المستخدم وتثبيت
+   [عقد تجربة المنتج](product-ux-audit.md) قبل أي تغيير بصري واسع.
+2. [#216](https://github.com/Lord-shaban/lor/issues/216): ينفذ إصلاحات مساحة وأدوات
+   الميتنج المؤكدة ومهامها الصغيرة، ثم
+   [#214](https://github.com/Lord-shaban/lor/issues/214) يجعل الصفحة الأولى طريقًا واضحًا
+   لبدء أو دخول ميتنج.
+3. [#212](https://github.com/Lord-shaban/lor/issues/212): ترتيب قصة الـlanding بالنسختين
+   وقائمة media مبنية على الديزاين الجديد بعد دمجه.
+4. [#213](https://github.com/Lord-shaban/lor/issues/213): landing page عامة بعد اعتماد
    المحتوى، فيها شرح، GitHub، الموقع المباشر، وصور/فيديو ببديل نصي.
-3. [#214](https://github.com/Lord-shaban/lor/issues/214): الصفحة الأولى للمنتج تبقى
-   طريق واضح لبدء أو دخول ميتنج، مش قائمة إصدارات طويلة.
-4. [#215](https://github.com/Lord-shaban/lor/issues/215) ثم
-   [#216](https://github.com/Lord-shaban/lor/issues/216): مراجعة كاملة لرحلة المستخدم ثم
-   تحسينات صغيرة مؤكدة.
 5. [#220](https://github.com/Lord-shaban/lor/issues/220): مساهمة أولى لإضافة asset آمن
    بعد اعتماد القائمة.
 
