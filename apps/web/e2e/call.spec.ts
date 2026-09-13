@@ -2822,7 +2822,10 @@ test.describe("a call between two people", () => {
       { name: "Open shared notes", exact: true },
     ).click();
     await expect(host.getByTestId("shared-notes").locator(".ProseMirror")).toContainText("release owner");
-    await host.getByRole("button", { name: "Close shared notes", exact: true }).click();
+    await host.getByTestId("shared-notes").getByRole(
+      "button",
+      { name: "Close shared notes", exact: true },
+    ).click();
 
     await join(guest, code, "سارة", "ar");
     await expect(guest.getByRole("button", { name: "اقفل الكابشنز", exact: true })).toBeVisible();
