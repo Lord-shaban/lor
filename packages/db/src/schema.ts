@@ -27,13 +27,47 @@ const binary = customType<{ data: Buffer; driverData: Buffer }>({
 });
 
 /**
+ * Every v0.6 vector comes from `jina-embeddings-v3` at its fixed 1024-dimension
+ * retrieval setting. Exporting this from the database package gives the indexer
+ * one source of truth: a provider response with another size cannot reach
+ * Postgres and a later model change has to be an explicit migration.
+ */
+export const SEARCH_EMBEDDING_DIMENSIONS = 1024;
+
+/**
  * `pgvector` is installed by the v0.6 migration. Keeping the dimension here
  * makes it impossible for an index row
  * and a query embedding from another model family to compare by accident.
  */
 const embedding = customType<{ data: number[]; driverData: string }>({
   dataType() {
-    return "vector(1536)";
+    return `vector(${SEARCH_EMBEDDING_DIMENSIONS})`;
+  },
+  toDriver(value) {
+    // pgvector accepts its canonical `[number,...]` literal. The provider is
+    // validated before this boundary; serialising only finite numbers keeps a
+    // malformed response from becoming executable SQL or an invalid vector.
+    if (
+      value.length !== SEARCH_EMBEDDING_DIMENSIONS
+      || value.some((component) => !Number.isFinite(component))
+    ) {
+      throw new Error("Search embedding has an unexpected dimension or value");
+    }
+    return `[${value.join(",")}]`;
+  },
+  fromDriver(value) {
+    const text = value.trim();
+    if (!text.startsWith("[") || !text.endsWith("]")) {
+      throw new Error("Stored search embedding is malformed");
+    }
+    const components = text.slice(1, -1).split(",").map(Number);
+    if (
+      components.length !== SEARCH_EMBEDDING_DIMENSIONS
+      || components.some((component) => !Number.isFinite(component))
+    ) {
+      throw new Error("Stored search embedding has an unexpected dimension or value");
+    }
+    return components;
   },
 });
 
