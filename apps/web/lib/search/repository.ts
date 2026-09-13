@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, gte, isNotNull, lt, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull, lt, notExists, notInArray, sql } from "drizzle-orm";
 import {
   canvasSnapshots,
   decisions,
@@ -134,6 +134,19 @@ async function eligibleEvidence(roomId: string, now: Date): Promise<EvidenceSour
         eq(transcriptLines.roomId, roomId),
         gte(transcriptLines.createdAt, transcriptCutoff),
         isNotNull(meetingOccurrences.endedAt),
+        // A proposed decision is not retained meeting evidence for Search.
+        // Its source caption must be excluded too: otherwise indexing that
+        // caption would expose the unreviewed proposal through another kind.
+        notExists(
+          db
+            .select({ id: decisions.id })
+            .from(decisions)
+            .where(and(
+              eq(decisions.roomId, roomId),
+              eq(decisions.sourceLineId, transcriptLines.id),
+              eq(decisions.status, "proposed"),
+            )),
+        ),
       ))
       .orderBy(desc(transcriptLines.createdAt), desc(transcriptLines.id))
       .limit(MAX_EVIDENCE_SOURCES),
@@ -277,6 +290,22 @@ async function upsertEvidence(source: EvidenceSource): Promise<IndexedDocument> 
   return document;
 }
 
+/**
+ * Keep the projection an exact view of eligible evidence. This clears a
+ * previously indexed caption if, for example, it later becomes the source of
+ * an unreviewed proposal; retaining that stale document would bypass the
+ * evidence boundary above until its normal retention expiry.
+ */
+async function deleteStaleEvidence(roomId: string, documents: readonly IndexedDocument[]) {
+  const db = getDb();
+  const ids = documents.map((document) => document.id);
+  await db
+    .delete(searchDocuments)
+    .where(ids.length === 0
+      ? roomSearchScope(roomId)
+      : and(roomSearchScope(roomId), notInArray(searchDocuments.id, ids)));
+}
+
 async function embedPending(
   documents: readonly IndexedDocument[],
   config: EmbeddingsProviderConfig,
@@ -311,9 +340,13 @@ async function embedPending(
 export async function indexSearchEvidence(roomId: string, now = new Date()): Promise<IndexOutcome> {
   await sweepSearchRetention(roomId, now);
   const sources = await eligibleEvidence(roomId, now);
-  if (sources.length === 0) return { state: "empty", sourceCount: 0, embedded: 0 };
+  if (sources.length === 0) {
+    await deleteStaleEvidence(roomId, []);
+    return { state: "empty", sourceCount: 0, embedded: 0 };
+  }
 
   const documents = await Promise.all(sources.map(upsertEvidence));
+  await deleteStaleEvidence(roomId, documents);
   const config = configuredEmbeddings(process.env);
   if (!config) return { state: "unconfigured", sourceCount: sources.length, embedded: 0 };
 
