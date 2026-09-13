@@ -373,7 +373,42 @@
       "decisions": "Decisions",
       "actionItems": "Action items",
       "timeline": "Timeline",
-      "memory": "Meeting memory"
+      "memory": "Meeting memory",
+      "search": "Search record"
+    },
+    "search": {
+      "title": "Search the kept record",
+      "intro": "Find retained captions, confirmed decisions, and shared notes from completed meetings in this room.",
+      "close": "Close",
+      "field": "What are you looking for?",
+      "placeholder": "For example: budget decision",
+      "hint": "Searching starts only when you submit a query.",
+      "submit": "Search",
+      "searching": "Searching…",
+      "loading": "Searching the kept record…",
+      "retry": "Try again",
+      "results": "Search results",
+      "emptyTitle": "No earlier meeting record",
+      "empty": "There are no retained captions, confirmed decisions, or shared notes from completed meetings in this room.",
+      "noResultsTitle": "No matching retained record",
+      "noResults": "Try a different word or phrase from the meeting record.",
+      "unconfiguredTitle": "Semantic matching is not configured",
+      "unconfigured": "You can still search the exact saved wording.",
+      "degradedTitle": "Semantic matching is temporarily unavailable",
+      "degraded": "Exact-word results remain available. Try again later for semantic matching.",
+      "meetingDate": "Meeting date: {date}",
+      "kind": {
+        "transcript": "Kept caption",
+        "decision": "Confirmed decision",
+        "notes": "Shared notes"
+      },
+      "openCaption": "Open original caption",
+      "openNotes": "Open shared notes",
+      "error": {
+        "query_invalid": "Write a search of up to 400 characters, then try again.",
+        "rate_limited": "Too many searches at once. Wait a moment, then try again.",
+        "unavailable": "The kept record could not be searched. Your call continues; try again."
+      }
     },
     "timeline": {
       "title": "Timeline",

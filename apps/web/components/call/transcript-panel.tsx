@@ -26,6 +26,7 @@ import { cn } from "@/lib/cn";
  */
 
 interface Line {
+  id: string;
   speaker: string;
   text: string;
   seq: number;
@@ -41,11 +42,14 @@ export function TranscriptPanel({
   code,
   onClose,
   highlightSeq,
+  highlightLineId,
 }: {
   code: string;
   onClose: () => void;
   /** A decision card can lead directly back to immutable transcript evidence. */
   highlightSeq?: number;
+  /** A retained search result can link by immutable source row, not sequence. */
+  highlightLineId?: string;
 }) {
   const t = useTranslations("call.transcript");
   const locale = useLocale() as Locale;
@@ -71,11 +75,14 @@ export function TranscriptPanel({
   }, [load]);
 
   useEffect(() => {
-    if (highlightSeq === undefined || !stored?.lines.some((line) => line.seq === highlightSeq)) {
+    const highlighted = stored?.lines.find((line) =>
+      line.id === highlightLineId || line.seq === highlightSeq,
+    );
+    if (!highlighted) {
       return;
     }
     const timer = setTimeout(() => {
-      const source = document.getElementById(`transcript-line-${highlightSeq}`);
+      const source = document.getElementById(`transcript-line-${highlighted.id}`);
       source?.focus({ preventScroll: true });
       source?.scrollIntoView({
         behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -85,7 +92,7 @@ export function TranscriptPanel({
       });
     }, 0);
     return () => clearTimeout(timer);
-  }, [highlightSeq, stored]);
+  }, [highlightLineId, highlightSeq, stored]);
 
   async function makeSummary() {
     setBusy("summary");
@@ -170,23 +177,26 @@ export function TranscriptPanel({
         )}
 
         <ul className="flex flex-col gap-2">
-          {lines.map((line) => (
-            <li
-              key={line.seq}
-              id={`transcript-line-${line.seq}`}
-              data-transcript-line={line.seq}
-              tabIndex={line.seq === highlightSeq ? -1 : undefined}
-              className={cn(
-                "flex scroll-mt-4 flex-col gap-0.5 rounded-md text-sm leading-relaxed",
-                line.seq === highlightSeq && "bg-[#27272a] p-2 ring-1 ring-[#a1a1aa]",
-              )}
-            >
-              <bdi className="text-xs font-medium text-[#a1a1aa]">{line.speaker}</bdi>
-              <span dir={lineDirection(line.text, fallback)} className="text-[#f4f4f5]">
-                {line.text}
-              </span>
-            </li>
-          ))}
+          {lines.map((line) => {
+            const highlighted = line.id === highlightLineId || line.seq === highlightSeq;
+            return (
+              <li
+                key={line.id}
+                id={`transcript-line-${line.id}`}
+                data-transcript-line={line.seq}
+                tabIndex={highlighted ? -1 : undefined}
+                className={cn(
+                  "flex scroll-mt-4 flex-col gap-0.5 rounded-md text-sm leading-relaxed",
+                  highlighted && "bg-[#27272a] p-2 ring-1 ring-[#a1a1aa]",
+                )}
+              >
+                <bdi className="text-xs font-medium text-[#a1a1aa]">{line.speaker}</bdi>
+                <span dir={lineDirection(line.text, fallback)} className="text-[#f4f4f5]">
+                  {line.text}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       </div>
 

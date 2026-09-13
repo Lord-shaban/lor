@@ -340,6 +340,11 @@ function candidateFields() {
     transcriptLineId: searchDocuments.transcriptLineId,
     decisionId: searchDocuments.decisionId,
     notesSnapshotRoomId: searchDocuments.notesSnapshotRoomId,
+    // A decision is its own indexed document, but its reviewable evidence is
+    // still the caption it was confirmed from. Returning this link lets the
+    // call workspace take people to that exact kept caption instead of making
+    // a decision look like an independent meeting fact.
+    decisionSourceLineId: decisions.sourceLineId,
     occurrenceId: searchDocuments.occurrenceId,
     sourceCreatedAt: searchDocuments.sourceCreatedAt,
   };
@@ -353,6 +358,7 @@ interface CandidateRow {
   transcriptLineId: string | null;
   decisionId: string | null;
   notesSnapshotRoomId: string | null;
+  decisionSourceLineId: string | null;
   occurrenceId: string | null;
   sourceCreatedAt: Date;
 }
@@ -364,7 +370,7 @@ function toCandidate(row: CandidateRow): SearchCandidate {
     speakerName: row.speakerName,
     content: row.content,
     source: {
-      transcriptLineId: row.transcriptLineId,
+      transcriptLineId: row.transcriptLineId ?? row.decisionSourceLineId,
       decisionId: row.decisionId,
       notesSnapshotRoomId: row.notesSnapshotRoomId,
       occurrenceId: row.occurrenceId,
@@ -380,6 +386,7 @@ async function lexicalCandidates(roomId: string, query: string) {
   const rows = await getDb()
     .select({ ...candidateFields(), rank })
     .from(searchDocuments)
+    .leftJoin(decisions, eq(searchDocuments.decisionId, decisions.id))
     .where(and(
       roomSearchScope(roomId),
       sql`${SEARCH_VECTOR} @@ websearch_to_tsquery('simple', ${query})`,
@@ -403,6 +410,7 @@ async function semanticCandidates(
   const rows = await getDb()
     .select({ ...candidateFields(), distance })
     .from(searchDocuments)
+    .leftJoin(decisions, eq(searchDocuments.decisionId, decisions.id))
     .where(and(
       roomSearchScope(roomId),
       eq(searchDocuments.embeddingModel, config.model),

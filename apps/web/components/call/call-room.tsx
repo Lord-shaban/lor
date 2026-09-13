@@ -53,6 +53,13 @@ const MemoryPanel = dynamic(
   { ssr: false },
 );
 
+// Search is another on-demand record workspace. Its implementation is not
+// fetched while somebody is joining or merely talking in the room.
+const SearchPanel = dynamic(
+  () => import("@/components/call/search-panel").then((module) => module.SearchPanel),
+  { ssr: false },
+);
+
 export interface Connection {
   token: string;
   serverUrl: string;
@@ -214,19 +221,28 @@ function CallStageContent({
   // server's cookie check decides anything; this is what the interface shows.
   const [isHost, setIsHost] = useState(startedAsHost);
   const [keysOpen, setKeysOpen] = useState(false);
-  const [recordPanel, setRecordPanel] = useState<"transcript" | "decisions" | "action-items" | "timeline" | "memory" | null>(null);
+  const [recordPanel, setRecordPanel] = useState<"transcript" | "decisions" | "action-items" | "timeline" | "memory" | "search" | null>(null);
   const [transcriptSourceSeq, setTranscriptSourceSeq] = useState<number | null>(null);
+  const [transcriptSourceId, setTranscriptSourceId] = useState<string | null>(null);
   const [carryOverDismissed, setCarryOverDismissed] = useState(false);
   const timelineEntryRef = useRef<HTMLButtonElement>(null);
   const restoreTimelineFocusRef = useRef(false);
   const memoryEntryRef = useRef<HTMLButtonElement>(null);
   const restoreMemoryFocusRef = useRef(false);
+  const searchEntryRef = useRef<HTMLButtonElement>(null);
+  const restoreSearchFocusRef = useRef(false);
   const { carryOver, retry: retryCarryOver } = useCarryOver({ code, meetingId });
 
   useEffect(() => {
     if (recordPanel !== null || !restoreTimelineFocusRef.current) return;
     timelineEntryRef.current?.focus();
     restoreTimelineFocusRef.current = false;
+  }, [recordPanel]);
+
+  useEffect(() => {
+    if (recordPanel !== null || !restoreSearchFocusRef.current) return;
+    searchEntryRef.current?.focus();
+    restoreSearchFocusRef.current = false;
   }, [recordPanel]);
 
   useEffect(() => {
@@ -356,6 +372,7 @@ function CallStageContent({
           <TranscriptPanel
             code={code}
             highlightSeq={transcriptSourceSeq ?? undefined}
+            highlightLineId={transcriptSourceId ?? undefined}
             onClose={() => setRecordPanel(null)}
           />
         )}
@@ -365,6 +382,7 @@ function CallStageContent({
             code={code}
             onClose={() => setRecordPanel(null)}
             onShowSource={(seq) => {
+              setTranscriptSourceId(null);
               setTranscriptSourceSeq(seq);
               setRecordPanel("transcript");
             }}
@@ -376,6 +394,7 @@ function CallStageContent({
             code={code}
             onClose={() => setRecordPanel(null)}
             onShowSource={(seq) => {
+              setTranscriptSourceId(null);
               setTranscriptSourceSeq(seq);
               setRecordPanel("transcript");
             }}
@@ -393,6 +412,7 @@ function CallStageContent({
               setRecordPanel(null);
             }}
             onShowSource={(seq) => {
+              setTranscriptSourceId(null);
               setTranscriptSourceSeq(seq);
               setRecordPanel("transcript");
             }}
@@ -408,8 +428,28 @@ function CallStageContent({
               setRecordPanel(null);
             }}
             onShowSource={(seq) => {
+              setTranscriptSourceId(null);
               setTranscriptSourceSeq(seq);
               setRecordPanel("transcript");
+            }}
+          />
+        )}
+
+        {recordPanel === "search" && (
+          <SearchPanel
+            code={code}
+            onClose={() => {
+              restoreSearchFocusRef.current = true;
+              setRecordPanel(null);
+            }}
+            onShowTranscriptSource={(id) => {
+              setTranscriptSourceSeq(null);
+              setTranscriptSourceId(id);
+              setRecordPanel("transcript");
+            }}
+            onShowNotesSource={() => {
+              setRecordPanel(null);
+              setPanel("notes");
             }}
           />
         )}
@@ -473,14 +513,17 @@ function CallStageContent({
         onOpenKeys={() => setKeysOpen(true)}
         onOpenTranscript={() => {
           setTranscriptSourceSeq(null);
+          setTranscriptSourceId(null);
           setRecordPanel("transcript");
         }}
         onOpenDecisions={() => setRecordPanel("decisions")}
         onOpenActionItems={() => setRecordPanel("action-items")}
         onOpenTimeline={() => setRecordPanel("timeline")}
         onOpenMemory={() => setRecordPanel("memory")}
+        onOpenSearch={() => setRecordPanel("search")}
         timelineEntryRef={timelineEntryRef}
         memoryEntryRef={memoryEntryRef}
+        searchEntryRef={searchEntryRef}
       />
 
       <CallControls
