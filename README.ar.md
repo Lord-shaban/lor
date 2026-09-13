@@ -13,7 +13,7 @@
 [![CI](https://github.com/Lord-shaban/lor/actions/workflows/ci.yml/badge.svg)](https://github.com/Lord-shaban/lor/actions/workflows/ci.yml)
 [![Roadmap](https://img.shields.io/badge/roadmap-v0.0%20%E2%86%92%20v1.0-6366f1)](https://github.com/Lord-shaban/lor/milestones)
 
-[English](README.md) · [خريطة الطريق](#خريطة-الطريق) · [الاستضافة الذاتية](#الاستضافة-الذاتية) · [المساهمة](CONTRIBUTING.md)
+[English](README.md) · [خريطة الطريق](#خريطة-الطريق) · [الاستضافة الذاتية](#الاستضافة-الذاتية) · [المساهمة](CONTRIBUTING.md) · [خريطة open-source](docs/open-source.ar.md)
 
 </div>
 
@@ -153,7 +153,7 @@ LOR.‎ بيزوّد نتائج دلالية بموديل `jina-embeddings-v3` �
 متصفحين في نفس الميتنج بيغطي التحميل الكسول وEnglish LTR وArabic RTL على
 الموبايل والتنقّل للمصدر وعزل الرومات والبديل ومسح الدليل بالحذف أو انتهاء الحفظ.
 
-### تكاملات وإضافات — `v0.7` و `v1.0`
+### تكاملات وإضافات — `v0.8` و `v1.0`
 
 Webhooks موقّعة، تكامل مع التقويم وأدوات الملاحظات، تصدير المهام، وواجهة إضافات موثّقة
 بنموذج صلاحيات — عشان المجتمع يوسّع LOR.‎ من غير ما يعمل fork.
@@ -191,14 +191,12 @@ npm install && npm run dev
 
 ## الاستضافة الذاتية
 
-> بتنزل في `v0.8`.
+> مخطط لها في `v0.9`؛ مفيش Compose command منشور لسه.
 
-```bash
-docker compose -f docker/docker-compose.yml up -d
-```
-
-بيشغّل تطبيق الويب و LiveKit SFU وسيرفر TURN و Postgres. سيرفر VPS صغير واحد بيكفي
-فريق حقيقي. الاستضافة الذاتية مسار أساسي مش إضافة — النسخة المستضافة بتشغّل نفس الكود.
+الـstack المقصود هو web app وLiveKit SFU وTURN server وPostgres.
+[#218](https://github.com/Lord-shaban/lor/issues/218) بيحدّد عقد الـdeploy والتحقق قبل
+التنفيذ. الاستضافة الذاتية مسار أساسي في المستقبل مش حاجة ثانوية — لازم تشغّل نفس كود
+النسخة المستضافة.
 
 ## الإعدادات
 
@@ -285,8 +283,9 @@ Drizzle · Postgres.
 | `v0.4` | الخط الزمني | **نزل** — [شغّال](https://lor-bay.vercel.app) |
 | `v0.5` | ذاكرة الاجتماعات | **نزل** — [شغّال](https://lor-bay.vercel.app) |
 | `v0.6` | البحث الدلالي | **نزل** — [شغّال](https://lor-bay.vercel.app) |
-| `v0.7` | التكاملات | مخطط |
-| `v0.8` | التقوية والاستضافة الذاتية | مخطط |
+| `v0.7` | إطلاق open-source وتجربة المنتج | مخطط — [خريطة المساهمة](docs/open-source.ar.md) |
+| `v0.8` | التكاملات | مخطط |
+| `v0.9` | التقوية والاستضافة الذاتية | مخطط |
 | `v1.0` | منظومة الإضافات | مخطط |
 
 متتبّعة في [الإصدارات](https://github.com/Lord-shaban/lor/milestones) وعلى
@@ -298,7 +297,8 @@ Drizzle · Postgres.
 
 كل تغيير بيعدّي على Issue وPull Request — حتى الصغير. ابدأ من
 [`good first issue`](https://github.com/Lord-shaban/lor/labels/good%20first%20issue)،
-واقرا [CONTRIBUTING.md](CONTRIBUTING.md) الأول.
+واقرا [CONTRIBUTING.md](CONTRIBUTING.md) الأول، وبعدها اختار مهمة محددة من
+[خريطة المساهمة open-source](docs/open-source.ar.md).
 
 أمثلة الكلام ثنائي اللغة اللي LOR.‎ بيغلط فيها مفيدة فعلاً حتى من غير إصلاح. افتح
 [بلاغ دقة كابشنز](https://github.com/Lord-shaban/lor/issues/new?template=captions_accuracy.yml)

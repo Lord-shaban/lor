@@ -142,7 +142,7 @@ packages/db/       Drizzle schema and migrations
 eval/captions/     transcription eval harness — its own workspace, so its
                    metrics are unit tested by `npm test` like anything else
 scripts/           browser-driving verification, not build tooling
-docker/            self-hosting compose stack — planned, `v0.8`. The README
+docker/            self-hosting compose stack — planned, `v0.9`. The README
                    marks it as such; do not describe it as though it is here
 ```
 
@@ -328,6 +328,11 @@ closes.
 
 **Live:** <https://lor-bay.vercel.app>. Everything through `v0.6`, including the
 Semantic search release, is deployed there on every push to `main`.
+
+**Next, planned but not started.** `v0.7 — Open-source launch & product experience`
+has its scoped contributor work in [#212–#216 and #220](https://github.com/Lord-shaban/lor/issues?q=is%3Aissue%20is%3Aopen%20milestone%3A%22v0.7%20%E2%80%94%20Open-source%20launch%20%26%20product%20experience%22).
+The landing-page content brief comes before the landing implementation; the product home
+screen remains a meeting launcher, not a marketing page. See `docs/open-source.md`.
 
 **Done.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, `v0.3`, `v0.4`, `v0.5`, and `v0.6` in full, all
 [tagged and released](https://github.com/Lord-shaban/lor/releases). The call is

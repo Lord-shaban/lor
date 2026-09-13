@@ -33,6 +33,10 @@ Issue #42  ←── description + acceptance criteria checklist
 
 [gfi]: https://github.com/Lord-shaban/lor/labels/good%20first%20issue
 
+The [open-source contribution map](docs/open-source.md) explains the current milestones,
+dependencies, architecture boundaries, and how to choose work that is ready. Do not pick
+an issue carrying `blocked` until the linked prerequisite is resolved.
+
 ## Commit format
 
 ```
@@ -66,10 +70,14 @@ npm run test:e2e          # needs the build above
 ```
 
 The last one puts two browser contexts in one room against a LiveKit and a
-Postgres started on your machine, and asserts that video is decoding on both
-sides. It is a required check, and it is the one that has caught the bugs the
-others could not see. Most of this project cannot be verified by reading it —
-[`scripts/README.md`](scripts/README.md) has the tools for looking at it instead.
+Postgres, and asserts that video is decoding on both sides. It is a required check, and
+it is the one that has caught the bugs the others could not see. CI starts disposable
+services for it. Locally, run migrations against a disposable database and make its
+`DATABASE_URL` available to the shell running Playwright as well as to `.env.local`;
+Playwright's direct database assertions do not load `.env.local` themselves. Never point
+the suite at production. [#221](https://github.com/Lord-shaban/lor/issues/221) tracks a
+fully self-contained local runner. Most of this project cannot be verified by reading it
+— [`scripts/README.md`](scripts/README.md) has the tools for looking at it instead.
 
 ## Rules that are not negotiable
 

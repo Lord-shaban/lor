@@ -29,8 +29,9 @@
     "v0_4": "Meeting timeline",
     "v0_5": "Meeting memory",
     "v0_6": "Semantic search",
-    "v0_7": "Integrations",
-    "v0_8": "Hardening",
+    "v0_7": "Open-source launch",
+    "v0_8": "Integrations",
+    "v0_9": "Hardening and self-hosting",
     "v1_0": "Plugin ecosystem"
   },
   "localeSwitcher": {
