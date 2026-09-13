@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
 import { direction as localeDirection, type Locale } from "@/i18n/routing";
@@ -12,7 +12,10 @@ import {
 } from "@livekit/components-react";
 import { RoomEvent, Track, type Participant, type RoomOptions } from "livekit-client";
 import { VideoGrid } from "@/components/call/video-grid";
-import { CallControls } from "@/components/call/call-controls";
+import {
+  CallControls,
+  type CallWorkspace,
+} from "@/components/call/call-controls";
 import { WhiteboardPanel } from "@/components/call/whiteboard-panel";
 import { NotesPanel } from "@/components/call/notes-panel";
 import { ChatPanel } from "@/components/call/chat-panel";
@@ -221,35 +224,12 @@ function CallStageContent({
   // server's cookie check decides anything; this is what the interface shows.
   const [isHost, setIsHost] = useState(startedAsHost);
   const [keysOpen, setKeysOpen] = useState(false);
-  const [recordPanel, setRecordPanel] = useState<"transcript" | "decisions" | "action-items" | "timeline" | "memory" | "search" | null>(null);
+  const [activeWorkspace, setActiveWorkspace] =
+    useState<CallWorkspace | null>(null);
   const [transcriptSourceSeq, setTranscriptSourceSeq] = useState<number | null>(null);
   const [transcriptSourceId, setTranscriptSourceId] = useState<string | null>(null);
   const [carryOverDismissed, setCarryOverDismissed] = useState(false);
-  const timelineEntryRef = useRef<HTMLButtonElement>(null);
-  const restoreTimelineFocusRef = useRef(false);
-  const memoryEntryRef = useRef<HTMLButtonElement>(null);
-  const restoreMemoryFocusRef = useRef(false);
-  const searchEntryRef = useRef<HTMLButtonElement>(null);
-  const restoreSearchFocusRef = useRef(false);
   const { carryOver, retry: retryCarryOver } = useCarryOver({ code, meetingId });
-
-  useEffect(() => {
-    if (recordPanel !== null || !restoreTimelineFocusRef.current) return;
-    timelineEntryRef.current?.focus();
-    restoreTimelineFocusRef.current = false;
-  }, [recordPanel]);
-
-  useEffect(() => {
-    if (recordPanel !== null || !restoreSearchFocusRef.current) return;
-    searchEntryRef.current?.focus();
-    restoreSearchFocusRef.current = false;
-  }, [recordPanel]);
-
-  useEffect(() => {
-    if (recordPanel !== null || !restoreMemoryFocusRef.current) return;
-    memoryEntryRef.current?.focus();
-    restoreMemoryFocusRef.current = false;
-  }, [recordPanel]);
 
   const { localParticipant } = useLocalParticipant();
   const participants = useParticipants();
@@ -308,37 +288,22 @@ function CallStageContent({
   const { announcement, moderate, dismiss: dismissAnnouncement } =
     useModeration({ code, isHost, onHostChanged: setIsHost });
 
-  // One slot, one panel. Two open at once would halve the grid on a laptop and
-  // cover it entirely on a phone.
-  const [panel, setPanel] = useState<"chat" | "door" | "whiteboard" | "notes" | null>(null);
-  const chatOpen = panel === "chat";
-  const whiteboardOpen = panel === "whiteboard";
-  const notesOpen = panel === "notes";
+  // Every complementary surface shares this one slot. A second state machine
+  // used to let Transcript cover Chat while Chat still squeezed the grid.
+  const chatOpen = activeWorkspace === "chat";
   // How many messages had arrived the last time the panel was closed. Held here
   // rather than cleared on every arrival, so nothing has to run in an effect to
   // keep the badge honest.
   const [read, setRead] = useState(0);
 
-  function toggleChat() {
-    // Closing marks what has arrived as seen. Opening does not need to: an open
-    // panel shows no badge at all.
+  function toggleWorkspace(workspace: CallWorkspace) {
     if (chatOpen) setRead(received);
-    setPanel(chatOpen ? null : "chat");
+    setActiveWorkspace((current) => (current === workspace ? null : workspace));
   }
 
-  function toggleDoor() {
+  function closeWorkspace() {
     if (chatOpen) setRead(received);
-    setPanel(panel === "door" ? null : "door");
-  }
-
-  function toggleWhiteboard() {
-    if (chatOpen) setRead(received);
-    setPanel(whiteboardOpen ? null : "whiteboard");
-  }
-
-  function toggleNotes() {
-    if (chatOpen) setRead(received);
-    setPanel(notesOpen ? null : "notes");
+    setActiveWorkspace(null);
   }
 
   return (
@@ -368,97 +333,87 @@ function CallStageContent({
           <KeysDialog onClose={() => setKeysOpen(false)} onSaved={captions.retry} />
         )}
 
-        {recordPanel === "transcript" && (
+        {activeWorkspace === "transcript" && (
           <TranscriptPanel
             code={code}
             highlightSeq={transcriptSourceSeq ?? undefined}
             highlightLineId={transcriptSourceId ?? undefined}
-            onClose={() => setRecordPanel(null)}
+            onClose={closeWorkspace}
           />
         )}
 
-        {recordPanel === "decisions" && (
+        {activeWorkspace === "decisions" && (
           <DecisionPanel
             code={code}
-            onClose={() => setRecordPanel(null)}
+            onClose={closeWorkspace}
             onShowSource={(seq) => {
               setTranscriptSourceId(null);
               setTranscriptSourceSeq(seq);
-              setRecordPanel("transcript");
+              setActiveWorkspace("transcript");
             }}
           />
         )}
 
-        {recordPanel === "action-items" && (
+        {activeWorkspace === "action-items" && (
           <ActionItemPanel
             code={code}
-            onClose={() => setRecordPanel(null)}
+            onClose={closeWorkspace}
             onShowSource={(seq) => {
               setTranscriptSourceId(null);
               setTranscriptSourceSeq(seq);
-              setRecordPanel("transcript");
+              setActiveWorkspace("transcript");
             }}
           />
         )}
 
-        {recordPanel === "timeline" && (
+        {activeWorkspace === "timeline" && (
           <TimelinePanel
             code={code}
             isHost={isHost}
             revision={timelineRevision}
             recording={recording}
-            onClose={() => {
-              restoreTimelineFocusRef.current = true;
-              setRecordPanel(null);
-            }}
+            onClose={closeWorkspace}
             onShowSource={(seq) => {
               setTranscriptSourceId(null);
               setTranscriptSourceSeq(seq);
-              setRecordPanel("transcript");
+              setActiveWorkspace("transcript");
             }}
             onTimelineChanged={announceTimelineUpdate}
           />
         )}
 
-        {recordPanel === "memory" && (
+        {activeWorkspace === "memory" && (
           <MemoryPanel
             code={code}
-            onClose={() => {
-              restoreMemoryFocusRef.current = true;
-              setRecordPanel(null);
-            }}
+            onClose={closeWorkspace}
             onShowSource={(seq) => {
               setTranscriptSourceId(null);
               setTranscriptSourceSeq(seq);
-              setRecordPanel("transcript");
+              setActiveWorkspace("transcript");
             }}
           />
         )}
 
-        {recordPanel === "search" && (
+        {activeWorkspace === "search" && (
           <SearchPanel
             code={code}
-            onClose={() => {
-              restoreSearchFocusRef.current = true;
-              setRecordPanel(null);
-            }}
+            onClose={closeWorkspace}
             onShowTranscriptSource={(id) => {
               setTranscriptSourceSeq(null);
               setTranscriptSourceId(id);
-              setRecordPanel("transcript");
+              setActiveWorkspace("transcript");
             }}
             onShowNotesSource={() => {
-              setRecordPanel(null);
-              setPanel("notes");
+              setActiveWorkspace("notes");
             }}
           />
         )}
 
         {chatOpen && (
-          <ChatPanel entries={entries} onSend={sendChat} onClose={toggleChat} />
+          <ChatPanel entries={entries} onSend={sendChat} onClose={closeWorkspace} />
         )}
 
-        {panel === "door" && (
+        {activeWorkspace === "door" && (
           <WaitingPanel
             waiting={waiting}
             deciding={deciding}
@@ -467,12 +422,14 @@ function CallStageContent({
             onSetDoor={setWaitingRoom}
             locked={locked}
             onSetLocked={setRoomLocked}
-            onClose={toggleDoor}
+            onClose={closeWorkspace}
           />
         )}
 
-        {whiteboardOpen && <WhiteboardPanel onClose={toggleWhiteboard} />}
-        {notesOpen && <NotesPanel onClose={toggleNotes} />}
+        {activeWorkspace === "whiteboard" && (
+          <WhiteboardPanel onClose={closeWorkspace} />
+        )}
+        {activeWorkspace === "notes" && <NotesPanel onClose={closeWorkspace} />}
       </div>
 
       {announcement && (
@@ -498,7 +455,7 @@ function CallStageContent({
           carryOver={carryOver}
           onOpenActionItems={() => {
             setCarryOverDismissed(true);
-            setRecordPanel("action-items");
+            setActiveWorkspace("action-items");
           }}
           onRetry={retryCarryOver}
           onDismiss={() => setCarryOverDismissed(true)}
@@ -511,35 +468,16 @@ function CallStageContent({
       <CaptionsNotice
         captions={captions}
         onOpenKeys={() => setKeysOpen(true)}
-        onOpenTranscript={() => {
-          setTranscriptSourceSeq(null);
-          setTranscriptSourceId(null);
-          setRecordPanel("transcript");
-        }}
-        onOpenDecisions={() => setRecordPanel("decisions")}
-        onOpenActionItems={() => setRecordPanel("action-items")}
-        onOpenTimeline={() => setRecordPanel("timeline")}
-        onOpenMemory={() => setRecordPanel("memory")}
-        onOpenSearch={() => setRecordPanel("search")}
-        timelineEntryRef={timelineEntryRef}
-        memoryEntryRef={memoryEntryRef}
-        searchEntryRef={searchEntryRef}
       />
 
       <CallControls
         canPublish={canPublish}
-        chatOpen={chatOpen}
+        activeWorkspace={activeWorkspace}
         unread={unreadCount({ received, read, open: chatOpen })}
-        onToggleChat={toggleChat}
-        whiteboardOpen={whiteboardOpen}
-        onToggleWhiteboard={toggleWhiteboard}
-        notesOpen={notesOpen}
-        onToggleNotes={toggleNotes}
+        onToggleWorkspace={toggleWorkspace}
         recording={recording}
         isHost={isHost}
-        doorOpen={panel === "door"}
         waitingCount={waiting.length}
-        onToggleDoor={toggleDoor}
         onMuteAll={() => moderate("muteAll")}
         handRaised={handRaised}
         onToggleHand={toggleHand}

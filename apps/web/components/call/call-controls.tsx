@@ -1,6 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import {
   useLocalParticipant,
@@ -14,13 +20,18 @@ import { VideoModeControl } from "@/components/call/video-mode-control";
 import { cn } from "@/lib/cn";
 import type { LocalRecording } from "@/components/call/use-local-recording";
 
-/**
- * What each reaction is called.
- *
- * Keyed by the emoji itself rather than by position, so reordering the list
- * cannot silently relabel them. An emoji with no name is unreadable to anyone
- * using a screen reader and ambiguous to everyone else.
- */
+export type CallWorkspace =
+  | "chat"
+  | "door"
+  | "whiteboard"
+  | "notes"
+  | "transcript"
+  | "decisions"
+  | "action-items"
+  | "timeline"
+  | "memory"
+  | "search";
+
 const REACTION_LABELS: Record<Reaction, string> = {
   "\u{1F44D}": "thumbsUp",
   "\u2764\uFE0F": "heart",
@@ -30,39 +41,23 @@ const REACTION_LABELS: Record<Reaction, string> = {
   "\u{1F62E}": "wow",
 };
 
-/**
- * Whether this device can share a screen at all.
- *
- * getDisplayMedia does not exist on iOS Safari or on most Android browsers.
- * Showing a button that can only fail is worse than not showing it: viewers can
- * still see somebody else's share perfectly well.
- */
 function canShareScreen(): boolean {
   return typeof navigator !== "undefined" &&
     typeof navigator.mediaDevices?.getDisplayMedia === "function";
 }
 
 /**
- * The bar everyone reaches for.
- *
- * Mute is the most-pressed control in any meeting, so it is first and it is
- * large. Leave is last and visually separated, because pressing it by accident
- * costs more than any other button here.
+ * The call dock keeps the five decisions needed in the moment in one row.
+ * Everything else is grouped by the job it serves, without hiding live state.
  */
 export function CallControls({
   canPublish,
-  chatOpen,
+  activeWorkspace,
   unread,
-  onToggleChat,
-  whiteboardOpen,
-  onToggleWhiteboard,
-  notesOpen,
-  onToggleNotes,
+  onToggleWorkspace,
   recording,
   isHost,
-  doorOpen,
   waitingCount,
-  onToggleDoor,
   onMuteAll,
   handRaised,
   onToggleHand,
@@ -74,18 +69,12 @@ export function CallControls({
   onLeave,
 }: {
   canPublish: boolean;
-  chatOpen: boolean;
+  activeWorkspace: CallWorkspace | null;
   unread: number;
-  onToggleChat: () => void;
-  whiteboardOpen: boolean;
-  onToggleWhiteboard: () => void;
-  notesOpen: boolean;
-  onToggleNotes: () => void;
+  onToggleWorkspace: (workspace: CallWorkspace) => void;
   recording: LocalRecording;
   isHost: boolean;
-  doorOpen: boolean;
   waitingCount: number;
-  onToggleDoor: () => void;
   onMuteAll: () => void;
   handRaised: boolean;
   onToggleHand: () => void;
@@ -102,295 +91,449 @@ export function CallControls({
   const participants = useParticipants();
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled } =
     useLocalParticipant();
-
-  // Read at first render rather than at module load, so this is not evaluated
-  // during a server render where navigator does not exist.
   const [screenShareSupported] = useState(canShareScreen);
-
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState<"workspaces" | "more" | null>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
+  const workspaceTriggerRef = useRef<HTMLButtonElement>(null);
+  const moreTriggerRef = useRef<HTMLButtonElement>(null);
+  const previousWorkspaceRef = useRef<CallWorkspace | null>(activeWorkspace);
 
   const screenShareOn = Boolean(
     localParticipant.getTrackPublication(Track.Source.ScreenShare),
   );
-
-  // One share at a time in v0.1. Two at once needs a way to choose between
-  // them, and that is a layout question this release does not answer.
   const someoneElseSharing = participants.some(
     (participant) =>
       participant.identity !== localParticipant.identity &&
       participant.getTrackPublication(Track.Source.ScreenShare),
   );
+  const workspaceOpen = activeWorkspace !== null && activeWorkspace !== "door";
+  const moreLive =
+    screenShareOn || captionsOn || recording.status === "recording";
+
+  useEffect(() => {
+    if (!openMenu) return;
+
+    const firstControl = dockRef.current?.querySelector<HTMLButtonElement>(
+      `[data-call-menu="${openMenu}"] button:not(:disabled)`,
+    );
+    firstControl?.focus();
+
+    function onPointerDown(event: PointerEvent) {
+      if (dockRef.current?.contains(event.target as Node)) return;
+      setOpenMenu(null);
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      const trigger =
+        openMenu === "workspaces" ? workspaceTriggerRef.current : moreTriggerRef.current;
+      setOpenMenu(null);
+      requestAnimationFrame(() => trigger?.focus());
+    }
+
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [openMenu]);
+
+  useEffect(() => {
+    const previous = previousWorkspaceRef.current;
+    previousWorkspaceRef.current = activeWorkspace;
+    if (!previous || activeWorkspace) return;
+
+    const trigger =
+      previous === "door" ? moreTriggerRef.current : workspaceTriggerRef.current;
+    requestAnimationFrame(() => trigger?.focus());
+  }, [activeWorkspace]);
+
+  function closeMenuAndFocus(menu: "workspaces" | "more") {
+    setOpenMenu(null);
+    const trigger =
+      menu === "workspaces" ? workspaceTriggerRef.current : moreTriggerRef.current;
+    requestAnimationFrame(() => trigger?.focus());
+  }
+
+  function chooseWorkspace(workspace: CallWorkspace) {
+    onToggleWorkspace(workspace);
+    // The workspace owns initial focus (usually its Close button or primary
+    // field). Focusing the dock here would steal it one frame later.
+    setOpenMenu(null);
+  }
 
   return (
-    <div className="relative flex flex-wrap items-center justify-center gap-2 border-t border-[#2a2a2e] px-4 py-3">
-      {canPublish ? (
-        <>
-          <ControlButton
-            active={isMicrophoneEnabled}
-            onLabel={t("muteMic")}
-            offLabel={t("unmuteMic")}
+    <div
+      ref={dockRef}
+      className="relative z-40 shrink-0 border-t border-[#2a2a2e] bg-[#0a0a0b]"
+    >
+      <div
+        data-testid="call-dock"
+        className="mx-auto grid h-[4.5rem] grid-cols-5 items-stretch gap-1 px-2 py-2 sm:flex sm:h-16 sm:items-center sm:justify-center sm:gap-2 sm:px-4"
+      >
+        <MediaButton
+          kind="microphone"
+          enabled={isMicrophoneEnabled}
+          disabled={!canPublish}
+          label={isMicrophoneEnabled ? t("muteMic") : t("unmuteMic")}
+          disabledTitle={!canPublish ? t("waitingToPublish") : undefined}
+          onClick={() =>
+            localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled)
+          }
+        />
+
+        <MediaButton
+          kind="camera"
+          enabled={isCameraEnabled}
+          disabled={!canPublish}
+          label={isCameraEnabled ? t("stopCamera") : t("startCamera")}
+          disabledTitle={!canPublish ? t("waitingToPublish") : undefined}
+          onClick={() => localParticipant.setCameraEnabled(!isCameraEnabled)}
+        />
+
+        <div className="relative min-w-0">
+          <DockButton
+            ref={workspaceTriggerRef}
+            icon={<WorkspaceIcon />}
+            label={t("controls.workspaces")}
+            active={workspaceOpen || openMenu === "workspaces"}
+            badge={unread > 0 ? format.number(unread) : undefined}
+            ariaLabel={
+              unread > 0
+                ? t("controls.workspacesWithUnread", { count: unread })
+                : openMenu === "workspaces"
+                  ? t("controls.closeWorkspaces")
+                  : t("controls.openWorkspaces")
+            }
+            aria-expanded={openMenu === "workspaces"}
+            aria-controls="call-workspaces-menu"
             onClick={() =>
-              localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled)
+              setOpenMenu((current) =>
+                current === "workspaces" ? null : "workspaces",
+              )
             }
           />
 
-          <ControlButton
-            active={isCameraEnabled}
-            onLabel={t("stopCamera")}
-            offLabel={t("startCamera")}
-            onClick={() => localParticipant.setCameraEnabled(!isCameraEnabled)}
+          {openMenu === "workspaces" && (
+            <ControlPopover
+              id="call-workspaces-menu"
+              menu="workspaces"
+              title={t("controls.workspaces")}
+            >
+              <MenuSection title={t("controls.together")}>
+                <MenuAction
+                  label={t("chat.title")}
+                  active={activeWorkspace === "chat"}
+                  badge={unread > 0 ? format.number(unread) : undefined}
+                  onClick={() => chooseWorkspace("chat")}
+                />
+                <MenuAction
+                  label={t("whiteboard.title")}
+                  active={activeWorkspace === "whiteboard"}
+                  onClick={() => chooseWorkspace("whiteboard")}
+                />
+                <MenuAction
+                  label={t("notes.title")}
+                  active={activeWorkspace === "notes"}
+                  onClick={() => chooseWorkspace("notes")}
+                />
+              </MenuSection>
+
+              <MenuSection title={t("controls.after")} columns={2}>
+                <MenuAction
+                  label={t("keeping.open")}
+                  active={activeWorkspace === "transcript"}
+                  onClick={() => chooseWorkspace("transcript")}
+                />
+                <MenuAction
+                  label={t("keeping.decisions")}
+                  active={activeWorkspace === "decisions"}
+                  onClick={() => chooseWorkspace("decisions")}
+                />
+                <MenuAction
+                  label={t("keeping.actionItems")}
+                  active={activeWorkspace === "action-items"}
+                  onClick={() => chooseWorkspace("action-items")}
+                />
+                <MenuAction
+                  label={t("keeping.timeline")}
+                  active={activeWorkspace === "timeline"}
+                  onClick={() => chooseWorkspace("timeline")}
+                />
+                <MenuAction
+                  label={t("keeping.memory")}
+                  active={activeWorkspace === "memory"}
+                  onClick={() => chooseWorkspace("memory")}
+                />
+                <MenuAction
+                  label={t("keeping.search")}
+                  active={activeWorkspace === "search"}
+                  onClick={() => chooseWorkspace("search")}
+                />
+              </MenuSection>
+            </ControlPopover>
+          )}
+        </div>
+
+        <div className="relative min-w-0">
+          <DockButton
+            ref={moreTriggerRef}
+            icon={<MoreIcon />}
+            label={t("controls.more")}
+            active={openMenu === "more" || activeWorkspace === "door"}
+            live={moreLive}
+            badge={waitingCount > 0 ? format.number(waitingCount) : undefined}
+            ariaLabel={
+              waitingCount > 0
+                ? t("controls.moreWithWaiting", { count: waitingCount })
+                : openMenu === "more"
+                  ? t("controls.closeMore")
+                  : t("controls.openMore")
+            }
+            aria-expanded={openMenu === "more"}
+            aria-controls="call-more-menu"
+            onClick={() =>
+              setOpenMenu((current) => (current === "more" ? null : "more"))
+            }
           />
 
-          {screenShareSupported && (
-            <ControlButton
-              active={!screenShareOn}
-              onLabel={t("shareScreen")}
-              offLabel={t("stopSharing")}
-              // Disabled rather than hidden: the button vanishing when someone
-              // else starts sharing is more confusing than it being unavailable
-              // with a reason.
-              disabled={someoneElseSharing && !screenShareOn}
-              title={
-                someoneElseSharing && !screenShareOn
-                  ? t("someoneElseSharing")
-                  : undefined
-              }
-              onClick={() =>
-                localParticipant.setScreenShareEnabled(!screenShareOn, {
-                  // Tab audio matters for anything with sound in it, and there
-                  // is no good reason to make people ask for it separately.
-                  audio: true,
-                })
-              }
-            />
-          )}
-
-          <button
-            type="button"
-            onClick={onToggleWhiteboard}
-            aria-pressed={whiteboardOpen}
-            aria-label={whiteboardOpen ? t("whiteboard.close") : t("whiteboard.open")}
-            className={cn(
-              "h-11 rounded-md px-4 text-sm font-medium transition-colors duration-150",
-              whiteboardOpen
-                ? "bg-[#f4f4f5] text-[#0a0a0b] hover:opacity-90"
-                : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
-            )}
-          >
-            {t("whiteboard.title")}
-          </button>
-
-          <button
-            type="button"
-            onClick={onToggleNotes}
-            aria-pressed={notesOpen}
-            aria-label={notesOpen ? t("notes.close") : t("notes.open")}
-            className={cn(
-              "h-11 rounded-md px-4 text-sm font-medium transition-colors duration-150",
-              notesOpen
-                ? "bg-[#f4f4f5] text-[#0a0a0b] hover:opacity-90"
-                : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
-            )}
-          >
-            {t("notes.title")}
-          </button>
-
-          <RecordingControls recording={recording} />
-        </>
-      ) : (
-        // Someone still in the waiting room. Saying why the controls are absent
-        // beats showing buttons that silently do nothing.
-        <p className="text-sm text-[#a1a1aa]">{t("waitingToPublish")}</p>
-      )}
-
-      {/* Outside the canPublish branch too: most of what this saves is what you
-          receive, and somebody waiting to be admitted is already receiving it. */}
-      <VideoModeControl mode={videoMode} onChoose={onChooseVideoMode} />
-
-      {/* Reactions and a raised hand are how you answer without interrupting,
-          which matters most to the people who are not speaking. Both stay
-          available to someone still waiting to be admitted: with no camera and
-          no microphone, they are the only way to ask. */}
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => setPickerOpen((open) => !open)}
-          aria-expanded={pickerOpen}
-          aria-label={t("reactions.open")}
-          className={cn(
-            "h-11 rounded-md px-4 text-base leading-none transition-colors duration-150",
-            pickerOpen
-              ? "bg-[#f4f4f5] text-[#0a0a0b]"
-              : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
-          )}
-        >
-          <span aria-hidden="true">{REACTIONS[3]}</span>
-        </button>
-
-        {pickerOpen && (
-          // Above the bar rather than inside it: a row that appeared in place
-          // would shove every other control sideways the moment it opened.
-          <div
-            role="group"
-            aria-label={t("reactions.open")}
-            className="absolute bottom-full left-1/2 z-30 mb-2 flex -translate-x-1/2 gap-1 rounded-full border border-[#2a2a2e] bg-[#141416] p-1"
-          >
-            {REACTIONS.map((emoji) => (
-              <button
-                key={emoji}
-                type="button"
-                aria-label={t(`reactions.${REACTION_LABELS[emoji]}`)}
-                onClick={() => {
-                  onReact(emoji);
-                  setPickerOpen(false);
-                }}
-                className="h-11 w-11 rounded-full text-2xl leading-none transition-colors duration-150 hover:bg-[#2a2a2e]"
-              >
-                <span aria-hidden="true">{emoji}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <button
-        type="button"
-        onClick={onToggleHand}
-        aria-pressed={handRaised}
-        aria-label={handRaised ? t("hands.lower") : t("hands.raise")}
-        className={cn(
-          "h-11 rounded-md px-4 text-base leading-none transition-colors duration-150",
-          handRaised
-            ? "bg-[#f4f4f5] text-[#0a0a0b]"
-            : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
-        )}
-      >
-        <span aria-hidden="true">✋</span>
-      </button>
-
-      {/* Not behind `canPublish`: somebody still at the door has nothing to
-          transcribe, but reading what the room is saying is exactly what would
-          tell them whether it is worth waiting. */}
-      <button
-        type="button"
-        onClick={onToggleCaptions}
-        aria-pressed={captionsOn}
-        aria-label={captionsOn ? t("captions.turnOff") : t("captions.turnOn")}
-        className={cn(
-          "h-11 rounded-md px-4 text-sm font-medium leading-none transition-colors duration-150",
-          captionsOn
-            ? "bg-[#f4f4f5] text-[#0a0a0b]"
-            : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
-        )}
-      >
-        {t("captions.short")}
-      </button>
-
-      {/* Outside the canPublish branch on purpose: someone still waiting to be
-          admitted has no camera, but they can still type — and asking to be let
-          in is exactly what they need to do. */}
-      <button
-        type="button"
-        onClick={onToggleChat}
-        aria-pressed={chatOpen}
-        aria-label={
-          unread > 0
-            ? t("chat.openWithUnread", { count: unread })
-            : chatOpen
-              ? t("chat.close")
-              : t("chat.open")
-        }
-        className={cn(
-          "relative h-11 rounded-md px-4 text-sm font-medium transition-colors duration-150",
-          chatOpen
-            ? "bg-[#f4f4f5] text-[#0a0a0b] hover:opacity-90"
-            : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
-        )}
-      >
-        {t("chat.title")}
-
-        {unread > 0 && (
-          // aria-hidden because the count is already in the button's label;
-          // announcing it twice is how a screen reader turns one message into
-          // two.
-          <span
-            aria-hidden="true"
-            className="absolute -top-1 -end-1 min-w-5 rounded-full bg-[#f87171] px-1.5 py-0.5 text-xs font-medium text-[#0a0a0b] tabular-nums"
-          >
-            {/* Localised, so an Arabic interface gets Arabic-Indic digits, and
-                isolated so they do not reorder against the button label. */}
-            <bdi>{format.number(unread)}</bdi>
-          </span>
-        )}
-      </button>
-
-      {/* Disruptive and deliberate, so it says exactly what it does rather than
-          hiding behind an icon. Recoverable too — everyone can unmute
-          themselves, which is why it does not ask twice. */}
-      {isHost && (
-        <button
-          type="button"
-          onClick={onMuteAll}
-          className="h-11 rounded-md bg-[#1e1e21] px-4 text-sm font-medium text-[#f4f4f5] transition-colors duration-150 hover:bg-[#2a2a2e]"
-        >
-          {t("moderation.muteAll")}
-        </button>
-      )}
-
-      {/* Only a host can decide, so only a host is offered the decision. It sits
-          beside the chat because both are "somebody wants your attention". */}
-      {isHost && (
-        <button
-          type="button"
-          onClick={onToggleDoor}
-          aria-pressed={doorOpen}
-          aria-label={
-            waitingCount > 0
-              ? t("door.openWithWaiting", { count: waitingCount })
-              : t("door.open")
-          }
-          className={cn(
-            "relative h-11 rounded-md px-4 text-sm font-medium transition-colors duration-150",
-            doorOpen
-              ? "bg-[#f4f4f5] text-[#0a0a0b] hover:opacity-90"
-              : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
-          )}
-        >
-          {t("door.title")}
-
-          {waitingCount > 0 && (
-            // The count is already in the button's label; announcing it twice
-            // turns one person at the door into two.
-            <span
-              aria-hidden="true"
-              className="absolute -top-1 -end-1 min-w-5 rounded-full bg-[#f87171] px-1.5 py-0.5 text-xs font-medium text-[#0a0a0b] tabular-nums"
+          {openMenu === "more" && (
+            <ControlPopover
+              id="call-more-menu"
+              menu="more"
+              title={t("controls.more")}
             >
-              <bdi>{format.number(waitingCount)}</bdi>
-            </span>
-          )}
-        </button>
-      )}
+              <MenuSection title={t("controls.callSettings")}>
+                {canPublish && screenShareSupported && (
+                  <MenuAction
+                    label={screenShareOn ? t("stopSharing") : t("shareScreen")}
+                    active={screenShareOn}
+                    disabled={someoneElseSharing && !screenShareOn}
+                    title={
+                      someoneElseSharing && !screenShareOn
+                        ? t("someoneElseSharing")
+                        : undefined
+                    }
+                    onClick={() => {
+                      void localParticipant.setScreenShareEnabled(!screenShareOn, {
+                        audio: true,
+                      });
+                      closeMenuAndFocus("more");
+                    }}
+                  />
+                )}
+                {canPublish && (
+                  <RecordingControls
+                    recording={recording}
+                    onAfterAction={() => closeMenuAndFocus("more")}
+                  />
+                )}
+              </MenuSection>
 
-      <button
-        type="button"
-        onClick={() => {
-          void room.disconnect();
-          onLeave();
-        }}
-        // Separated from the rest so it is not the button next to the one you
-        // meant to press.
-        className="ms-4 h-11 rounded-md bg-[#f87171] px-5 text-sm font-medium text-[#0a0a0b] transition-opacity duration-150 hover:opacity-90"
-      >
-        {t("leave")}
-      </button>
+              <div className="border-t border-[#2a2a2e] px-3 py-3">
+                <VideoModeControl mode={videoMode} onChoose={onChooseVideoMode} />
+              </div>
+
+              <MenuSection title={t("controls.participate")} columns={2}>
+                <MenuAction
+                  label={handRaised ? t("hands.lower") : t("hands.raise")}
+                  active={handRaised}
+                  onClick={() => {
+                    onToggleHand();
+                    closeMenuAndFocus("more");
+                  }}
+                />
+                <MenuAction
+                  label={captionsOn ? t("captions.turnOff") : t("captions.turnOn")}
+                  active={captionsOn}
+                  live={captionsOn}
+                  onClick={() => {
+                    onToggleCaptions();
+                    closeMenuAndFocus("more");
+                  }}
+                />
+              </MenuSection>
+
+              <div
+                role="group"
+                aria-label={t("reactions.open")}
+                className="grid grid-cols-6 gap-1 border-t border-[#2a2a2e] px-3 py-3"
+              >
+                {REACTIONS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    aria-label={t(`reactions.${REACTION_LABELS[emoji]}`)}
+                    onClick={() => {
+                      onReact(emoji);
+                      closeMenuAndFocus("more");
+                    }}
+                    className="h-11 min-w-0 rounded-md text-xl leading-none transition-colors duration-150 hover:bg-[#2a2a2e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f5]"
+                  >
+                    <span aria-hidden="true">{emoji}</span>
+                  </button>
+                ))}
+              </div>
+
+              {isHost && (
+                <MenuSection title={t("controls.host")} columns={2}>
+                  <MenuAction
+                    label={t("door.title")}
+                    active={activeWorkspace === "door"}
+                    badge={
+                      waitingCount > 0 ? format.number(waitingCount) : undefined
+                    }
+                    onClick={() => chooseWorkspace("door")}
+                  />
+                  <MenuAction
+                    label={t("moderation.muteAll")}
+                    onClick={() => {
+                      onMuteAll();
+                      closeMenuAndFocus("more");
+                    }}
+                  />
+                </MenuSection>
+              )}
+            </ControlPopover>
+          )}
+        </div>
+
+        <DockButton
+          icon={<LeaveIcon />}
+          label={t("leave")}
+          danger
+          onClick={() => {
+            void room.disconnect();
+            onLeave();
+          }}
+        />
+      </div>
     </div>
   );
 }
 
-function RecordingControls({ recording }: { recording: LocalRecording }) {
+function ControlPopover({
+  id,
+  menu,
+  title,
+  children,
+}: {
+  id: string;
+  menu: "workspaces" | "more";
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      id={id}
+      data-call-menu={menu}
+      role="dialog"
+      aria-modal="false"
+      aria-label={title}
+      className="fixed inset-x-3 bottom-[4.75rem] z-50 max-h-[min(70dvh,36rem)] overflow-y-auto rounded-lg border border-[#2a2a2e] bg-[#141416] sm:absolute sm:inset-x-auto sm:bottom-full sm:left-1/2 sm:mb-2 sm:w-80 sm:-translate-x-1/2"
+    >
+      <p className="border-b border-[#2a2a2e] px-3 py-2 text-sm font-medium">
+        {title}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+function MenuSection({
+  title,
+  columns = 1,
+  children,
+}: {
+  title: string;
+  columns?: 1 | 2;
+  children: ReactNode;
+}) {
+  return (
+    <section className="border-t border-[#2a2a2e] px-3 py-3 first:border-t-0">
+      <h3 className="mb-2 text-xs font-medium text-[#a1a1aa]">{title}</h3>
+      <div className={cn("grid gap-1", columns === 2 && "grid-cols-2")}>
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function MenuAction({
+  label,
+  ariaLabel,
+  ariaDescribedBy,
+  active = false,
+  live = false,
+  badge,
+  disabled,
+  title,
+  onClick,
+}: {
+  label: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  active?: boolean;
+  live?: boolean;
+  badge?: string;
+  disabled?: boolean;
+  title?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
+      aria-pressed={active || undefined}
+      onClick={onClick}
+      className={cn(
+        "flex min-h-11 min-w-0 items-center gap-2 rounded-md px-3 py-2 text-start text-sm transition-colors duration-150",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f5] disabled:cursor-not-allowed disabled:opacity-50",
+        active
+          ? "bg-[#f4f4f5] text-[#0a0a0b]"
+          : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
+      )}
+    >
+      {live && (
+        <span
+          aria-hidden="true"
+          className="size-2 shrink-0 rounded-full bg-[#f87171]"
+        />
+      )}
+      <span className="min-w-0 flex-1">{label}</span>
+      {badge && (
+        <span
+          aria-hidden="true"
+          className="min-w-5 rounded-full bg-[#f87171] px-1.5 py-0.5 text-center text-xs font-medium text-[#0a0a0b] tabular-nums"
+        >
+          <bdi>{badge}</bdi>
+        </span>
+      )}
+    </button>
+  );
+}
+
+function RecordingControls({
+  recording,
+  onAfterAction,
+}: {
+  recording: LocalRecording;
+  onAfterAction: () => void;
+}) {
   const t = useTranslations("call.recording");
 
-  if (!recording.supported) return null;
+  if (!recording.supported) {
+    return (
+      <p className="rounded-md bg-[#1e1e21] px-3 py-2 text-xs leading-relaxed text-[#a1a1aa]">
+        {t("fallback")}
+      </p>
+    );
+  }
 
   const isRecording = recording.status === "recording";
   const isStopping = recording.status === "stopping";
@@ -399,71 +542,182 @@ function RecordingControls({ recording }: { recording: LocalRecording }) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={isRecording ? recording.stop : recording.start}
-        disabled={isStopping || (!isRecording && needsVideo)}
-        aria-describedby="local-recording-status"
-        aria-label={isRecording ? t("stop") : t("start")}
-        title={needsVideo ? t("needVideo") : undefined}
-        className={cn(
-          "h-11 rounded-md px-4 text-sm font-medium transition-colors duration-150",
-          "disabled:cursor-not-allowed disabled:opacity-50",
+      <MenuAction
+        label={
           isRecording
-            ? "bg-[#f87171] text-[#0a0a0b] hover:opacity-90"
-            : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
-        )}
-      >
-        {isRecording ? t("stopShort") : isStopping ? t("stoppingShort") : t("title")}
-      </button>
-
-      {canDownload && (
-        <button
-          type="button"
-          onClick={recording.download}
-          aria-label={t("download")}
-          className="h-11 rounded-md bg-[#f4f4f5] px-4 text-sm font-medium text-[#0a0a0b] transition-opacity duration-150 hover:opacity-90"
+            ? t("stopShort")
+            : isStopping
+              ? t("stoppingShort")
+              : t("title")
+        }
+        active={isRecording}
+        live={isRecording}
+        ariaLabel={isRecording ? t("stop") : t("start")}
+        ariaDescribedBy={needsVideo ? "local-recording-status" : undefined}
+        disabled={isStopping || (!isRecording && needsVideo)}
+        title={needsVideo ? t("needVideo") : undefined}
+        onClick={() => {
+          if (isRecording) recording.stop();
+          else recording.start();
+          onAfterAction();
+        }}
+      />
+      {needsVideo && (
+        <p
+          id="local-recording-status"
+          className="px-2 py-1 text-xs leading-relaxed text-[#a1a1aa]"
         >
-          {t("download")}
-        </button>
+          {t("needVideo")}
+        </p>
+      )}
+      {canDownload && (
+        <MenuAction
+          label={t("download")}
+          onClick={() => {
+            recording.download();
+            onAfterAction();
+          }}
+        />
       )}
     </>
   );
 }
 
-function ControlButton({
-  active,
-  onLabel,
-  offLabel,
-  onClick,
+function MediaButton({
+  kind,
+  enabled,
   disabled,
-  title,
+  disabledTitle,
+  label,
+  onClick,
 }: {
-  active: boolean;
-  onLabel: string;
-  offLabel: string;
+  kind: "microphone" | "camera";
+  enabled: boolean;
+  disabled: boolean;
+  disabledTitle?: string;
+  label: string;
   onClick: () => void;
-  disabled?: boolean;
-  title?: string;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <DockButton
+      icon={
+        kind === "microphone" ? (
+          <MicrophoneIcon off={!enabled} />
+        ) : (
+          <CameraIcon off={!enabled} />
+        )
+      }
+      label={label}
+      live={enabled}
+      active={!enabled}
       disabled={disabled}
-      title={title}
-      aria-pressed={!active}
+      title={disabledTitle}
+      aria-pressed={!enabled}
+      onClick={onClick}
+    />
+  );
+}
+
+function DockButton({
+  ref,
+  icon,
+  label,
+  ariaLabel,
+  active = false,
+  live = false,
+  danger = false,
+  badge,
+  ...props
+}: {
+  ref?: RefObject<HTMLButtonElement | null>;
+  icon: ReactNode;
+  label: string;
+  ariaLabel?: string;
+  active?: boolean;
+  live?: boolean;
+  danger?: boolean;
+  badge?: string;
+} & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "children">) {
+  return (
+    <button
+      ref={ref}
+      type="button"
+      aria-label={ariaLabel ?? label}
       className={cn(
-        // 44px tall, and wide enough that the label is the target rather than
-        // an icon somebody has to aim at.
-        "h-11 rounded-md px-4 text-sm font-medium transition-colors duration-150",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        active
-          ? "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]"
-          : "bg-[#f87171] text-[#0a0a0b] hover:opacity-90",
+        "relative flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 text-[0.6875rem] font-medium transition-colors duration-150 sm:h-11 sm:min-w-20 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f5] disabled:cursor-not-allowed disabled:opacity-50",
+        danger
+          ? "bg-[#f87171] text-[#0a0a0b] hover:opacity-90"
+          : active
+            ? "bg-[#f4f4f5] text-[#0a0a0b]"
+            : "bg-[#1e1e21] text-[#f4f4f5] hover:bg-[#2a2a2e]",
       )}
+      {...props}
     >
-      {active ? onLabel : offLabel}
+      <span aria-hidden="true" className="relative flex size-5 shrink-0 items-center justify-center">
+        {icon}
+        {live && (
+          <span className="absolute -end-1 -top-1 size-2 rounded-full border border-[#1e1e21] bg-[#f87171]" />
+        )}
+      </span>
+      <span className="max-w-full truncate">{label}</span>
+      {badge && (
+        <span
+          aria-hidden="true"
+          className="absolute -end-1 -top-1 min-w-5 rounded-full bg-[#f87171] px-1 py-0.5 text-xs font-medium text-[#0a0a0b] tabular-nums"
+        >
+          <bdi>{badge}</bdi>
+        </span>
+      )}
     </button>
+  );
+}
+
+function MicrophoneIcon({ off }: { off: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5">
+      <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 5.1 2.1" />
+      <path d="M17 11v1a5 5 0 0 1-8.5 3.5M5 11v1a7 7 0 0 0 12 4.9M12 19v2M9 21h6" />
+      {off && <path d="M4 4l16 16" />}
+    </svg>
+  );
+}
+
+function CameraIcon({ off }: { off: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5">
+      <rect x="3" y="6" width="13" height="12" rx="2" />
+      <path d="m16 10 5-3v10l-5-3" />
+      {off && <path d="M4 4l16 16" />}
+    </svg>
+  );
+}
+
+function WorkspaceIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
+  );
+}
+
+function MoreIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
+      <circle cx="5" cy="12" r="1.8" />
+      <circle cx="12" cy="12" r="1.8" />
+      <circle cx="19" cy="12" r="1.8" />
+    </svg>
+  );
+}
+
+function LeaveIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5">
+      <path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10" />
+    </svg>
   );
 }

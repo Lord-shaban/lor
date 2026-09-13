@@ -7,10 +7,9 @@ import { cn } from "@/lib/cn";
 /**
  * How much video to spend bandwidth on.
  *
- * In the bar rather than behind a settings menu, and on by default rather than
- * offered after something has already gone wrong. Somebody whose call is
- * breaking up is not in a position to go looking for the fix, and on mobile
- * data they often know before the connection indicator does.
+ * In the compact More surface and on by default rather than offered only after
+ * something has already gone wrong. Somebody on mobile data often knows the
+ * right mode before the connection indicator does.
  *
  * A radio group, not three toggles: the three states are exclusive, and a
  * screen reader should say "audio only, 3 of 3" rather than reading three

@@ -14,30 +14,10 @@ export function RecordingStatus({ recording }: { recording: LocalRecording }) {
   const t = useTranslations("call.recording");
   const elapsed = useElapsed(recording.startedAt);
 
-  if (!recording.supported) {
-    return (
-      <p
-        id="local-recording-status"
-        role="status"
-        className="border-b border-[#2a2a2e] bg-[#18181b] px-4 py-2 text-center text-sm text-[#d4d4d8]"
-      >
-        {t("fallback")}
-      </p>
-    );
-  }
-
-  if (recording.status === "idle") {
-    if (recording.canStart) return null;
-    return (
-      <p
-        id="local-recording-status"
-        role="status"
-        className="border-b border-[#2a2a2e] bg-[#18181b] px-4 py-2 text-center text-sm text-[#d4d4d8]"
-      >
-        {t("needVideo")}
-      </p>
-    );
-  }
+  // Capability and readiness belong beside the Record command in More. A
+  // permanent warning for an action nobody tried used to take another row
+  // from every camera-off call.
+  if (!recording.supported || recording.status === "idle") return null;
 
   const error = recording.error ? t(`error.${recording.error}`) : null;
   const warning =
