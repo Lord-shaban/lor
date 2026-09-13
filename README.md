@@ -21,7 +21,7 @@ No account. No time limit. No download.
 ---
 
 > [!NOTE]
-> **Status: Meeting memory is live.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, `v0.3`, `v0.4`, and `v0.5` have
+> **Status: Semantic search is live.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, `v0.3`, `v0.4`, `v0.5`, and `v0.6` have
 > shipped and are deployed at [lor-bay.vercel.app](https://lor-bay.vercel.app): open a
 > link, type a name, hold a real meeting with mixed Arabic/English captions, record
 > locally, work together on a shared board or note, confirm decisions against their
@@ -29,7 +29,8 @@ No account. No time limit. No download.
 > at the start of the next meeting. Retained captions also become an on-demand Timeline
 > with evidence-backed chapters, moments, and talk time — and a bounded Memory of
 > confirmed decisions, open work, vocabulary, and repeated caption labels from past
-> completed meetings.
+> completed meetings. Past evidence can also be searched on demand, with every result
+> scoped to its room and linked back to its retained source.
 > Follow the [milestones](https://github.com/Lord-shaban/lor/milestones) to track progress.
 
 ## What LOR. is
@@ -58,7 +59,7 @@ afterthought.
 | Grounded decision proposals | yes | no | paid | no |
 | Action items | yes | no | paid | no |
 | Memory across meetings | yes, bounded | no | no | no |
-| Semantic search of past meetings | not yet | no | paid | no |
+| Semantic search of past meetings | yes, room-scoped | no | paid | no |
 | Plugin API | not yet | no | yes | no |
 | Self-hostable | not yet | no | no | yes |
 | Arabic RTL interface | first-class | partial | partial | partial |
@@ -151,6 +152,21 @@ or a people directory. The current occurrence, proposals, completed tasks,
 expired or deleted captions, unscoped legacy records, and another room's data do
 not enter memory. Deleting or expiring a source removes its derived fact too.
 
+### Semantic search, bounded by evidence — `v0.6`
+
+Search record opens only when someone asks for it. It searches one room's kept,
+completed-meeting captions, host-confirmed decisions, and current shared notes;
+it never reads the live occurrence, a proposal or its source, another room,
+unscoped legacy text, or expired/deleted evidence. Each result returns to the
+original caption or notes.
+
+Exact-word search always works from the retained projection. When the operator
+configures Jina embeddings, LOR. adds semantic matches using the fixed
+1024-dimension `jina-embeddings-v3` model. Provider trouble leaves exact-word
+results available and never interrupts the call. The two-person browser suite
+covers lazy loading, English LTR, Arabic RTL phone use, source navigation,
+room isolation, fallback, and deletion/retention cleanup.
+
 ### Integrations and plugins — `v0.7`, `v1.0`
 
 Signed outgoing webhooks, calendar and note-taking integrations, task export, and a
@@ -240,6 +256,12 @@ brings their own key. That is the way to run LOR. without lending your own key
 at all. There is no setting meaning "unlimited" — an operator who does not want
 rationing sets a large number.
 
+Semantic search is optional too. Leave `LOR_EMBEDDINGS_API_KEY` empty to keep
+the room-scoped exact-word search without any embeddings request. When it is
+set, only the server sends bounded, retained evidence and the query to Jina;
+the browser never receives that key. Changing the provider or the fixed model
+dimension is a migration-and-reindex decision, not a runtime toggle.
+
 ## Architecture
 
 Media and all real-time application state travel over LiveKit. The server does short
@@ -281,7 +303,7 @@ Drizzle · Postgres.
 | `v0.3` | Action items | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.4` | Meeting timeline | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.5` | Meeting memory | **shipped** — [live](https://lor-bay.vercel.app) |
-| `v0.6` | Semantic search | planned |
+| `v0.6` | Semantic search | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.7` | Integrations | planned |
 | `v0.8` | Hardening and self-hosting | planned |
 | `v1.0` | Plugin ecosystem | planned |

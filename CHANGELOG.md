@@ -6,6 +6,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] — Semantic search
+
+Past meetings can now be searched without turning LOR. into a global meeting
+archive or making an AI provider a dependency of the call.
+
+### Added
+
+- An on-demand Search record workspace searches one room's retained evidence
+  only: completed-occurrence captions, host-confirmed decisions, and the
+  current shared-notes snapshot. Every result returns to its original caption
+  or notes source.
+- Search combines exact-word matching with optional Jina embeddings. The
+  `jina-embeddings-v3` model is fixed at 1024 dimensions; the index is bounded,
+  room-scoped, and refreshed only after someone deliberately searches.
+- A missing, rate-limited, or unavailable embeddings provider leaves exact-word
+  results available and never interrupts a call. No participant, browser, or
+  room-open event sends a historic corpus to a provider.
+- The real two-person browser suite verifies lazy loading, English LTR,
+  Arabic RTL at phone width, source navigation, room isolation, provider
+  fallback, and removal after retention expiry or deletion.
+
+### Fixed
+
+- An unreviewed decision and its source caption cannot enter the search
+  projection. Existing stale projections are removed when eligibility changes.
+- Search projections are protected by row-level security and are not readable
+  through Supabase's public Data API roles.
+
 ## [0.5.0] — Meeting memory
 
 Recurring rooms can now carry a small, evidence-backed meeting record forward
