@@ -169,7 +169,8 @@ proxied, the route forwards and returns without logging, caching, or storing any
 **No API key is ever written to the database.** See [SECURITY.md](SECURITY.md).
 
 Supported providers: Groq, Google Gemini, OpenAI, OpenRouter, Anthropic, Deepgram,
-ElevenLabs, and any OpenAI-compatible endpoint — including a local Ollama or LM Studio.
+ElevenLabs, Jina for embeddings, and any OpenAI-compatible endpoint — including a local
+Ollama or LM Studio.
 
 The meeting itself never depends on any of this. With no key and no quota, video,
 audio, screen share, chat, whiteboard, and recording all still work.
@@ -211,6 +212,9 @@ hosted demo runs the same code.
 | `LOR_HOST_COOKIE_SECRET` | yes | Secret used to sign host cookies |
 | `LOR_STT_API_KEY` | no | Operator's speech-to-text key. Omitted means users bring their own |
 | `LOR_LLM_API_KEY` | no | Operator's LLM key. Omitted means users bring their own |
+| `LOR_EMBEDDINGS_API_KEY` | no | Jina key for the on-demand, room-scoped Semantic search index. It is separate from the chat provider and stays server-only. |
+| `LOR_EMBEDDINGS_PROVIDER` | no | `jina` (the supported v0.6 provider) |
+| `LOR_EMBEDDINGS_MODEL` | no | `jina-embeddings-v3`; fixed at 1024 dimensions, so changing it requires a database migration and reindex |
 | `LOR_FREE_STT_SECONDS_PER_USER_PER_DAY` | no | Free transcription per person per day, in seconds of audio. Default 900 |
 | `LOR_FREE_STT_SECONDS_PER_ROOM_PER_DAY` | no | The same, per meeting. Default 3600 |
 | `LOR_FREE_STT_SECONDS_GLOBAL_PER_DAY` | no | Server-wide, so a runaway cannot spend the operator's key. Default 18000 |
