@@ -195,6 +195,30 @@ async function useMoreControl(
   await (await revealMoreControl(page, name, locale)).click();
 }
 
+async function ensureCaptionsOn(page: Page, locale: TestLocale = "en") {
+  const dialogName = locale === "ar" ? "المزيد" : "More";
+  await page.getByRole("button", {
+    name: locale === "ar" ? /^افتح باقي الأدوات/ : /^Open more controls/,
+  }).click();
+  const dialog = page.getByRole("dialog", { name: dialogName, exact: true });
+  await expect(dialog).toBeVisible();
+  const turnOn = dialog.getByRole("button", {
+    name: locale === "ar" ? "شغّل الكابشنز" : "Turn on captions",
+    exact: true,
+  });
+  if (await turnOn.count()) {
+    await turnOn.click();
+    return;
+  }
+  await expect(
+    dialog.getByRole("button", {
+      name: locale === "ar" ? "اقفل الكابشنز" : "Turn off captions",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+}
+
 async function expectMoreControl(
   page: Page,
   name: string,
@@ -3355,7 +3379,7 @@ test.describe("a call between two people", () => {
     // cloud replay or reopen that former local file.
     await first.reload();
     await join(first, code, "Ahmed");
-    await useMoreControl(first, "Turn on captions");
+    await ensureCaptionsOn(first);
     await openWorkspace(first, "Timeline");
     const reloadedTimeline = first.getByTestId("timeline-panel");
     const unavailablePlayer = reloadedTimeline.getByRole("button", { name: "Open local recording", exact: true });
