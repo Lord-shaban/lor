@@ -167,7 +167,9 @@ export function SearchPanel({
           {t("hint")}
         </p>
         <div id="retained-evidence-query-error" aria-live="polite" aria-atomic="true" className="mt-2">
-          {failure && <p role="alert" className="text-sm leading-relaxed text-[#fca5a5]">{t(`error.${failure}`)}</p>}
+          {failure === "query_invalid" && (
+            <p role="alert" className="text-sm leading-relaxed text-[#fca5a5]">{t(`error.${failure}`)}</p>
+          )}
         </div>
       </form>
 
@@ -179,18 +181,16 @@ export function SearchPanel({
           </div>
         )}
 
-        {!busy && failure && (
+        {!busy && failure && failure !== "query_invalid" && (
           <section className="rounded-lg border border-[#7f1d1d] bg-[#1c1012] p-4">
             <p className="text-sm leading-relaxed text-[#fecaca]">{t(`error.${failure}`)}</p>
-            {failure !== "query_invalid" && (
-              <button
-                type="button"
-                onClick={() => void submit()}
-                className="mt-3 min-h-11 rounded-md px-3 text-sm font-medium text-[#f4f4f5] underline decoration-[#a1a1aa] underline-offset-4 transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f5] motion-reduce:transition-none"
-              >
-                {t("retry")}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => void submit()}
+              className="mt-3 min-h-11 rounded-md px-3 text-sm font-medium text-[#f4f4f5] underline decoration-[#a1a1aa] underline-offset-4 transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f5] motion-reduce:transition-none"
+            >
+              {t("retry")}
+            </button>
           </section>
         )}
 
