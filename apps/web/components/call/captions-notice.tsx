@@ -28,8 +28,10 @@ export function CaptionsNotice({
   onOpenActionItems,
   onOpenTimeline,
   onOpenMemory,
+  onOpenSearch,
   timelineEntryRef,
   memoryEntryRef,
+  searchEntryRef,
 }: {
   captions: Captions;
   onOpenKeys: () => void;
@@ -38,8 +40,10 @@ export function CaptionsNotice({
   onOpenActionItems: () => void;
   onOpenTimeline: () => void;
   onOpenMemory: () => void;
+  onOpenSearch: () => void;
   timelineEntryRef: RefObject<HTMLButtonElement | null>;
   memoryEntryRef: RefObject<HTMLButtonElement | null>;
+  searchEntryRef: RefObject<HTMLButtonElement | null>;
 }) {
   const t = useTranslations("call.captions");
   const keys = useTranslations("call.keys");
@@ -116,6 +120,15 @@ export function CaptionsNotice({
         className="rounded-md px-2 py-0.5 font-medium text-[#a1a1aa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:text-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
       >
         {keeping("memory")}
+      </button>
+
+      <button
+        type="button"
+        ref={searchEntryRef}
+        onClick={onOpenSearch}
+        className="rounded-md px-2 py-0.5 font-medium text-[#a1a1aa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:text-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
+      >
+        {keeping("search")}
       </button>
 
       <button

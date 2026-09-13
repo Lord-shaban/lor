@@ -62,6 +62,7 @@ export async function GET(
   await sweepTranscript(room.id, keptSince(new Date(), days));
   const lines = await db
     .select({
+      id: transcriptLines.id,
       speaker: transcriptLines.speakerName,
       text: transcriptLines.text,
       seq: transcriptLines.seq,
