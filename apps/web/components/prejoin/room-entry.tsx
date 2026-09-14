@@ -215,6 +215,7 @@ export function RoomEntry({
     return (
       <CallRoom
         code={code}
+        inviteUrl={inviteUrl}
         connection={connection}
         details={details}
         onLeave={() => {

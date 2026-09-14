@@ -146,6 +146,14 @@
   },
   "call": {
     "aloneInRoom": "You are the only one here. Send the link to someone.",
+    "roomHeader": {
+      "ariaLabel": "Meeting room",
+      "label": "Meeting",
+      "participants": "{count, plural, =0 {No one here} one {# participant} other {# participants}}",
+      "copyInvite": "Copy invite",
+      "inviteCopied": "Invite copied",
+      "copyInviteFailed": "Could not copy the invite. Try again."
+    },
     "youLabel": "<n>{name}</n> (you)",
     "muted": "Microphone off",
     "pin": "Pin",

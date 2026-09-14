@@ -39,6 +39,7 @@ import { useCarryOver } from "@/components/call/use-carry-over";
 import { useVideoMode } from "@/components/call/use-video-mode";
 import { useLocalRecording } from "@/components/call/use-local-recording";
 import { RecordingNotice, RecordingStatus } from "@/components/call/recording-notice";
+import { RoomHeader } from "@/components/call/room-header";
 import { YjsRoomLifecycle } from "@/components/call/use-yjs-room";
 import { unreadCount } from "@/lib/chat-log";
 import type { JoinDetails } from "@/components/prejoin/prejoin";
@@ -85,12 +86,15 @@ export interface Connection {
  */
 export function CallRoom({
   code,
+  inviteUrl,
   connection,
   details,
   onLeave,
 }: {
   /** The public room code, which the host's door routes are addressed by. */
   code: string;
+  /** The canonical, locale-aware link somebody can send to a guest. */
+  inviteUrl: string;
   connection: Connection;
   details: JoinDetails;
   onLeave: () => void;
@@ -151,6 +155,7 @@ export function CallRoom({
         className="flex min-h-0 flex-1 flex-col"
       >
         <SharingBanner />
+        <RoomHeader code={code} inviteUrl={inviteUrl} />
 
         <CallStage
           code={code}
