@@ -1,6 +1,6 @@
 # LOR. public landing brief
 
-Status: approved content and media contract for issue [#213](https://github.com/Lord-shaban/lor/issues/213).
+Status: approved content and media contract for issue [#213](https://github.com/Lord-shaban/lor/issues/213), extended for the showcase pass in [#234](https://github.com/Lord-shaban/lor/issues/234).
 This brief is the source for the public project page; it does not change the product
 launcher at `/[locale]`.
 
@@ -32,6 +32,20 @@ The page uses headings in order (`h1`, then one `h2` per section), sentence case
 reading order that remains complete when CSS, media, or motion is unavailable. There is
 no testimonial, social-proof count, partner logo, pricing claim, integration claim, or
 unverified AI promise.
+
+## Showcase extension
+
+The polished project showcase keeps the approved first-viewport contract and expands the
+story in this order: **hero → why LOR. → one simple path → shipped capabilities →
+capability comparison → privacy and control → open source and quick start → FAQ →
+final actions**. The comparison uses a generic “conventional room” baseline rather than
+naming competitors; every LOR. cell maps to a shipped README or release capability.
+
+The quick-start panel mirrors the repository's current `#quick-start` commands and has a
+copy button plus the visible code block as its fallback. FAQ answers are native
+`details` disclosures so they remain keyboard and screen-reader accessible without
+client-side navigation. The existing synthetic preview remains the only media until a
+privacy-safe contribution satisfies [#220](https://github.com/Lord-shaban/lor/issues/220).
 
 ## Approved copy vocabulary
 

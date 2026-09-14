@@ -16,6 +16,10 @@ const copy = {
     source: "شوف الكود",
     visual: "اقرأ وصف الصورة",
     alt: "عرض اصطناعي لاجتماع LOR.‎ بيبيّن بلاطتين للمكالمة جنب transcript محفوظ وقرار راجعه المضيف.",
+    overview: "مكالمة أهدى، وتسليم أوضح.",
+    compare: "المكالمة بداية، مش أرشيف.",
+    faq: "أسئلة تستاهل إجابة.",
+    copy: "انسخ الأوامر",
   },
   en: {
     path: "/en/about",
@@ -25,6 +29,10 @@ const copy = {
     source: "View the source",
     visual: "Read the visual description",
     alt: "A synthetic LOR. meeting view shows two call tiles beside a retained transcript and a host-reviewed decision.",
+    overview: "A calmer meeting, a stronger handoff.",
+    compare: "A call is the beginning, not the archive.",
+    faq: "Questions worth answering.",
+    copy: "Copy commands",
   },
 } as const;
 
@@ -54,11 +62,22 @@ test.describe("public project landing", () => {
         await expect(preview).toHaveAttribute("src", /product-preview/);
         await expect(page.getByText(text.visual, { exact: true })).toBeVisible();
 
-        await expect(page.locator("main h2")).toHaveCount(4);
-        await expect(page.locator("#story")).toBeVisible();
-        await expect(page.locator("#open-source")).toBeVisible();
-        await expect(page.locator('a[href="#story"]')).toHaveCount(1);
+        await expect(page.getByRole("heading", { level: 2, name: text.overview })).toBeVisible();
+        await expect(page.getByRole("heading", { level: 2, name: text.compare })).toBeVisible();
+        await expect(page.getByRole("heading", { level: 2, name: text.faq })).toBeVisible();
+        for (const id of ["overview", "story", "features", "compare", "open-source", "faq"]) {
+          await expect(page.locator(`#${id}`)).toBeVisible();
+        }
+        await expect(page.locator("#compare table")).toHaveCount(1);
+        await expect(page.locator("#compare thead th")).toHaveCount(3);
+        await expect(page.locator("#compare tbody tr")).toHaveCount(7);
+        await expect(page.getByRole("button", { name: text.copy, exact: true })).toBeVisible();
+        await expect(page.locator("#faq details")).toHaveCount(5);
+        await expect(page.locator('a[href="#overview"]')).toHaveCount(1);
+        await expect(page.locator('a[href="#features"]')).toHaveCount(1);
+        await expect(page.locator('a[href="#compare"]')).toHaveCount(2);
         await expect(page.locator("a[href='#open-source']")).toHaveCount(1);
+        await expect(page.locator('a[href="#faq"]')).toHaveCount(1);
         expect(
           await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
         ).toBe(true);
@@ -69,6 +88,11 @@ test.describe("public project landing", () => {
         await page.keyboard.press("Enter");
         await expect(mediaDetails).toHaveAttribute("open", "");
         await expect(mediaDetails.getByText(text.alt, { exact: true })).toBeVisible();
+
+        const faq = page.locator("#faq details").first();
+        await faq.locator("summary").focus();
+        await page.keyboard.press("Enter");
+        await expect(faq).toHaveAttribute("open", "");
       }
     });
   }
