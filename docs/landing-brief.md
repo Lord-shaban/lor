@@ -13,7 +13,8 @@ real, and choose one of two honest next steps:
 - **Try the live app** at [lor-bay.vercel.app](https://lor-bay.vercel.app).
 - **View the source** at [github.com/Lord-shaban/lor](https://github.com/Lord-shaban/lor).
 
-The public route is `/en/about` and `/ar/about`. The default locale may also be reached
+The public routes are `/about` for the Arabic default locale and `/en/about` for English
+(`/ar/about` remains an explicit locale alias). The default locale may also be reached
 through the locale-aware link from the product home; the product route remains the
 shortest path for starting or joining a meeting.
 

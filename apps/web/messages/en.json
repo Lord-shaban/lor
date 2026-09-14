@@ -19,6 +19,7 @@
     },
     "links": {
       "menu": "Help and source",
+      "about": "About LOR.",
       "source": "Source",
       "privacy": "Privacy and security",
       "help": "Help",
@@ -27,6 +28,98 @@
       "license": "AGPL-3.0"
     },
     "roadmapHeading": "Release roadmap"
+  },
+  "landing": {
+    "metadata": {
+      "title": "LOR. — Open-source video meetings that remember",
+      "description": "Meet, collaborate, and keep the useful record. LOR. is an Arabic-first open-source video meeting product."
+    },
+    "nav": {
+      "label": "Landing navigation",
+      "story": "How it works",
+      "openSource": "Open source",
+      "try": "Try the app"
+    },
+    "hero": {
+      "kicker": "Open source · Arabic-first",
+      "title": "Meetings that remember what matters.",
+      "description": "<brand>LOR.</brand> is an open-source video meeting room for conversations that should leave something useful behind.",
+      "liveCta": "Try the live app",
+      "sourceCta": "View the source",
+      "trustLabel": "Good to know",
+      "trust": {
+        "noAccount": "No account",
+        "local": "Local recording stays in your tab",
+        "ai": "The call works without <term>AI</term>"
+      },
+      "mediaAlt": "A synthetic LOR. meeting view shows two call tiles beside a retained transcript and a host-reviewed decision.",
+      "mediaCaption": "A product surface, not a promise: the call stays live while its useful record stays scoped.",
+      "mediaTextLabel": "Read the visual description"
+    },
+    "story": {
+      "title": "From a link to a useful record.",
+      "intro": "LOR. keeps the meeting itself simple, then makes the result easier to return to.",
+      "steps": {
+        "join": {
+          "title": "Join without ceremony",
+          "body": "Open a link, type your name, and enter. No account or download stands between the invitation and the call."
+        },
+        "together": {
+          "title": "Work in the same room",
+          "body": "Share a board, notes, chat, captions, and local recording while the conversation is happening."
+        },
+        "evidence": {
+          "title": "Keep the thread",
+          "body": "Decisions, commitments, <term>Timeline</term>, <term>Memory</term>, and search stay bounded by retained source evidence."
+        }
+      }
+    },
+    "proof": {
+      "title": "Proof over promises.",
+      "intro": "The shipped product is deliberately bounded. Each capability has a clear place and a clear edge.",
+      "releases": "See shipped releases",
+      "rows": {
+        "captions": {
+          "label": "Mixed-language captions",
+          "body": "Arabic and English can stay in the scripts people actually use, with an evaluation set behind the claim."
+        },
+        "collaboration": {
+          "label": "Live collaboration",
+          "body": "The shared board, notes, chat, and local recording stay in the call without an AI key."
+        },
+        "decisions": {
+          "label": "Evidence-backed records",
+          "body": "Decisions and clear commitments keep their exact retained source instead of becoming loose summaries."
+        },
+        "search": {
+          "label": "Room-scoped search",
+          "body": "Past evidence can be found on demand, never mixed with another room or the live conversation."
+        }
+      }
+    },
+    "openSource": {
+      "title": "Built in public. Easy to pick up.",
+      "body": "LOR. is AGPL-3.0. Read the map, run the app, choose a focused issue, and contribute a small change anyone can reproduce.",
+      "source": "View the repository",
+      "sourceHint": "Code, issues, and discussions",
+      "contribute": "Read CONTRIBUTING.md",
+      "contributeHint": "Workflow and checks before your first PR",
+      "roadmap": "Follow the roadmap",
+      "roadmapHint": "Shipped releases and planned boundaries"
+    },
+    "final": {
+      "title": "Start with a real meeting.",
+      "body": "Try the hosted app, then open the source when you want to see how it works or help shape what comes next.",
+      "liveCta": "Open the live app",
+      "sourceCta": "Open GitHub"
+    },
+    "footer": {
+      "name": "<brand>LOR.</brand> — Live Open Rooms",
+      "label": "Footer links",
+      "setup": "Setup guide",
+      "security": "Security",
+      "product": "Start a meeting"
+    }
   },
   "releases": {
     "v0_0": "Foundation",
