@@ -1,32 +1,14 @@
 import { use } from "react";
 import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RoomLauncher } from "@/components/room-launcher";
-import { LiveDot } from "@/components/ui/live-dot";
 
 const REPO = "https://github.com/Lord-shaban/lor";
-
-/** The most recent shipped release. Everything after it is planned. */
-const LATEST_RELEASE = "v0.6";
-
-/** Message key per release, so the names translate with everything else. */
-const RELEASES = [
-  { tag: "v0.0", key: "v0_0" },
-  { tag: "v0.1", key: "v0_1" },
-  { tag: "v0.1.5", key: "v0_1_5" },
-  { tag: "v0.1.8", key: "v0_1_8" },
-  { tag: "v0.2", key: "v0_2" },
-  { tag: "v0.3", key: "v0_3" },
-  { tag: "v0.4", key: "v0_4" },
-  { tag: "v0.5", key: "v0_5" },
-  { tag: "v0.6", key: "v0_6" },
-  { tag: "v0.7", key: "v0_7" },
-  { tag: "v0.8", key: "v0_8" },
-  { tag: "v0.9", key: "v0_9" },
-  { tag: "v1.0", key: "v1_0" },
-] as const;
+const MENU_LINK_CLASS =
+  "flex min-h-11 items-center rounded-sm px-3 py-2 text-sm text-foreground transition-colors duration-150 hover:bg-surface-strong focus-visible:bg-surface-strong";
 
 export default function Home({ params }: PageProps<"/[locale]">) {
   // params is a promise in Next 16. This stays a sync Server Component so
@@ -35,35 +17,72 @@ export default function Home({ params }: PageProps<"/[locale]">) {
   setRequestLocale(locale);
 
   const t = useTranslations("home");
-  const releases = useTranslations("releases");
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="flex items-center justify-end gap-2 px-6 py-4">
-        <ThemeToggle />
-        <LocaleSwitcher />
+      <header className="flex items-center justify-between gap-4 px-6 py-4 sm:px-8">
+        <Link
+          href="/"
+          aria-label="LOR."
+          className="text-lg font-semibold tracking-tight"
+        >
+          {/* The dot is part of the wordmark and the live indicator, not
+              punctuation. <bdi> keeps it on the right in Arabic. */}
+          <bdi>
+            LOR<span className="text-live">.</span>
+          </bdi>
+        </Link>
+
+        <div className="flex items-center gap-3 sm:gap-4">
+          <details className="group relative">
+            <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-sm px-2 text-sm text-muted transition-colors duration-150 hover:bg-surface-strong hover:text-foreground">
+              {t("links.menu")}
+              <ChevronDownIcon />
+            </summary>
+
+            <nav
+              aria-label={t("links.menu")}
+              className="absolute end-0 top-[calc(100%+0.5rem)] z-10 grid min-w-52 max-w-[calc(100vw-3rem)] overflow-hidden rounded-md border border-border bg-surface p-1"
+            >
+              <a className={MENU_LINK_CLASS} href={REPO}>
+                {t("links.source")}
+              </a>
+              <a className={MENU_LINK_CLASS} href={`${REPO}/blob/main/SECURITY.md`}>
+                {t("links.privacy")}
+              </a>
+              <a className={MENU_LINK_CLASS} href={`${REPO}/issues`}>
+                {t("links.help")}
+              </a>
+              <a className={MENU_LINK_CLASS} href={`${REPO}/blob/main/CONTRIBUTING.md`}>
+                {t("links.contributing")}
+              </a>
+              <a className={MENU_LINK_CLASS} href={`${REPO}/milestones`}>
+                {t("links.roadmap")}
+              </a>
+              <a className={MENU_LINK_CLASS} href={`${REPO}/blob/main/LICENSE`}>
+                <span dir="ltr">{t("links.license")}</span>
+              </a>
+            </nav>
+          </details>
+          <ThemeToggle />
+          <LocaleSwitcher />
+        </div>
       </header>
 
-      <main className="flex flex-1 items-center justify-center px-6 pb-20">
-        <div className="w-full max-w-xl">
-          {/* The dot is part of the wordmark, not punctuation: it is the live
-              indicator, so it takes the red the logo uses. <bdi> keeps it on
-              the right of the letters when the page direction is RTL. */}
-          <h1 className="text-2xl font-semibold tracking-tight">
-            <bdi>
-              LOR<span className="text-live">.</span>
-            </bdi>
+      <main className="flex flex-1 justify-center px-6 py-12 sm:px-8 sm:py-16">
+        <div className="w-full max-w-2xl">
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+            {t("title")}
           </h1>
 
-          <p className="mt-4 max-w-prose text-base text-balance">
+          <p className="mt-4 max-w-xl text-base text-balance">
             {t("tagline")}
           </p>
 
-          {/* The line that says what this product is for better than a feature
-              list would. dir="auto" picks the paragraph direction from the first
-              strong character, and <bdi> isolates each Latin run so the
-              surrounding Arabic does not scramble its word order. */}
-          <p dir="auto" className="mt-3 max-w-prose text-base text-muted">
+          {/* This mixed-language example stays secondary and measured. The
+              explicit direction plus isolated Latin runs preserve its reading
+              order without making it compete with the entry surface. */}
+          <p dir="auto" className="mt-3 max-w-md text-sm leading-6 text-muted">
             {t.rich("codeSwitchExample", {
               term: (chunks) => (
                 <bdi className="font-medium text-foreground">{chunks}</bdi>
@@ -73,68 +92,35 @@ export default function Home({ params }: PageProps<"/[locale]">) {
 
           <RoomLauncher />
 
-          <section className="mt-12 rounded-lg border border-border bg-surface p-6">
-            <h2 className="sr-only">{t("roadmapHeading")}</h2>
-
-            <ol className="space-y-2 text-sm">
-              {RELEASES.map((release) => {
-                const isLatest = release.tag === LATEST_RELEASE;
-                return (
-                  <li
-                    key={release.tag}
-                    className={
-                      isLatest
-                        ? "flex items-center gap-4"
-                        : "flex items-center gap-4 text-muted"
-                    }
-                  >
-                    {/* Monospace here is not texture: these are values that
-                        should align in a column. It is scoped to the tag
-                        because no monospace face covers Arabic. */}
-                    <span
-                      dir="ltr"
-                      className="w-14 shrink-0 font-mono text-xs tabular-nums"
-                    >
-                      {release.tag}
-                    </span>
-                    <span>{releases(release.key)}</span>
-                    {isLatest && (
-                      <LiveDot
-                        label={t("latest")}
-                        className="ms-auto text-xs"
-                      />
-                    )}
-                  </li>
-                );
+          <ul
+            aria-label={t("trust.label")}
+            className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted"
+          >
+            <li>{t("trust.noAccount")}</li>
+            <li>{t("trust.noDownload")}</li>
+            <li>
+              {t.rich("trust.worksWithoutAi", {
+                term: (chunks) => <bdi>{chunks}</bdi>,
               })}
-            </ol>
-          </section>
-
-          <nav className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-            <a
-              className="underline underline-offset-4 hover:text-muted"
-              href={REPO}
-            >
-              {t("links.source")}
-            </a>
-            <a
-              className="underline underline-offset-4 hover:text-muted"
-              href={`${REPO}/milestones`}
-            >
-              {t("links.roadmap")}
-            </a>
-            <a
-              className="underline underline-offset-4 hover:text-muted"
-              href={`${REPO}/blob/main/CONTRIBUTING.md`}
-            >
-              {t("links.contributing")}
-            </a>
-            <span dir="ltr" className="text-muted">
-              {t("links.license")}
-            </span>
-          </nav>
+            </li>
+          </ul>
         </div>
       </main>
     </div>
+  );
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      className="h-4 w-4 shrink-0 transition-transform duration-150 group-open:rotate-180"
+    >
+      <path d="m5.5 7.75 4.5 4.5 4.5-4.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

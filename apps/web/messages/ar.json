@@ -8,11 +8,20 @@
     "body": "الصفحة دي محتاجة نت. أول ما ترجع أونلاين، افتح لينك الميتنج تاني."
   },
   "home": {
+    "title": "ابدأ أو ادخل اجتماع",
     "tagline": "اجتماعات فيديو مفتوحة المصدر بتفتكر. من غير حساب، من غير حد زمني، من غير تحميل.",
     "codeSwitchExample": "وبيفهم لما تقول «عملت الـ <term>deploy</term> على الـ <term>server</term>».",
-    "latest": "الأحدث",
+    "trust": {
+      "label": "معلومات سريعة",
+      "noAccount": "من غير حساب",
+      "noDownload": "من غير تحميل",
+      "worksWithoutAi": "المكالمة شغالة من غير <term>AI</term>"
+    },
     "links": {
+      "menu": "المساعدة والكود",
       "source": "الكود",
+      "privacy": "الخصوصية والأمان",
+      "help": "المساعدة",
       "roadmap": "خريطة الطريق",
       "contributing": "المساهمة",
       "license": "AGPL-3.0"
@@ -45,11 +54,17 @@
     "current": "المظهر: {theme}"
   },
   "launcher": {
+    "title": "دخول الاجتماع",
     "start": "ابدأ اجتماع",
     "starting": "بيجهّز…",
+    "newMeeting": "اجتماع جديد",
+    "newMeetingHint": "اعمل روم وابعت اللينك.",
     "join": "ادخل",
-    "joinLabel": "أو ادخل باجتماع موجود",
+    "joinHeading": "ادخل اجتماع",
+    "joinHint": "استخدم كود الروم أو الصق لينك الدعوة.",
+    "joinLabel": "كود الروم أو لينك الدعوة",
     "joinPlaceholder": "mza-krfq-tqn",
+    "or": "أو",
     "errors": {
       "badCode": "الكود ده مش مظبوط. اتأكد منه أو الصق اللينك كامل.",
       "createFailed": "مقدرناش نعمل الاجتماع. جرّب تاني.",
