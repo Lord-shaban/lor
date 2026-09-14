@@ -44,6 +44,9 @@ export default function Home({ params }: PageProps<"/[locale]">) {
               aria-label={t("links.menu")}
               className="absolute end-0 top-[calc(100%+0.5rem)] z-10 grid min-w-52 max-w-[calc(100vw-3rem)] overflow-hidden rounded-md border border-border bg-surface p-1"
             >
+              <Link className={MENU_LINK_CLASS} href="/about">
+                {t("links.about")}
+              </Link>
               <a className={MENU_LINK_CLASS} href={REPO}>
                 {t("links.source")}
               </a>
