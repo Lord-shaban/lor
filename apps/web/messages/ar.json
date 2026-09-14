@@ -146,6 +146,14 @@
   },
   "call": {
     "aloneInRoom": "لسه لوحدك. ابعت اللينك لحد عشان يدخل.",
+    "roomHeader": {
+      "ariaLabel": "روم الميتنج",
+      "label": "الميتنج",
+      "participants": "{count, plural, =0 {مفيش حد هنا} one {شخص واحد هنا} two {شخصين هنا} few {# أشخاص هنا} many {# شخص هنا} other {# شخص هنا}}",
+      "copyInvite": "انسخ الدعوة",
+      "inviteCopied": "اتنسخت الدعوة",
+      "copyInviteFailed": "مقدرناش ننسخ الدعوة. جرّب تاني."
+    },
     "youLabel": "<n>{name}</n> (انت)",
     "muted": "المايك مقفول",
     "pin": "تثبيت",

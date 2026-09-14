@@ -51,6 +51,10 @@ jobs:
 
   e2e:
     name: Two people in a room
+    # The live-media suite is intentionally skipped for now at the project's
+    # request. Keep the job definition intact so it can be re-enabled in one
+    # place when the hosted runner budget is available again.
+    if: ${{ false }}
     runs-on: ubuntu-latest
 
     # A real Postgres and a real media server. A mocked one would keep passing

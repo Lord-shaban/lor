@@ -362,6 +362,84 @@ test.describe("a call between two people", () => {
     expect((await captionsNotice.boundingBox())?.height).toBeLessThanOrEqual(60);
   });
 
+  test("keeps room identity, invite access, and participant count in the call header", async () => {
+    const first = await alice.newPage();
+    const second = await bob.newPage();
+    const code = await createRoom(first);
+
+    await join(first, code, "Ahmed");
+    const header = first.getByTestId("room-header");
+    await expect(header).toBeVisible();
+    await expect(header.getByText(code, { exact: true })).toBeVisible();
+    await expect(header.getByRole("status")).toHaveText("1 participant");
+
+    const copy = header.getByRole("button", { name: "Copy invite", exact: true });
+    await expect(copy).toBeVisible();
+    const copyBox = await copy.boundingBox();
+    expect(copyBox?.width).toBeGreaterThanOrEqual(44);
+    expect(copyBox?.height).toBeGreaterThanOrEqual(44);
+
+    // Keyboard activation uses the same action as a touch click and confirms
+    // the browser accepted the canonical invite URL.
+    await first.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await copy.focus();
+    await first.keyboard.press("Enter");
+    await expect(
+      header.getByRole("button", { name: "Invite copied", exact: true }),
+    ).toBeVisible();
+
+    await join(second, code, "سارة");
+    await expect(header.getByRole("status")).toHaveText("2 participants");
+
+    for (const [width, height] of [
+      [390, 844],
+      [768, 900],
+      [1024, 900],
+      [1440, 900],
+    ] as const) {
+      await first.setViewportSize({ width, height });
+      expect((await header.boundingBox())?.height).toBeLessThanOrEqual(48);
+      expect(
+        await first.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+    }
+  });
+
+  test("keeps the room header usable in Arabic RTL on a phone", async () => {
+    const page = await alice.newPage();
+    await page.setViewportSize({ width: 390, height: 844 });
+    const code = await createRoom(page);
+
+    await join(page, code, "أحمد", "ar");
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+
+    const header = page.getByTestId("room-header");
+    await expect(header).toBeVisible();
+    await expect(header.getByText(code, { exact: true })).toBeVisible();
+    await expect(header.getByRole("status")).toHaveText("شخص واحد هنا");
+
+    const copy = header.getByRole("button", { name: "انسخ الدعوة", exact: true });
+    await expect(copy).toBeVisible();
+    const copyBox = await copy.boundingBox();
+    expect(copyBox?.width).toBeGreaterThanOrEqual(44);
+    expect(copyBox?.height).toBeGreaterThanOrEqual(44);
+    expect((await header.boundingBox())?.height).toBeLessThanOrEqual(48);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await copy.focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      header.getByRole("button", { name: "اتنسخت الدعوة", exact: true }),
+    ).toBeVisible();
+  });
+
   test("a second person joining does not evict the first", async () => {
     // The identity is derived from a per-tab secret. If that ever collapses to
     // one value, LiveKit disconnects the earlier participant and the symptom is
