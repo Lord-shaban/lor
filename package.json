@@ -28,6 +28,7 @@
     "db:migrate": "npm run db:migrate --workspace @lor/db",
     "db:studio": "npm run db:studio --workspace @lor/db",
     "test": "npm run test --workspaces --if-present",
+    "docs:check": "node scripts/check-doc-links.mjs",
     "test:e2e": "npm run test:e2e --workspace web",
     "eval:captions": "npm run eval --workspace @lor/captions-eval"
   },
