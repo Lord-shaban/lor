@@ -75,6 +75,11 @@ clear actions. The release is planned, not shipped.
 
 ### Landing-page brief
 
+The implementation contract is kept in the bilingual [landing brief](landing-brief.md)
+and [Arabic landing brief](landing-brief.ar.md). It records the approved section order,
+claim ledger, canonical destinations, media ownership, privacy review, and accessibility
+floor so the public page can be implemented without inventing product claims.
+
 The landing page should lead with the concrete promise, then let the visitor verify it:
 
 1. A concise hero and two distinct actions: **try the live app** and **view the source**.
