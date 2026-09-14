@@ -89,6 +89,26 @@ export function Prejoin({
     return preview.devices.filter((device) => device.kind === kind);
   }
 
+  const selectedDeviceNames = [
+    videoDeviceId &&
+      devicesOfKind("videoinput").find((device) => device.deviceId === videoDeviceId)
+        ?.label,
+    audioDeviceId &&
+      devicesOfKind("audioinput").find((device) => device.deviceId === audioDeviceId)
+        ?.label,
+    speakerDeviceId &&
+      devicesOfKind("audiooutput").find((device) => device.deviceId === speakerDeviceId)
+        ?.label,
+  ].filter((label): label is string => Boolean(label));
+
+  // A saved id can outlive a disconnected headset. Do not print that opaque id;
+  // show a useful, honest summary until the device is connected again.
+  const deviceSummary =
+    selectedDeviceNames[0] ??
+    (videoDeviceId || audioDeviceId || speakerDeviceId
+      ? t("deviceSettingsSaved")
+      : t("deviceSettingsDefault"));
+
   /** A short tone through the chosen output, so "which speaker" is answerable. */
   async function testSpeaker() {
     let context: AudioContext | undefined;
@@ -256,54 +276,78 @@ export function Prejoin({
           />
         </div>
 
-        <DeviceSelect
-          id={`${fieldId}-mic`}
-          label={t("microphone")}
-          devices={devicesOfKind("audioinput")}
-          value={audioDeviceId}
-          empty={t("noMicrophone")}
-          onChange={(id) => {
-            setAudioDeviceId(id);
-            persist({ audioDeviceId: id });
-          }}
-        />
+        <details
+          data-testid="device-settings"
+          className="group rounded-md border border-border bg-surface/40"
+        >
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm select-none">
+            <DeviceSettingsIcon />
+            <span className="min-w-0 flex-1 truncate font-medium">
+              {t("deviceSettings")}
+            </span>
+            <span
+              dir="auto"
+              title={deviceSummary}
+              className="max-w-[7rem] shrink truncate text-end text-xs text-muted sm:max-w-[11rem]"
+            >
+              {deviceSummary}
+            </span>
+            <DisclosureIcon />
+          </summary>
 
-        <DeviceSelect
-          id={`${fieldId}-camera`}
-          label={t("camera")}
-          devices={devicesOfKind("videoinput")}
-          value={videoDeviceId}
-          empty={t("noCamera")}
-          onChange={(id) => {
-            setVideoDeviceId(id);
-            persist({ videoDeviceId: id });
-          }}
-        />
+          <div className="grid gap-4 border-t border-border px-3 pb-3 pt-4">
+            <p className="text-xs leading-5 text-muted">{t("deviceSettingsHint")}</p>
 
-        {devicesOfKind("audiooutput").length > 0 && (
-          <div>
             <DeviceSelect
-              id={`${fieldId}-speaker`}
-              label={t("speaker")}
-              devices={devicesOfKind("audiooutput")}
-              value={speakerDeviceId}
-              empty={t("noSpeaker")}
+              id={`${fieldId}-mic`}
+              label={t("microphone")}
+              devices={devicesOfKind("audioinput")}
+              value={audioDeviceId}
+              empty={t("noMicrophone")}
               onChange={(id) => {
-                setSpeakerDeviceId(id);
-                persist({ speakerDeviceId: id });
+                setAudioDeviceId(id);
+                persist({ audioDeviceId: id });
               }}
             />
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="mt-2"
-              onClick={testSpeaker}
-            >
-              {t("testSpeaker")}
-            </Button>
+
+            <DeviceSelect
+              id={`${fieldId}-camera`}
+              label={t("camera")}
+              devices={devicesOfKind("videoinput")}
+              value={videoDeviceId}
+              empty={t("noCamera")}
+              onChange={(id) => {
+                setVideoDeviceId(id);
+                persist({ videoDeviceId: id });
+              }}
+            />
+
+            {devicesOfKind("audiooutput").length > 0 && (
+              <div>
+                <DeviceSelect
+                  id={`${fieldId}-speaker`}
+                  label={t("speaker")}
+                  devices={devicesOfKind("audiooutput")}
+                  value={speakerDeviceId}
+                  empty={t("noSpeaker")}
+                  onChange={(id) => {
+                    setSpeakerDeviceId(id);
+                    persist({ speakerDeviceId: id });
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="md"
+                  className="mt-2 px-3"
+                  onClick={testSpeaker}
+                >
+                  {t("testSpeaker")}
+                </Button>
+              </div>
+            )}
           </div>
-        )}
+        </details>
 
         <Button type="submit" size="lg" disabled={!canJoin} className="mt-auto">
           {joining ? t("joining") : t("join")}
@@ -316,6 +360,39 @@ export function Prejoin({
         )}
       </div>
     </form>
+  );
+}
+
+function DeviceSettingsIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      className="h-4 w-4 shrink-0 text-muted"
+    >
+      <path d="M3.5 6.25h13M3.5 10h13M3.5 13.75h13" strokeLinecap="round" />
+      <circle cx="7" cy="6.25" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="12.5" cy="10" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="8.75" cy="13.75" r="1.2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function DisclosureIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      className="h-4 w-4 shrink-0 text-muted transition-transform duration-150 group-open:rotate-180"
+    >
+      <path d="m5.5 7.75 4.5 4.5 4.5-4.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
