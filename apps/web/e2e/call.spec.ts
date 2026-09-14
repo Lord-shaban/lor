@@ -263,6 +263,73 @@ test.describe("a call between two people", () => {
     await bob.close();
   });
 
+  test("keeps advanced prejoin device controls behind an accessible disclosure", async () => {
+    // Keep locale cookies isolated: an explicit /en visit can otherwise make
+    // the default-locale redirect for a later /ar visit render English.
+    const englishPage = await alice.newPage();
+    const arabicPage = await bob.newPage();
+    const englishCode = await createRoom(englishPage);
+    const arabicCode = await createRoom(arabicPage);
+
+    for (const [locale, page, code, name, settingsLabel, defaultLabel] of [
+      ["en", englishPage, englishCode, "Ahmed", "Audio and video settings", "Browser defaults"],
+      ["ar", arabicPage, arabicCode, "أحمد", "إعدادات الصوت والفيديو", "إعدادات المتصفح"],
+    ] as const) {
+      for (const [width, height] of [
+        [390, 844],
+        [768, 900],
+        [1024, 900],
+        [1440, 900],
+      ] as const) {
+        await page.setViewportSize({ width, height });
+        await page.goto(`/${locale}/${code}`);
+
+        const nameField = page.locator('input[autocomplete="name"]');
+        await expect(nameField).toBeVisible();
+        await nameField.fill(name);
+
+        const joinButton = page.getByRole("button", {
+          name: locale === "ar" ? "ادخل الاجتماع" : "Join meeting",
+          exact: true,
+        });
+        await expect(joinButton).toBeEnabled();
+
+        const disclosure = page.getByTestId("device-settings");
+        const summary = disclosure.locator("summary");
+        await expect(summary).toContainText(settingsLabel);
+        await expect(summary).toContainText(defaultLabel);
+        await expect(disclosure.locator("select").first()).toBeHidden();
+        await expect(joinButton).toBeVisible();
+
+        // Native <summary> keeps the disclosure in the tab order and handles
+        // Enter without a custom focus trap or pointer-only interaction.
+        await summary.focus();
+        await page.keyboard.press("Enter");
+        await expect(disclosure.locator("select").first()).toBeVisible();
+        await expect(summary).toBeFocused();
+
+        const speakerButton = disclosure.getByRole("button", {
+          name: locale === "ar" ? "جرّب السماعة" : "Test speaker",
+          exact: true,
+        });
+        if (await speakerButton.count()) {
+          await expect(speakerButton).toBeVisible();
+          const speakerBox = await speakerButton.boundingBox();
+          expect(speakerBox?.width).toBeGreaterThanOrEqual(44);
+          expect(speakerBox?.height).toBeGreaterThanOrEqual(44);
+        }
+
+        await summary.click();
+        await expect(disclosure.locator("select").first()).toBeHidden();
+        expect(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+          ),
+        ).toBe(true);
+      }
+    }
+  });
+
   test("video flows both ways and chat crosses between them", async () => {
     const first = await alice.newPage();
     const second = await bob.newPage();
