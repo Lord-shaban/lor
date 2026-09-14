@@ -11,12 +11,13 @@ const copy = {
   ar: {
     path: "/ar/about",
     direction: "rtl",
-    title: "اجتماعات بتفتكر اللي يهم.",
+    title: "المكالمة شغالة. والخيط المفيد مكمل.",
     live: "جرّب الموقع المباشر",
-    source: "شوف الكود",
-    visual: "اقرأ وصف الصورة",
-    alt: "عرض اصطناعي لاجتماع LOR.‎ بيبيّن بلاطتين للمكالمة جنب transcript محفوظ وقرار راجعه المضيف.",
-    overview: "مكالمة أهدى، وتسليم أوضح.",
+    docs: "اقرأ الدوكس",
+    source: "افتح المصدر",
+    visual: "شايفه جوّه المنتج",
+    alt: "شاشة البداية الحقيقية لمنتج LOR.‎ بتعرض مسار ابدأ أو ادخل اجتماع، من غير حساب ولا تحميل، مع مشغّل الاجتماع.",
+    product: "شوف السطح قبل ما تثق في الحكاية.",
     compare: "المكالمة بداية، مش أرشيف.",
     faq: "أسئلة تستاهل إجابة.",
     copy: "انسخ الأوامر",
@@ -24,12 +25,13 @@ const copy = {
   en: {
     path: "/en/about",
     direction: "ltr",
-    title: "Meetings that remember what matters.",
+    title: "The meeting is live. The useful thread stays.",
     live: "Try the live app",
-    source: "View the source",
-    visual: "Read the visual description",
-    alt: "A synthetic LOR. meeting view shows two call tiles beside a retained transcript and a host-reviewed decision.",
-    overview: "A calmer meeting, a stronger handoff.",
+    docs: "Read the docs",
+    source: "Open the source",
+    visual: "Seen in the product",
+    alt: "A real LOR. product home screen shows the focused start-or-join flow with no account, no download, and the meeting launcher.",
+    product: "See the surface before you trust the story.",
     compare: "A call is the beginning, not the archive.",
     faq: "Questions worth answering.",
     copy: "Copy commands",
@@ -56,16 +58,20 @@ test.describe("public project landing", () => {
           "href",
           "https://github.com/Lord-shaban/lor",
         );
+        await expect(page.getByRole("link", { name: text.docs, exact: true }).first()).toHaveAttribute(
+          "href",
+          /docs/,
+        );
 
         const preview = page.getByRole("img", { name: text.alt });
         await expect(preview).toBeVisible();
-        await expect(preview).toHaveAttribute("src", /product-preview/);
-        await expect(page.getByText(text.visual, { exact: true })).toBeVisible();
+        await expect(preview).toHaveAttribute("src", /product-home/);
+        await expect(page.getByRole("figure").first().getByText(text.visual, { exact: true }).first()).toBeVisible();
 
-        await expect(page.getByRole("heading", { level: 2, name: text.overview })).toBeVisible();
+        await expect(page.getByRole("heading", { level: 2, name: text.product })).toBeVisible();
         await expect(page.getByRole("heading", { level: 2, name: text.compare })).toBeVisible();
         await expect(page.getByRole("heading", { level: 2, name: text.faq })).toBeVisible();
-        for (const id of ["overview", "story", "features", "compare", "open-source", "faq"]) {
+        for (const id of ["product", "story", "features", "compare", "open-source", "faq"]) {
           await expect(page.locator(`#${id}`)).toBeVisible();
         }
         await expect(page.locator("#compare table")).toHaveCount(1);
@@ -73,11 +79,9 @@ test.describe("public project landing", () => {
         await expect(page.locator("#compare tbody tr")).toHaveCount(7);
         await expect(page.getByRole("button", { name: text.copy, exact: true })).toBeVisible();
         await expect(page.locator("#faq details")).toHaveCount(5);
-        await expect(page.locator('a[href="#overview"]')).toHaveCount(1);
+        await expect(page.locator('a[href="#product"]')).toHaveCount(1);
         await expect(page.locator('a[href="#features"]')).toHaveCount(1);
-        await expect(page.locator('a[href="#compare"]')).toHaveCount(2);
-        await expect(page.locator("a[href='#open-source']")).toHaveCount(1);
-        await expect(page.locator('a[href="#faq"]')).toHaveCount(1);
+        await expect(page.locator('a[href="#compare"]')).toHaveCount(1);
         expect(
           await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
         ).toBe(true);
@@ -101,7 +105,7 @@ test.describe("public project landing", () => {
     await page.goto("/en/about");
 
     const heroLive = page.getByRole("link", { name: "Try the live app", exact: true });
-    const heroSource = page.getByRole("link", { name: "View the source", exact: true });
+    const heroSource = page.locator("main").getByRole("link", { name: "Read the docs", exact: true }).first();
     await heroLive.focus();
     await expect(heroLive).toBeFocused();
     await page.keyboard.press("Tab");

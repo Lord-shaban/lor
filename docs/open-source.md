@@ -3,7 +3,8 @@
 LOR. is an Arabic-first, open-source video-meeting product: a person joins from a
 link with no account, then keeps the useful result of the meeting — a retained
 transcript and grounded decisions that return to their source evidence. The public
-demo is [live](https://lor-bay.vercel.app); the code, discussions, and issues live in
+demo is [live](https://lor-bay.vercel.app); the localized project story and setup are
+available in the local [/docs](/docs) hub; the code, discussions, and issues live in
 the [repository](https://github.com/Lord-shaban/lor).
 
 This page makes the next work legible without pretending that it is already shipped.
@@ -70,7 +71,10 @@ clear actions. The release is planned, not shipped.
    Arabic landing copy plus a media inventory from the merged product design.
 4. [#213](https://github.com/Lord-shaban/lor/issues/213) builds the accessible, localised
    public landing page from that brief.
-5. [#220](https://github.com/Lord-shaban/lor/issues/220) is a small, supervised media
+5. [#236](https://github.com/Lord-shaban/lor/issues/236) refines the public showcase,
+   adds privacy-reviewed launcher captures, and ships the first-class localized docs
+   hub at `/docs` and `/en/docs`.
+6. [#220](https://github.com/Lord-shaban/lor/issues/220) is a small, supervised media
    contribution after the inventory is approved.
 
 ### Landing-page brief
@@ -82,7 +86,8 @@ floor so the public page can be implemented without inventing product claims.
 
 The landing page should lead with the concrete promise, then let the visitor verify it:
 
-1. A concise hero and two distinct actions: **try the live app** and **view the source**.
+1. A concise hero and two distinct actions: **try the live app** and **read the local docs**;
+   source/community links remain available but secondary.
 2. A real product screenshot or short, controlled demo with an image/poster and text
    alternative.
 3. A small feature story: join simply, collaborate live, and retain evidence responsibly.

@@ -14,7 +14,7 @@ No account. No time limit. No download.
 [![Roadmap](https://img.shields.io/badge/roadmap-v0.0%20%E2%86%92%20v1.0-6366f1)](https://github.com/Lord-shaban/lor/milestones)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-[العربية](README.ar.md) · [Roadmap](#roadmap) · [Self-hosting](#self-hosting) · [Contributing](CONTRIBUTING.md) · [Open-source map](docs/open-source.md)
+[العربية](README.ar.md) · [Project page](https://lor-bay.vercel.app/en/about) · [Docs](https://lor-bay.vercel.app/en/docs) · [Roadmap](#roadmap) · [Self-hosting](#self-hosting) · [Contributing](CONTRIBUTING.md) · [Open-source map](docs/open-source.md)
 
 </div>
 
