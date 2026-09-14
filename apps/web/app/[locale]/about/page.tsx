@@ -15,14 +15,11 @@ import {
   RecordIcon,
   SearchIcon,
   ShieldIcon,
-  SparkIcon,
-  QuestionIcon,
 } from "@/components/landing-icons";
 
 const REPO = "https://github.com/Lord-shaban/lor";
 const LIVE_APP = "https://lor-bay.vercel.app";
-const SETUP = `${REPO}#quick-start`;
-const CONTAINER = "mx-auto w-full max-w-6xl px-6 sm:px-8 lg:px-10";
+const CONTAINER = "mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-12";
 const TEXT_LINK =
   "underline decoration-border underline-offset-4 transition-colors duration-150 hover:decoration-foreground";
 const QUICK_START = `git clone https://github.com/Lord-shaban/lor && cd lor
@@ -55,6 +52,10 @@ export default function PublicLanding({
   setRequestLocale(locale);
 
   const t = useTranslations("landing");
+  const productHome =
+    locale === "ar"
+      ? "/landing/product-home-ar-crop.png"
+      : "/landing/product-home-crop.png";
 
   return (
     <div className="min-h-full bg-background text-foreground">
@@ -65,42 +66,33 @@ export default function PublicLanding({
         {t("skip")}
       </a>
 
-      <header className="border-b border-border">
+      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className={`${CONTAINER} py-4`}>
-          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-            <Link
-              href="/"
-              aria-label="LOR."
-              className="text-lg font-semibold tracking-tight"
-            >
-              <bdi>
-                LOR<span className="text-live">.</span>
-              </bdi>
+          <div className="grid items-center gap-4 sm:grid-cols-[auto_1fr_auto]">
+            <Link href="/" aria-label="LOR." className="justify-self-start">
+              <LorWordmark className="h-9 w-auto" />
             </Link>
 
             <nav
               aria-label={t("nav.label")}
-              className="order-3 flex w-full flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted sm:order-none sm:w-auto sm:justify-start sm:gap-x-5"
+              className="order-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted sm:order-none sm:justify-start"
             >
-              <a className={TEXT_LINK} href="#overview">
-                {t("nav.overview")}
+              <a className={TEXT_LINK} href="#product">
+                {t("nav.product")}
               </a>
               <a className={TEXT_LINK} href="#features">
                 {t("nav.features")}
               </a>
+              <Link className={TEXT_LINK} href="/docs">
+                {t("nav.docs")}
+              </Link>
               <a className={TEXT_LINK} href="#compare">
                 {t("nav.compare")}
               </a>
-              <a className={TEXT_LINK} href="#open-source">
-                {t("nav.openSource")}
-              </a>
-              <a className={TEXT_LINK} href="#faq">
-                {t("nav.faq")}
-              </a>
             </nav>
 
-            <div className="flex items-center gap-3 sm:gap-4">
-              <Button asChild size="sm" variant="outline">
+            <div className="flex items-center justify-self-end gap-2 sm:gap-3">
+              <Button asChild size="sm">
                 <a href={LIVE_APP}>{t("nav.try")}</a>
               </Button>
               <ThemeToggle />
@@ -111,127 +103,175 @@ export default function PublicLanding({
       </header>
 
       <div className="border-b border-border bg-surface">
-        <div className={`${CONTAINER} flex flex-wrap items-center justify-between gap-3 py-3 text-sm`}>
+        <div
+          className={`${CONTAINER} flex flex-wrap items-center justify-between gap-3 py-3 text-sm`}
+        >
           <p className="flex items-center gap-2 text-muted">
             <span className="h-2 w-2 rounded-full bg-live" aria-hidden="true" />
             <span>{t("banner.label")}</span>
           </p>
-          <a className={`inline-flex items-center gap-2 ${TEXT_LINK}`} href="#compare">
+          <Link className={`inline-flex items-center gap-2 ${TEXT_LINK}`} href="/docs">
             {t("banner.link")}
             <ArrowUpRightIcon />
-          </a>
+          </Link>
         </div>
       </div>
 
       <main id="main-content" tabIndex={-1}>
         <section
           aria-labelledby="landing-title"
-          className={`${CONTAINER} grid items-center gap-12 py-14 sm:py-20 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16 lg:py-24`}
+          className="overflow-hidden border-b border-border"
         >
-          <div className="max-w-xl">
-            <p className="flex items-center gap-3 text-sm text-muted">
-              <span className="h-px w-8 bg-border" aria-hidden="true" />
-              {t("hero.kicker")}
-            </p>
+          <div
+            className={`${CONTAINER} grid gap-12 py-14 sm:py-20 lg:grid-cols-[0.86fr_1.14fr] lg:items-center lg:gap-20 lg:py-24`}
+          >
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-4">
+                <span className="grid h-12 w-12 place-items-center rounded-md border border-border bg-surface text-foreground">
+                  <LorMark />
+                </span>
+                <div>
+                  <p className="text-sm font-medium tracking-tight">{t("brand.name")}</p>
+                  <p className="mt-1 text-sm text-muted">{t("brand.tagline")}</p>
+                </div>
+              </div>
 
-            <h1
-              id="landing-title"
-              className="mt-6 max-w-[12ch] text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl"
-            >
-              {t("hero.title")}
-            </h1>
+              <p className="mt-10 flex items-center gap-3 text-sm text-muted">
+                <span className="h-px w-8 bg-live" aria-hidden="true" />
+                {t("hero.kicker")}
+              </p>
 
-            <p className="mt-6 max-w-lg text-lg leading-8 text-muted sm:text-xl">
-              {t.rich("hero.description", {
-                brand: (chunks) => <bdi className="text-foreground">{chunks}</bdi>,
-              })}
-            </p>
+              <h1
+                id="landing-title"
+                className="mt-5 max-w-[13ch] text-5xl font-semibold leading-[1.03] tracking-[-0.04em] sm:text-6xl lg:text-7xl"
+              >
+                {t("hero.title")}
+              </h1>
 
-            <p className="mt-4 max-w-lg text-base leading-7 text-muted">
-              {t("hero.supporting")}
-            </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg">
-                <a href={LIVE_APP}>
-                  {t("hero.liveCta")}
-                  <ArrowUpRightIcon />
-                </a>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <a href={REPO}>
-                  {t("hero.sourceCta")}
-                  <CodeIcon />
-                </a>
-              </Button>
-            </div>
-
-            <ul
-              aria-label={t("hero.trustLabel")}
-              className="mt-8 grid gap-3 border-y border-border py-4 text-sm text-muted sm:grid-cols-3 sm:gap-4"
-            >
-              <li>{t("hero.trust.noAccount")}</li>
-              <li>{t("hero.trust.local")}</li>
-              <li>
-                {t.rich("hero.trust.ai", {
-                  term: (chunks) => <bdi>{chunks}</bdi>,
+              <p className="mt-7 max-w-xl text-lg leading-8 text-muted sm:text-xl">
+                {t.rich("hero.description", {
+                  brand: (chunks) => (
+                    <bdi className="font-medium text-foreground">{chunks}</bdi>
+                  ),
                 })}
-              </li>
-            </ul>
-          </div>
+              </p>
 
-          <figure className="min-w-0">
-            <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface">
-              <Image
-                src="/landing/product-preview.svg"
-                alt={t("hero.mediaAlt")}
-                width={1440}
-                height={900}
-                priority
-                sizes="(min-width: 1024px) 52vw, 100vw"
-                className="h-auto w-full"
-              />
+              <p className="mt-4 max-w-xl text-base leading-7 text-muted">
+                {t("hero.supporting")}
+              </p>
+
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Button asChild size="lg">
+                  <a href={LIVE_APP}>
+                    {t("hero.liveCta")}
+                    <ArrowUpRightIcon />
+                  </a>
+                </Button>
+                <Button asChild size="lg" variant="outline">
+                  <Link href="/docs">
+                    {t("hero.docsCta")}
+                    <BookIcon />
+                  </Link>
+                </Button>
+              </div>
+
+              <p className="mt-5 text-sm text-muted">
+                {t("hero.sourceLead")} {" "}
+                <a className={TEXT_LINK} href={REPO}>
+                  {t("hero.sourceCta")}
+                </a>
+              </p>
+
+              <ul
+                aria-label={t("hero.trustLabel")}
+                className="mt-9 grid gap-3 border-y border-border py-4 text-sm text-muted sm:grid-cols-3 sm:gap-5"
+              >
+                <li className="flex items-start gap-2">
+                  <CheckIcon />
+                  <span>{t("hero.trust.noAccount")}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckIcon />
+                  <span>{t("hero.trust.local")}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckIcon />
+                  <span>
+                    {t.rich("hero.trust.ai", {
+                      term: (chunks) => <bdi>{chunks}</bdi>,
+                    })}
+                  </span>
+                </li>
+              </ul>
             </div>
-            <figcaption className="mt-4 flex flex-col gap-2 text-sm text-muted sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-              <span>{t("hero.mediaCaption")}</span>
-              <details className="shrink-0">
-                <summary className="cursor-pointer underline underline-offset-4">
-                  {t("hero.mediaTextLabel")}
-                </summary>
-                <p className="mt-2 max-w-sm leading-6">{t("hero.mediaAlt")}</p>
-              </details>
-            </figcaption>
-          </figure>
+
+            <ProductHeroMedia
+              src={productHome}
+              alt={t("hero.mediaAlt")}
+              caption={t("hero.mediaCaption")}
+              label={t("hero.mediaLabel")}
+              secondaryAlt={t("gallery.workspace.alt")}
+            />
+          </div>
         </section>
 
-        <section id="overview" aria-labelledby="overview-title" className="scroll-mt-8 border-y border-border bg-surface">
-          <div className={`${CONTAINER} py-16 sm:py-20 lg:py-24`}>
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
-              <div className="max-w-2xl">
-                <p className="text-sm text-muted">{t("overview.eyebrow")}</p>
-                <h2 id="overview-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                  {t("overview.title")}
+        <section id="product" aria-labelledby="product-title" className="scroll-mt-24 bg-surface">
+          <div className={`${CONTAINER} py-16 sm:py-20 lg:py-28`}>
+            <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr] lg:items-end lg:gap-16">
+              <div>
+                <p className="text-sm text-muted">{t("gallery.eyebrow")}</p>
+                <h2 id="product-title" className="mt-4 max-w-xl text-3xl font-semibold tracking-tight sm:text-4xl">
+                  {t("gallery.title")}
                 </h2>
               </div>
-              <p className="max-w-md text-base leading-7 text-muted sm:text-lg">{t("overview.intro")}</p>
+              <p className="max-w-2xl text-base leading-7 text-muted sm:text-lg">
+                {t("gallery.intro")}
+              </p>
             </div>
 
-            <div className="mt-12 grid gap-4 md:grid-cols-3">
-              <OverviewCard icon={<SparkIcon />} title={t("overview.cards.conversation.title")}>
-                {t("overview.cards.conversation.body")}
-              </OverviewCard>
-              <OverviewCard icon={<BoardIcon />} title={t("overview.cards.work.title")}>
-                {t("overview.cards.work.body")}
-              </OverviewCard>
-              <OverviewCard icon={<RecordIcon />} title={t("overview.cards.record.title")}>
-                {t("overview.cards.record.body")}
-              </OverviewCard>
+            <div className="mt-12 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+              <ProductMediaCard
+                src={productHome}
+                alt={t("gallery.home.alt")}
+                eyebrow={t("gallery.home.eyebrow")}
+                title={t("gallery.home.title")}
+                body={t("gallery.home.body")}
+                width={672}
+                height={704}
+                sizes="(min-width: 1024px) 58vw, 100vw"
+              />
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+                <ProductMediaCard
+                  src="/landing/product-home-menu-crop.png"
+                  alt={t("gallery.menu.alt")}
+                  eyebrow={t("gallery.menu.eyebrow")}
+                  title={t("gallery.menu.title")}
+                  body={t("gallery.menu.body")}
+                  width={672}
+                  height={704}
+                  sizes="(min-width: 1024px) 35vw, 100vw"
+                />
+                <ProductMediaCard
+                  src="/landing/product-preview.svg"
+                  alt={t("gallery.workspace.alt")}
+                  eyebrow={t("gallery.workspace.eyebrow")}
+                  title={t("gallery.workspace.title")}
+                  body={t("gallery.workspace.body")}
+                  width={1440}
+                  height={900}
+                  sizes="(min-width: 1024px) 35vw, 100vw"
+                />
+              </div>
             </div>
+
+            <p className="mt-5 max-w-3xl text-sm leading-6 text-muted">
+              {t("gallery.disclosure")}
+            </p>
           </div>
         </section>
 
-        <section id="story" aria-labelledby="story-title" className="scroll-mt-8">
-          <div className={`${CONTAINER} py-16 sm:py-20 lg:py-24`}>
+        <section id="story" aria-labelledby="story-title" className="scroll-mt-24 border-y border-border">
+          <div className={`${CONTAINER} py-16 sm:py-20 lg:py-28`}>
             <div className="max-w-2xl">
               <p className="text-sm text-muted">{t("story.eyebrow")}</p>
               <h2 id="story-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -240,72 +280,54 @@ export default function PublicLanding({
               <p className="mt-5 text-base leading-7 text-muted sm:text-lg">{t("story.intro")}</p>
             </div>
 
-            <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-6 lg:gap-10">
+            <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-7 lg:gap-12">
               <StoryStep number="01" icon={<LinkIcon />} title={t("story.steps.join.title")}>
-                {t.rich("story.steps.join.body", {
-                  term: (chunks) => <bdi>{chunks}</bdi>,
-                })}
+                {t.rich("story.steps.join.body", { term: (chunks) => <bdi>{chunks}</bdi> })}
               </StoryStep>
               <StoryStep number="02" icon={<TogetherIcon />} title={t("story.steps.together.title")}>
-                {t.rich("story.steps.together.body", {
-                  term: (chunks) => <bdi>{chunks}</bdi>,
-                })}
+                {t.rich("story.steps.together.body", { term: (chunks) => <bdi>{chunks}</bdi> })}
               </StoryStep>
               <StoryStep number="03" icon={<EvidenceIcon />} title={t("story.steps.evidence.title")}>
-                {t.rich("story.steps.evidence.body", {
-                  term: (chunks) => <bdi>{chunks}</bdi>,
-                })}
+                {t.rich("story.steps.evidence.body", { term: (chunks) => <bdi>{chunks}</bdi> })}
               </StoryStep>
             </ol>
           </div>
         </section>
 
-        <section id="features" aria-labelledby="features-title" className="scroll-mt-8 border-y border-border bg-surface">
-          <div className={`${CONTAINER} py-16 sm:py-20 lg:py-24`}>
-            <div className="max-w-2xl">
-              <p className="text-sm text-muted">{t("features.eyebrow")}</p>
-              <h2 id="features-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                {t("features.title")}
-              </h2>
-              <p className="mt-5 text-base leading-7 text-muted sm:text-lg">{t("features.intro")}</p>
+        <section id="features" aria-labelledby="features-title" className="scroll-mt-24">
+          <div className={`${CONTAINER} py-16 sm:py-20 lg:py-28`}>
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
+              <div className="max-w-2xl">
+                <p className="text-sm text-muted">{t("features.eyebrow")}</p>
+                <h2 id="features-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+                  {t("features.title")}
+                </h2>
+              </div>
+              <p className="max-w-xl text-base leading-7 text-muted sm:text-lg">{t("features.intro")}</p>
             </div>
 
             <div className="mt-12 grid gap-px overflow-hidden border border-border bg-border md:grid-cols-2 lg:grid-cols-3">
-              <FeatureCard icon={<CaptionIcon />} title={t("features.cards.captions.title")}>
-                {t("features.cards.captions.body")}
-              </FeatureCard>
-              <FeatureCard icon={<BoardIcon />} title={t("features.cards.collaboration.title")}>
-                {t("features.cards.collaboration.body")}
-              </FeatureCard>
-              <FeatureCard icon={<RecordIcon />} title={t("features.cards.recording.title")}>
-                {t("features.cards.recording.body")}
-              </FeatureCard>
-              <FeatureCard icon={<EvidenceIcon />} title={t("features.cards.decisions.title")}>
-                {t("features.cards.decisions.body")}
-              </FeatureCard>
-              <FeatureCard icon={<TimelineIcon />} title={t("features.cards.timeline.title")}>
-                {t("features.cards.timeline.body")}
-              </FeatureCard>
-              <FeatureCard icon={<SearchIcon />} title={t("features.cards.search.title")}>
-                {t("features.cards.search.body")}
-              </FeatureCard>
+              <FeatureCard icon={<CaptionIcon />} title={t("features.cards.captions.title")}>{t("features.cards.captions.body")}</FeatureCard>
+              <FeatureCard icon={<BoardIcon />} title={t("features.cards.collaboration.title")}>{t("features.cards.collaboration.body")}</FeatureCard>
+              <FeatureCard icon={<RecordIcon />} title={t("features.cards.recording.title")}>{t("features.cards.recording.body")}</FeatureCard>
+              <FeatureCard icon={<EvidenceIcon />} title={t("features.cards.decisions.title")}>{t("features.cards.decisions.body")}</FeatureCard>
+              <FeatureCard icon={<TimelineIcon />} title={t("features.cards.timeline.title")}>{t("features.cards.timeline.body")}</FeatureCard>
+              <FeatureCard icon={<SearchIcon />} title={t("features.cards.search.title")}>{t("features.cards.search.body")}</FeatureCard>
             </div>
           </div>
         </section>
 
-        <section id="compare" aria-labelledby="compare-title" className="scroll-mt-8">
-          <div className={`${CONTAINER} py-16 sm:py-20 lg:py-24`}>
-            <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:items-end lg:gap-20">
+        <section id="compare" aria-labelledby="compare-title" className="scroll-mt-24 border-y border-border bg-surface">
+          <div className={`${CONTAINER} py-16 sm:py-20 lg:py-28`}>
+            <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:items-end lg:gap-20">
               <div>
                 <p className="text-sm text-muted">{t("compare.eyebrow")}</p>
-                <h2 id="compare-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                  {t("compare.title")}
-                </h2>
+                <h2 id="compare-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">{t("compare.title")}</h2>
               </div>
               <p className="max-w-2xl text-base leading-7 text-muted sm:text-lg">{t("compare.intro")}</p>
             </div>
 
-            <div className="mt-12 overflow-x-auto rounded-[var(--radius-lg)] border border-border">
+            <div className="mt-12 overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-background">
               <table className="w-full min-w-[42rem] border-collapse text-start text-sm">
                 <caption className="sr-only">{t("compare.caption")}</caption>
                 <thead className="bg-surface">
@@ -326,72 +348,74 @@ export default function PublicLanding({
                 </tbody>
               </table>
             </div>
-            <p className="mt-4 text-sm text-muted">{t("compare.note")}</p>
+            <p className="mt-4 text-sm leading-6 text-muted">{t("compare.note")}</p>
           </div>
         </section>
 
-        <section aria-labelledby="control-title" className="border-y border-border bg-surface">
-          <div className={`${CONTAINER} py-16 sm:py-20 lg:py-24`}>
+        <section aria-labelledby="docs-cta-title" className="border-b border-border bg-foreground text-on-foreground">
+          <div className={`${CONTAINER} grid gap-10 py-16 sm:py-20 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:gap-20 lg:py-24`}>
+            <div className="max-w-xl">
+              <p className="text-sm opacity-65">{t("docsCta.eyebrow")}</p>
+              <h2 id="docs-cta-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">{t("docsCta.title")}</h2>
+              <p className="mt-5 text-base leading-7 opacity-75 sm:text-lg">{t("docsCta.body")}</p>
+              <Button asChild size="lg" variant="secondary" className="mt-8">
+                <Link href="/docs">{t("docsCta.cta")}<ArrowUpRightIcon /></Link>
+              </Button>
+            </div>
+
+            <div className="overflow-hidden rounded-[var(--radius-lg)] border border-on-foreground/20 bg-background text-foreground">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
+                <div>
+                  <p className="text-sm font-medium">{t("quickStart.label")}</p>
+                  <p className="mt-1 text-sm text-muted">{t("quickStart.hint")}</p>
+                </div>
+                <LandingCopyCommand value={QUICK_START} copyLabel={t("quickStart.copy")} copiedLabel={t("quickStart.copied")} />
+              </div>
+              <pre className="overflow-x-auto p-5 text-sm leading-7 sm:p-6"><code>{QUICK_START}</code></pre>
+              <div className="border-t border-border px-5 py-4 text-sm text-muted sm:px-6">{t("quickStart.note")}</div>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="control-title" className="border-b border-border bg-surface">
+          <div className={`${CONTAINER} py-16 sm:py-20 lg:py-28`}>
             <div className="max-w-2xl">
               <p className="text-sm text-muted">{t("control.eyebrow")}</p>
-              <h2 id="control-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                {t("control.title")}
-              </h2>
+              <h2 id="control-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">{t("control.title")}</h2>
               <p className="mt-5 text-base leading-7 text-muted sm:text-lg">{t("control.intro")}</p>
             </div>
 
-            <div className="mt-12 grid gap-4 md:grid-cols-3">
-              <GuardrailCard icon={<ShieldIcon />} title={t("control.cards.scope.title")}>
-                {t("control.cards.scope.body")}
-              </GuardrailCard>
-              <GuardrailCard icon={<RecordIcon />} title={t("control.cards.local.title")}>
-                {t("control.cards.local.body")}
-              </GuardrailCard>
-              <GuardrailCard icon={<CodeIcon />} title={t("control.cards.keys.title")}>
-                {t("control.cards.keys.body")}
-              </GuardrailCard>
+            <div className="mt-12 grid gap-px overflow-hidden border border-border bg-border md:grid-cols-3">
+              <GuardrailCard icon={<ShieldIcon />} title={t("control.cards.scope.title")}>{t("control.cards.scope.body")}</GuardrailCard>
+              <GuardrailCard icon={<RecordIcon />} title={t("control.cards.local.title")}>{t("control.cards.local.body")}</GuardrailCard>
+              <GuardrailCard icon={<CodeIcon />} title={t("control.cards.keys.title")}>{t("control.cards.keys.body")}</GuardrailCard>
             </div>
             <a className={`mt-8 inline-flex items-center gap-2 ${TEXT_LINK}`} href={`${REPO}/blob/main/SECURITY.md`}>
-              {t("control.security")}
-              <ArrowUpRightIcon />
+              {t("control.security")}<ArrowUpRightIcon />
             </a>
           </div>
         </section>
 
-        <section id="open-source" aria-labelledby="open-source-title" className="scroll-mt-8">
-          <div className={`${CONTAINER} py-16 sm:py-20 lg:py-24`}>
-            <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-20">
-              <div>
+        <section id="open-source" aria-labelledby="open-source-title" className="scroll-mt-24">
+          <div className={`${CONTAINER} py-16 sm:py-20 lg:py-28`}>
+            <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start lg:gap-20">
+              <div className="max-w-xl">
                 <p className="text-sm text-muted">AGPL-3.0 · {t("openSource.eyebrow")}</p>
-                <h2 id="open-source-title" className="mt-4 max-w-xl text-3xl font-semibold tracking-tight sm:text-4xl">
-                  {t("openSource.title")}
-                </h2>
-                <p className="mt-5 max-w-xl text-base leading-7 text-muted sm:text-lg">{t("openSource.body")}</p>
-
-                <div className="mt-8 grid gap-3">
-                  <ResourceCard href={REPO} title={t("openSource.source")} hint={t("openSource.sourceHint")} />
-                  <ResourceCard href={`${REPO}/blob/main/CONTRIBUTING.md`} title={t("openSource.contribute")} hint={t("openSource.contributeHint")} />
-                  <ResourceCard href={`${REPO}/milestones`} title={t("openSource.roadmap")} hint={t("openSource.roadmapHint")} />
-                </div>
+                <h2 id="open-source-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">{t("openSource.title")}</h2>
+                <p className="mt-5 text-base leading-7 text-muted sm:text-lg">{t("openSource.body")}</p>
               </div>
 
-              <div className="overflow-hidden rounded-[var(--radius-lg)] bg-foreground text-on-foreground">
-                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-on-foreground/20 px-5 py-4 sm:px-6">
-                  <div>
-                    <p className="text-sm font-medium">{t("quickStart.label")}</p>
-                    <p className="mt-1 text-sm opacity-65">{t("quickStart.hint")}</p>
-                  </div>
-                  <LandingCopyCommand value={QUICK_START} copyLabel={t("quickStart.copy")} copiedLabel={t("quickStart.copied")} />
-                </div>
-                <pre className="overflow-x-auto p-5 text-sm leading-7 sm:p-6"><code>{QUICK_START}</code></pre>
-                <div className="border-t border-on-foreground/20 px-5 py-4 text-sm opacity-75 sm:px-6">{t("quickStart.note")}</div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <ResourceCard href={REPO} title={t("openSource.source")} hint={t("openSource.sourceHint")} />
+                <ResourceCard href={`${REPO}/blob/main/CONTRIBUTING.md`} title={t("openSource.contribute")} hint={t("openSource.contributeHint")} />
+                <ResourceCard href={`${REPO}/milestones`} title={t("openSource.roadmap")} hint={t("openSource.roadmapHint")} />
               </div>
             </div>
           </div>
         </section>
 
-        <section id="faq" aria-labelledby="faq-title" className="border-y border-border bg-surface scroll-mt-8">
-          <div className={`${CONTAINER} grid gap-10 py-16 sm:py-20 lg:grid-cols-[0.7fr_1.3fr] lg:gap-20 lg:py-24`}>
+        <section id="faq" aria-labelledby="faq-title" className="scroll-mt-24 border-y border-border bg-surface">
+          <div className={`${CONTAINER} grid gap-10 py-16 sm:py-20 lg:grid-cols-[0.7fr_1.3fr] lg:gap-20 lg:py-28`}>
             <div>
               <p className="text-sm text-muted">{t("faq.eyebrow")}</p>
               <h2 id="faq-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">{t("faq.title")}</h2>
@@ -408,39 +432,32 @@ export default function PublicLanding({
           </div>
         </section>
 
-        <section aria-labelledby="final-title" className={`${CONTAINER} py-16 sm:py-20 lg:py-24`}>
-          <div className="rounded-[var(--radius-lg)] bg-foreground px-6 py-12 text-on-foreground sm:px-10 sm:py-16 lg:flex lg:items-end lg:justify-between lg:gap-12 lg:px-14">
-            <div className="max-w-xl">
-              <p className="text-sm opacity-65">{t("final.eyebrow")}</p>
-              <h2 id="final-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">{t("final.title")}</h2>
+        <section aria-labelledby="final-title" className={`${CONTAINER} py-16 sm:py-20 lg:py-28`}>
+          <div className="grid gap-8 rounded-[var(--radius-lg)] border border-border bg-foreground px-6 py-10 text-on-foreground sm:px-10 sm:py-14 lg:grid-cols-[1fr_auto] lg:items-end lg:gap-12 lg:px-14">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-3"><LorMark /><p className="text-sm opacity-65">{t("final.eyebrow")}</p></div>
+              <h2 id="final-title" className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">{t("final.title")}</h2>
               <p className="mt-4 text-base leading-7 opacity-75 sm:text-lg">{t("final.body")}</p>
             </div>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row lg:mt-0 lg:shrink-0">
-              <a href={LIVE_APP} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-on-foreground px-6 text-base font-medium text-foreground transition-opacity duration-150 hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-foreground">
-                {t("final.liveCta")}
-                <ArrowUpRightIcon />
-              </a>
-              <a href={REPO} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-on-foreground/40 px-6 text-base font-medium text-on-foreground transition-colors duration-150 hover:bg-on-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-foreground">
-                {t("final.sourceCta")}
-                <CodeIcon />
-              </a>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <a href={LIVE_APP} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-on-foreground px-6 text-base font-medium text-foreground transition-opacity duration-150 hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-foreground">{t("final.liveCta")}<ArrowUpRightIcon /></a>
+              <Link href="/docs" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-on-foreground/40 px-6 text-base font-medium text-on-foreground transition-colors duration-150 hover:bg-on-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-foreground">{t("final.docsCta")}<BookIcon /></Link>
             </div>
           </div>
         </section>
       </main>
 
       <footer className="border-t border-border">
-        <div className={`${CONTAINER} flex flex-col gap-6 py-8 text-sm text-muted sm:flex-row sm:items-start sm:justify-between`}>
+        <div className={`${CONTAINER} flex flex-col gap-7 py-9 text-sm text-muted sm:flex-row sm:items-start sm:justify-between`}>
           <div>
-            <p>{t.rich("footer.name", { brand: (chunks) => <bdi className="text-foreground">{chunks}</bdi> })}</p>
-            <p className="mt-2 max-w-sm leading-6">{t("footer.tagline")}</p>
+            <div className="flex items-center gap-3"><LorWordmark className="h-7 w-auto" /><span className="text-muted">{t("footer.descriptor")}</span></div>
+            <p className="mt-3 max-w-sm leading-6">{t("footer.tagline")}</p>
           </div>
-          <nav aria-label={t("footer.label")} className="grid grid-cols-2 gap-x-8 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-5">
-            <a className={TEXT_LINK} href={SETUP}>{t("footer.setup")}</a>
-            <a className={TEXT_LINK} href={`${REPO}/blob/main/SECURITY.md`}>{t("footer.security")}</a>
-            <a className={TEXT_LINK} href={`${REPO}/releases`}>{t("footer.releases")}</a>
-            <a className={TEXT_LINK} href={`${REPO}/discussions`}>{t("footer.community")}</a>
+          <nav aria-label={t("footer.label")} className="grid grid-cols-2 gap-x-8 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-6">
+            <Link className={TEXT_LINK} href="/docs">{t("footer.docs")}</Link>
             <Link className={TEXT_LINK} href="/">{t("footer.product")}</Link>
+            <a className={TEXT_LINK} href={`${REPO}/blob/main/SECURITY.md`}>{t("footer.security")}</a>
+            <a className={TEXT_LINK} href={REPO}>{t("footer.source")}</a>
           </nav>
         </div>
       </footer>
@@ -448,159 +465,97 @@ export default function PublicLanding({
   );
 }
 
-function OverviewCard({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+function ProductHeroMedia({ src, alt, caption, label, secondaryAlt }: { src: string; alt: string; caption: string; label: string; secondaryAlt: string }) {
   return (
-    <article className="border border-border bg-background p-6 sm:p-7">
-      <span className="text-muted" aria-hidden="true">{icon}</span>
-      <h3 className="mt-8 text-xl font-medium tracking-tight">{title}</h3>
-      <p className="mt-3 text-base leading-7 text-muted">{children}</p>
+    <figure className="min-w-0">
+      <div className="relative overflow-hidden rounded-[var(--radius-lg)] border border-border bg-background p-2 sm:p-3">
+        <div className="absolute inset-x-6 top-6 z-10 flex items-center justify-between text-xs font-medium text-on-foreground sm:inset-x-8 sm:top-8">
+          <span className="rounded-full bg-foreground/85 px-3 py-1.5">{label}</span>
+          <span className="flex items-center gap-2 rounded-full bg-foreground/85 px-3 py-1.5"><span className="h-1.5 w-1.5 rounded-full bg-live" aria-hidden="true" /><span dir="ltr">LOR.</span></span>
+        </div>
+        <Image src={src} alt={alt} width={672} height={704} priority sizes="(min-width: 1024px) 56vw, 100vw" className="h-auto w-full rounded-[calc(var(--radius-lg)-4px)] border border-border" />
+      </div>
+      <figcaption className="mt-4 flex flex-col gap-2 text-sm text-muted sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <span className="max-w-xl leading-6">{caption}</span>
+        <details className="shrink-0"><summary className="cursor-pointer underline underline-offset-4">{label}</summary><p className="mt-2 max-w-sm leading-6">{alt}</p><p className="mt-2 max-w-sm leading-6">{secondaryAlt}</p></details>
+      </figcaption>
+    </figure>
+  );
+}
+
+function ProductMediaCard({ src, alt, eyebrow, title, body, width, height, sizes }: { src: string; alt: string; eyebrow: string; title: string; body: string; width: number; height: number; sizes: string }) {
+  return (
+    <article className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-background">
+      <div className="aspect-[16/10] overflow-hidden border-b border-border bg-surface"><Image src={src} alt={alt} width={width} height={height} sizes={sizes} className="h-full w-full object-cover object-top" /></div>
+      <div className="p-5 sm:p-6"><p className="text-sm text-muted">{eyebrow}</p><h3 className="mt-3 text-xl font-medium tracking-tight">{title}</h3><p className="mt-3 text-base leading-7 text-muted">{body}</p></div>
     </article>
   );
 }
 
 function StoryStep({ number, icon, title, children }: { number: string; icon: ReactNode; title: string; children: ReactNode }) {
-  return (
-    <li className="border-t border-border pt-5">
-      <div className="flex items-center justify-between gap-4">
-        <span dir="ltr" className="font-mono text-xs tabular-nums text-muted">{number}</span>
-        <span className="text-muted" aria-hidden="true">{icon}</span>
-      </div>
-      <h3 className="mt-8 text-xl font-medium tracking-tight">{title}</h3>
-      <p className="mt-3 text-base leading-7 text-muted">{children}</p>
-    </li>
-  );
+  return <li className="border-t border-border pt-5"><div className="flex items-center justify-between gap-4"><span dir="ltr" className="font-mono text-xs tabular-nums text-muted">{number}</span><span className="text-muted" aria-hidden="true">{icon}</span></div><h3 className="mt-8 text-xl font-medium tracking-tight">{title}</h3><p className="mt-3 text-base leading-7 text-muted">{children}</p></li>;
 }
 
 function FeatureCard({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
-  return (
-    <article className="bg-background p-6 sm:p-7">
-      <span className="text-muted" aria-hidden="true">{icon}</span>
-      <h3 className="mt-6 text-lg font-medium tracking-tight">{title}</h3>
-      <p className="mt-3 text-base leading-7 text-muted">{children}</p>
-    </article>
-  );
+  return <article className="bg-background p-6 sm:p-7"><span className="text-muted" aria-hidden="true">{icon}</span><h3 className="mt-6 text-lg font-medium tracking-tight">{title}</h3><p className="mt-3 text-base leading-7 text-muted">{children}</p></article>;
 }
 
 function GuardrailCard({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
-  return (
-    <article className="border border-border bg-background p-6 sm:p-7">
-      <span className="text-muted" aria-hidden="true">{icon}</span>
-      <h3 className="mt-6 text-lg font-medium tracking-tight">{title}</h3>
-      <p className="mt-3 text-base leading-7 text-muted">{children}</p>
-    </article>
-  );
+  return <article className="bg-background p-6 sm:p-7"><span className="text-muted" aria-hidden="true">{icon}</span><h3 className="mt-6 text-lg font-medium tracking-tight">{title}</h3><p className="mt-3 text-base leading-7 text-muted">{children}</p></article>;
 }
 
 function ResourceCard({ href, title, hint }: { href: string; title: string; hint: string }) {
-  return (
-    <a href={href} className="group flex min-h-16 items-center justify-between gap-4 rounded-[var(--radius-md)] border border-border bg-surface px-5 transition-colors duration-150 hover:bg-surface-strong">
-      <span className="min-w-0">
-        <span className="block font-medium">{title}</span>
-        <span className="mt-1 block text-sm text-muted">{hint}</span>
-      </span>
-      <ArrowUpRightIcon className="shrink-0 transition-transform duration-150 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
-    </a>
-  );
+  return <a href={href} className="group flex min-h-16 items-center justify-between gap-4 rounded-[var(--radius-md)] border border-border bg-surface px-5 py-3 transition-colors duration-150 hover:bg-surface-strong"><span className="min-w-0"><span className="block font-medium">{title}</span><span className="mt-1 block text-sm leading-5 text-muted">{hint}</span></span><ArrowUpRightIcon className="shrink-0 transition-transform duration-150 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" /></a>;
 }
 
 function ComparisonRow({ label, baseline, lor }: { label: string; baseline: string; lor: string }) {
-  return (
-    <tr>
-      <th scope="row" className="px-5 py-5 text-start font-medium">{label}</th>
-      <td className="px-5 py-5 text-muted">{baseline}</td>
-      <td className="px-5 py-5">
-        <span className="inline-flex items-start gap-2 font-medium">
-          <CheckIcon />
-          <span>{lor}</span>
-        </span>
-      </td>
-    </tr>
-  );
+  return <tr><th scope="row" className="px-5 py-5 text-start font-medium">{label}</th><td className="px-5 py-5 text-muted">{baseline}</td><td className="px-5 py-5"><span className="inline-flex items-start gap-2 font-medium"><CheckIcon /><span>{lor}</span></span></td></tr>;
 }
 
 function FaqItem({ question, children }: { question: string; children: ReactNode }) {
-  return (
-    <details className="group">
-      <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-5 py-5 text-start font-medium [&::-webkit-details-marker]:hidden">
-        <span>{question}</span>
-        <span className="flex shrink-0 items-center gap-2 text-muted" aria-hidden="true">
-          <QuestionIcon />
-          <ChevronDownIcon className="transition-transform duration-150 group-open:rotate-180" />
-        </span>
-      </summary>
-      <div className="max-w-2xl pb-6 pe-8 text-base leading-7 text-muted">{children}</div>
-    </details>
-  );
+  return <details className="group"><summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-5 py-5 text-start font-medium [&::-webkit-details-marker]:hidden"><span>{question}</span><ChevronDownIcon className="shrink-0 text-muted transition-transform duration-150 group-open:rotate-180" /></summary><div className="max-w-2xl pb-6 pe-8 text-base leading-7 text-muted">{children}</div></details>;
+}
+
+function LorWordmark({ className = "" }: { className?: string }) {
+  return <svg role="img" aria-label="LOR." viewBox="0 0 360 140" fill="none" className={className}><title>LOR.</title><g stroke="currentColor" strokeWidth="20" strokeLinecap="butt" strokeLinejoin="round"><path d="M10 20V110H60" /><circle cx="136" cy="70" r="40" /><path d="M222 20V120M222 30H256A25 25 0 0 1 256 80H222M222 80L301 110" /></g><circle cx="332" cy="105" r="15" fill="var(--live)" /></svg>;
+}
+
+function LorMark() {
+  return <svg aria-hidden="true" viewBox="0 0 64 64" className="h-7 w-7"><circle cx="27" cy="30" r="13" fill="none" stroke="currentColor" strokeWidth="8" /><circle cx="50" cy="45" r="6" fill="var(--live)" /></svg>;
 }
 
 function ArrowUpRightIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className={`h-4 w-4 ${className}`}>
-      <path d="M5.5 14.5 14.5 5.5M7 5.5h7.5V13" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className={`h-4 w-4 ${className}`}><path d="M5.5 14.5 14.5 5.5M7 5.5h7.5V13" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+}
+
+function BookIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-4 w-4"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H16v14H6.5A2.5 2.5 0 0 0 4 18V4.5ZM4 4.5V18M7 6h6M7 9h6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
 function CodeIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-4 w-4">
-      <path d="m7.25 6-4 4 4 4M12.75 6l4 4-4 4M11.5 4.5l-3 11" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-6 w-6"><path d="m7.25 6-4 4 4 4M12.75 6l4 4-4 4M11.5 4.5l-3 11" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
 function LinkIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6">
-      <path d="m9.5 14.5 5-5M7.25 17.75l-1.5 1.5a3.18 3.18 0 0 1-4.5-4.5l3.5-3.5a3.18 3.18 0 0 1 4.5 0M16.75 6.25l1.5-1.5a3.18 3.18 0 1 1 4.5 4.5l-3.5 3.5a3.18 3.18 0 0 1-4.5 0" strokeLinecap="round" />
-    </svg>
-  );
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6"><path d="m9.5 14.5 5-5M7.25 17.75l-1.5 1.5a3.18 3.18 0 0 1-4.5-4.5l3.5-3.5a3.18 3.18 0 0 1 4.5 0M16.75 6.25l1.5-1.5a3.18 3.18 0 1 1 4.5 4.5l-3.5 3.5a3.18 3.18 0 0 1-4.5 0" strokeLinecap="round" /></svg>;
 }
 
 function TogetherIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6">
-      <circle cx="8" cy="8" r="3" />
-      <circle cx="16" cy="8" r="3" />
-      <path d="M2.5 19c.6-3 2.4-4.5 5.5-4.5S12.9 16 13.5 19M10.5 19c.6-3 2.4-4.5 5.5-4.5s4.9 1.5 5.5 4.5" strokeLinecap="round" />
-    </svg>
-  );
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6"><circle cx="8" cy="8" r="3" /><circle cx="16" cy="8" r="3" /><path d="M2.5 19c.6-3 2.4-4.5 5.5-4.5S12.9 16 13.5 19M10.5 19c.6-3 2.4-4.5 5.5-4.5s4.9 1.5 5.5 4.5" strokeLinecap="round" /></svg>;
 }
 
 function EvidenceIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6">
-      <path d="M5 4.5h14v15H5z" strokeLinejoin="round" />
-      <path d="M8 9h8M8 12.5h6M8 16h4" strokeLinecap="round" />
-      <path d="M8 4.5V3h8v1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6"><path d="M5 4.5h14v15H5z" strokeLinejoin="round" /><path d="M8 9h8M8 12.5h6M8 16h4" strokeLinecap="round" /><path d="M8 4.5V3h8v1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
 function CaptionIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6">
-      <path d="M4 6.5h16v11H4z" strokeLinejoin="round" />
-      <path d="M7 10h3M14 10h3M7 14h6" strokeLinecap="round" />
-    </svg>
-  );
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6"><path d="M4 6.5h16v11H4z" strokeLinejoin="round" /><path d="M7 10h3M14 10h3M7 14h6" strokeLinecap="round" /></svg>;
 }
 
 function TimelineIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6">
-      <path d="M5 5v14M5 7h14M5 12h10M5 17h7" strokeLinecap="round" />
-      <circle cx="19" cy="7" r="1.5" />
-      <circle cx="15" cy="12" r="1.5" />
-      <circle cx="12" cy="17" r="1.5" />
-    </svg>
-  );
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6"><path d="M5 5v14M5 7h14M5 12h10M5 17h7" strokeLinecap="round" /><circle cx="19" cy="7" r="1.5" /><circle cx="15" cy="12" r="1.5" /><circle cx="12" cy="17" r="1.5" /></svg>;
 }
 
 function ChevronDownIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className={`h-4 w-4 ${className}`}>
-      <path d="m5 7.5 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className={`h-4 w-4 ${className}`}><path d="m5 7.5 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }

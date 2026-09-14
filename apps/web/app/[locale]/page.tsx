@@ -47,6 +47,9 @@ export default function Home({ params }: PageProps<"/[locale]">) {
               <Link className={MENU_LINK_CLASS} href="/about">
                 {t("links.about")}
               </Link>
+              <Link className={MENU_LINK_CLASS} href="/docs">
+                {t("links.docs")}
+              </Link>
               <a className={MENU_LINK_CLASS} href={REPO}>
                 {t("links.source")}
               </a>

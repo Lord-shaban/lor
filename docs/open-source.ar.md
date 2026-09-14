@@ -2,7 +2,8 @@
 
 LOR.‎ مشروع اجتماعات فيديو open-source، عربي أولاً: تدخل من لينك من غير حساب، وتحتفظ
 بنتيجة الميتنج المفيدة — transcript وقرارات مرتبطة بالدليل الأصلي. النسخة المستضافة
-[شغّالة هنا](https://lor-bay.vercel.app)، والكود والإيشوز على
+[شغّالة هنا](https://lor-bay.vercel.app)، وقصة المشروع والإعداد المترجمين موجودين في
+دوكس محلية على [`/docs`](/docs)، والكود والإيشوز على
 [GitHub](https://github.com/Lord-shaban/lor).
 
 الملف ده بيوضّح الشغل الجاي من غير ما يدّعي إنه اتنفّذ. قواعد الـPR موجودة في
@@ -50,8 +51,10 @@ open-source بتجربة أوضح:
 3. [#212](https://github.com/Lord-shaban/lor/issues/212): ترتيب قصة الـlanding بالنسختين
    وقائمة media مبنية على الديزاين الجديد بعد دمجه.
 4. [#213](https://github.com/Lord-shaban/lor/issues/213): landing page عامة بعد اعتماد
-   المحتوى، فيها شرح، GitHub، الموقع المباشر، وصور/فيديو ببديل نصي.
-5. [#220](https://github.com/Lord-shaban/lor/issues/220): مساهمة أولى لإضافة asset آمن
+   المحتوى، فيها شرح، الموقع المباشر، ومسار مصدر ثانوي، وصور/فيديو ببديل نصي.
+5. [#236](https://github.com/Lord-shaban/lor/issues/236): تحسين الـshowcase، إضافة لقطات
+   privacy-safe من launcher، وإطلاق دوكس محلية مترجمة في `/docs` و`/en/docs`.
+6. [#220](https://github.com/Lord-shaban/lor/issues/220): مساهمة أولى لإضافة asset آمن
    بعد اعتماد القائمة.
 
 التفاصيل المعتمدة موجودة في [brief الـlanding الإنجليزي](landing-brief.md) و[النسخة

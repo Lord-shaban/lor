@@ -20,6 +20,7 @@
     "links": {
       "menu": "Help and source",
       "about": "About LOR.",
+      "docs": "Docs",
       "source": "Source",
       "privacy": "Privacy and security",
       "help": "Help",
@@ -37,34 +38,62 @@
     "skip": "Skip to the project",
     "banner": {
       "label": "Open source · Arabic-first · AGPL-3.0",
-      "link": "See what ships today"
+      "link": "Read the product guide"
+    },
+    "brand": {
+      "name": "Live Open Rooms",
+      "tagline": "The room stays open. The thread stays useful."
     },
     "nav": {
       "label": "Landing navigation",
-      "overview": "Why LOR.",
+      "product": "Product",
       "features": "Features",
+      "docs": "Docs",
       "compare": "Compare",
-      "story": "How it works",
-      "openSource": "Open source",
-      "faq": "FAQ",
       "try": "Try the app"
     },
     "hero": {
       "kicker": "Open source · Arabic-first",
-      "title": "Meetings that remember what matters.",
+      "title": "The meeting is live. The useful thread stays.",
       "description": "<brand>LOR.</brand> is an open-source video meeting room for conversations that should leave something useful behind.",
-      "supporting": "A familiar link-in, a shared workspace, and a record you can return to when the call is over.",
+      "supporting": "A familiar link-in, a shared workspace, and a record you can return to when the call is over. Built for the way real teams speak, switch languages, and decide.",
       "liveCta": "Try the live app",
-      "sourceCta": "View the source",
+      "docsCta": "Read the docs",
+      "sourceLead": "Want to inspect the build?",
+      "sourceCta": "Open the source",
       "trustLabel": "Good to know",
       "trust": {
         "noAccount": "No account",
         "local": "Local recording stays in your tab",
         "ai": "The call works without <term>AI</term>"
       },
-      "mediaAlt": "A synthetic LOR. meeting view shows two call tiles beside a retained transcript and a host-reviewed decision.",
-      "mediaCaption": "A product surface, not a promise: the call stays live while its useful record stays scoped.",
-      "mediaTextLabel": "Read the visual description"
+      "mediaAlt": "A real LOR. product home screen shows the focused start-or-join flow with no account, no download, and the meeting launcher.",
+      "mediaCaption": "Captured from the shipped product in a clean local session. No room code, participant, transcript, or key is present.",
+      "mediaLabel": "Seen in the product"
+    },
+    "gallery": {
+      "eyebrow": "Product, not a moodboard",
+      "title": "See the surface before you trust the story.",
+      "intro": "The first screen gets people into a room. The shared workspace keeps the conversation close to the work. Each frame below is a privacy-safe capture of shipped UI language.",
+      "home": {
+        "eyebrow": "Start here",
+        "title": "A focused door into the room",
+        "body": "Create a room or paste an invitation link. The path is short, legible, and ready before optional AI features.",
+        "alt": "The shipped LOR. product home shows Start or join a meeting, a create-room action, a room-code field, and trust notes."
+      },
+      "menu": {
+        "eyebrow": "Stay oriented",
+        "title": "Help is nearby, never in the way",
+        "body": "Docs, security, contribution, roadmap, and the product entry point live together as quiet secondary routes.",
+        "alt": "The shipped LOR. product home has its Help and source menu open with About, Source, Privacy and security, Help, Contributing, Roadmap, and AGPL-3.0."
+      },
+      "workspace": {
+        "eyebrow": "In the room",
+        "title": "Keep the live moment and the record together",
+        "body": "Captions, shared work, and evidence-backed decisions stay close without making the call depend on a dashboard.",
+        "alt": "A privacy-safe synthetic LOR. meeting workspace shows two call tiles beside live captions and a retained record panel."
+      },
+      "disclosure": "The PNG captures are generated from the current local product UI with placeholder content only. The workspace illustration is synthetic until a reviewed community walkthrough lands."
     },
     "overview": {
       "eyebrow": "The LOR. difference",
@@ -243,6 +272,12 @@
       "copied": "Copied",
       "note": "Add your LiveKit and Supabase values to .env.local, then open http://localhost:3000."
     },
+    "docsCta": {
+      "eyebrow": "A better next click",
+      "title": "Learn the shape of LOR. before you leave the page.",
+      "body": "The local docs explain the room, the evidence boundary, the stack, and the contributor path in one calm place. GitHub is there when you are ready to inspect or change the code.",
+      "cta": "Open the docs hub"
+    },
     "faq": {
       "eyebrow": "Before you join",
       "title": "Questions worth answering.",
@@ -275,16 +310,15 @@
       "title": "Start with a real meeting.",
       "body": "Try the hosted app, then open the source when you want to see how it works or help shape what comes next.",
       "liveCta": "Open the live app",
-      "sourceCta": "Open GitHub"
+      "docsCta": "Read the docs"
     },
     "footer": {
-      "name": "<brand>LOR.</brand> — Live Open Rooms",
+      "descriptor": "Live Open Rooms",
       "tagline": "Open-source video meetings that remember.",
       "label": "Footer links",
-      "setup": "Setup guide",
+      "docs": "Docs",
+      "source": "Source",
       "security": "Security",
-      "releases": "Releases",
-      "community": "Discussions",
       "product": "Start a meeting"
     }
   },
@@ -924,6 +958,184 @@
         "action_item_owner_invalid": "Choose a participant from this meeting before opening the task.",
         "action_item_due_invalid": "Choose a complete YYYY-MM-DD due date before opening the task."
       }
+    }
+  },
+  "docs": {
+    "metadata": {
+      "title": "LOR. Docs — Understand the room",
+      "description": "A practical guide to running, understanding, and contributing to LOR. open-source video meetings."
+    },
+    "skip": "Skip to the documentation",
+    "nav": {
+      "label": "Documentation navigation",
+      "product": "Product",
+      "landing": "Project page",
+      "docs": "Docs",
+      "community": "Community",
+      "try": "Try the app",
+      "source": "Source"
+    },
+    "breadcrumb": {
+      "home": "LOR.",
+      "docs": "Docs"
+    },
+    "title": "The room is easy. The edges are documented.",
+    "intro": "A short, honest guide to what LOR. ships today, how the pieces fit together, and where a contributor can make the next useful change.",
+    "status": "v0.6 shipped · Arabic-first · AGPL-3.0",
+    "toc": {
+      "label": "On this page",
+      "start": "Start here",
+      "what": "What LOR. is",
+      "workflow": "How a room works",
+      "boundaries": "What is promised",
+      "architecture": "Architecture",
+      "contribute": "Contribute",
+      "help": "Questions"
+    },
+    "quickStart": {
+      "eyebrow": "Start locally",
+      "title": "Run the same room you just saw.",
+      "intro": "The hosted app is the fastest way to try LOR. The local path is for reading the code, changing a focused issue, or testing a boundary on your own machine.",
+      "label": "Quick start",
+      "hint": "Three commands, then add your local values",
+      "copy": "Copy commands",
+      "copied": "Copied",
+      "note": "Put LiveKit and Supabase values in .env.local. The call itself does not depend on an AI key.",
+      "details": "The full configuration list lives in .env.example and the repository README."
+    },
+    "overview": {
+      "eyebrow": "A useful mental model",
+      "title": "Live first. Retained second. Optional AI around the edges.",
+      "intro": "LOR. keeps the call dependable, then lets the host turn retained evidence into a record people can actually use.",
+      "cards": {
+        "call": {
+          "title": "The call",
+          "body": "Video, audio, chat, captions, screen share, board, notes, and local recording stay available without an AI key."
+        },
+        "record": {
+          "title": "The record",
+          "body": "Retained captions anchor confirmed decisions, action items, Timeline, Memory, and room-scoped search."
+        },
+        "boundary": {
+          "title": "The boundary",
+          "body": "Evidence is room-scoped and deletable. Local recordings stay in the browser tab; keys never enter storage."
+        }
+      }
+    },
+    "what": {
+      "eyebrow": "The product",
+      "title": "A video room for conversations that should leave something useful behind.",
+      "body": "Open a link, type a display name, and join. During the call, people can work together in the same room. Afterward, the useful record stays tied to its source instead of becoming a loose summary.",
+      "mixed": "Arabic and English can share a sentence without asking the transcript to choose a different language.",
+      "linkLabel": "See the public story"
+    },
+    "workflow": {
+      "eyebrow": "One room, one thread",
+      "title": "How a meeting becomes a record.",
+      "intro": "The flow is intentionally small. Each step has a clear owner and a clear edge.",
+      "steps": {
+        "join": {
+          "title": "Join",
+          "body": "Share a room link, enter a name, and use the prejoin screen to check your devices before anyone hears you."
+        },
+        "work": {
+          "title": "Work together",
+          "body": "Keep chat, captions, a shared board, rich notes, and a local WebM close to the conversation."
+        },
+        "review": {
+          "title": "Review and return",
+          "body": "A host confirms decisions and participant-owned commitments. Timeline, Memory, and search return to retained evidence."
+        }
+      }
+    },
+    "boundaries": {
+      "eyebrow": "Read this before you build",
+      "title": "What LOR. promises today.",
+      "intro": "The product is deliberately explicit about what is shipped and what remains a contribution boundary.",
+      "caption": "Current and planned LOR. capabilities",
+      "capability": "Capability",
+      "today": "Shipped today",
+      "planned": "Planned / not a promise",
+      "rows": {
+        "call": {
+          "label": "Video meeting",
+          "today": "LiveKit room, prejoin, chat, screen share",
+          "planned": "No account system or paid tier"
+        },
+        "evidence": {
+          "label": "Retained evidence",
+          "today": "Captions, decisions, tasks, Timeline, Memory, search",
+          "planned": "No cross-room or live-occurrence indexing"
+        },
+        "privacy": {
+          "label": "Privacy edges",
+          "today": "Room scope, retention cleanup, local-only recording",
+          "planned": "Self-hosting contract is v0.9 work"
+        },
+        "extension": {
+          "label": "Extensions",
+          "today": "A focused repository and public issues",
+          "planned": "Integrations in v0.8; plugin ecosystem in v1.0"
+        }
+      }
+    },
+    "architecture": {
+      "eyebrow": "Under the surface",
+      "title": "Short requests. One real-time room.",
+      "intro": "Media and shared meeting state travel over LiveKit. Next.js handles short request/response work; Postgres holds the retained projection.",
+      "code": "Browser (Next.js)\n  │ WebRTC media + LiveKit data channel\n  │ chat · captions · board · notes · reactions\n  ▼\nLiveKit (cloud today)\n  │ short REST requests\n  ▼\nNext.js route handlers\n  │ tokens · rooms · admission · AI proxy\n  ▼\nPostgres + pgvector\n  retained captions · decisions · tasks · usage",
+      "note": "The application does not run its own long-lived WebSocket server. That boundary keeps the same code usable on a hosted or future self-hosted box."
+    },
+    "contribute": {
+      "eyebrow": "Pick up a thread",
+      "title": "Make one small change reproducible.",
+      "body": "Every contribution starts with a scoped issue, a branch, the required checks, and a pull request that explains what changed. Arabic RTL is the first layout pass; English LTR follows.",
+      "steps": {
+        "read": "Read the contribution contract",
+        "choose": "Choose a focused issue with acceptance criteria",
+        "verify": "Run typecheck, lint, tests, build, and the relevant browser check"
+      },
+      "cta": "Read CONTRIBUTING.md",
+      "roadmap": "See the contribution map"
+    },
+    "help": {
+      "eyebrow": "Before you open an issue",
+      "title": "Questions that save a round trip.",
+      "intro": "If an answer is not here, the repository issue templates keep the next question concrete.",
+      "items": {
+        "keys": {
+          "question": "Do API keys reach storage?",
+          "answer": "No. Operator keys stay server-only, and a participant's key is encrypted in the browser and forwarded without being written to the database, logs, or cache."
+        },
+        "ai": {
+          "question": "Does an AI outage break the call?",
+          "answer": "No. AI features degrade to their bounded fallback; video, audio, collaboration, and local recording keep their own path."
+        },
+        "selfHost": {
+          "question": "Can I self-host it now?",
+          "answer": "The self-hosting contract is planned for v0.9. The current public path is the hosted demo and the reproducible local development setup."
+        },
+        "language": {
+          "question": "Why is Arabic the first pass?",
+          "answer": "Mixed Arabic/English speech and RTL layout are first-class product constraints. Every UI change is checked in Arabic before English."
+        }
+      }
+    },
+    "next": {
+      "title": "Choose your next depth",
+      "body": "Try the room, read the project story, or open the source when you have a concrete question to answer.",
+      "project": "Read the project page",
+      "try": "Try the live app",
+      "source": "Open the source"
+    },
+    "footer": {
+      "label": "Documentation footer",
+      "landing": "Project page",
+      "product": "Start a meeting",
+      "source": "Source",
+      "security": "Security",
+      "license": "AGPL-3.0",
+      "tagline": "Open-source video meetings that remember."
     }
   },
   "keys": {

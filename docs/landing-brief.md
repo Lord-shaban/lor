@@ -1,6 +1,6 @@
 # LOR. public landing brief
 
-Status: approved content and media contract for issue [#213](https://github.com/Lord-shaban/lor/issues/213), extended for the showcase pass in [#234](https://github.com/Lord-shaban/lor/issues/234).
+Status: approved content and media contract for issue [#213](https://github.com/Lord-shaban/lor/issues/213), extended for the showcase pass in [#234](https://github.com/Lord-shaban/lor/issues/234), and refined with the public docs hub in [#236](https://github.com/Lord-shaban/lor/issues/236).
 This brief is the source for the public project page; it does not change the product
 launcher at `/[locale]`.
 
@@ -11,7 +11,7 @@ Within the first viewport they should understand the promise, see that the produ
 real, and choose one of two honest next steps:
 
 - **Try the live app** at [lor-bay.vercel.app](https://lor-bay.vercel.app).
-- **View the source** at [github.com/Lord-shaban/lor](https://github.com/Lord-shaban/lor).
+- **Read the product docs** at the local [`/docs`](/docs) hub.
 
 The public routes are `/about` for the Arabic default locale and `/en/about` for English
 (`/ar/about` remains an explicit locale alias). The default locale may also be reached
@@ -41,11 +41,20 @@ capability comparison → privacy and control → open source and quick start �
 final actions**. The comparison uses a generic “conventional room” baseline rather than
 naming competitors; every LOR. cell maps to a shipped README or release capability.
 
+Issue #236 makes the identity explicit with the official LOR. geometry, a short
+“Live Open Rooms” lockup, and a local docs CTA. GitHub remains a deliberately quieter
+source/community path instead of being repeated as the page's primary action. The page
+also includes a first-class localized docs hub at `/docs` and `/en/docs`: quick start,
+workflow, shipped-versus-planned boundaries, architecture, contribution steps, and FAQ.
+
 The quick-start panel mirrors the repository's current `#quick-start` commands and has a
 copy button plus the visible code block as its fallback. FAQ answers are native
 `details` disclosures so they remain keyboard and screen-reader accessible without
-client-side navigation. The existing synthetic preview remains the only media until a
-privacy-safe contribution satisfies [#220](https://github.com/Lord-shaban/lor/issues/220).
+client-side navigation. The hero/gallery now use privacy-reviewed captures of the shipped
+local launcher (`product-home-crop.png`, `product-home-menu-crop.png`, and
+`product-home-ar-crop.png`) with placeholder room data; the workspace illustration remains
+synthetic until a privacy-safe contribution satisfies
+[#220](https://github.com/Lord-shaban/lor/issues/220).
 
 ## Approved copy vocabulary
 
@@ -63,13 +72,16 @@ features are required, always available, or free from provider limits.
 
 ## Media inventory
 
-The first implementation ships one static product visual and its text alternative. A
-video is an optional enhancement, not a dependency for understanding the page.
+The showcase ships responsive product captures and their text alternatives. A video is
+an optional enhancement, not a dependency for understanding the page.
 
 | Asset | Owner | Purpose | Target format / dimensions | Text alternative | Privacy and licence | Status |
 |---|---|---|---|---|---|---|
 | `landing/product-preview.svg` | LOR. maintainers | Show the shipped launcher and evidence workspace language in the hero proof surface. | SVG, viewBox 1440×900; rendered responsively with `next/image` or inline fallback. | EN: “A synthetic LOR. meeting view shows the call stage beside a retained transcript and a host-reviewed decision.” AR: equivalent sentence, with all Latin runs isolated. | Project-authored vector; synthetic labels only; no room code, name, transcript, device label, key, or self-view. AGPL-3.0 repository asset. | Approved for #213; static fallback. |
-| `landing/product-screenshot.webp` | LOR. maintainers | Optional replacement for the vector when a real shipped screen is captured. | WebP, 1600×1000 source, responsive derivatives. | Same semantic description as the vector, updated to match the captured state. | Capture from a local synthetic room only; review before publishing; no private data. | Follow-up capture, not required to block #213. |
+| `landing/product-home-crop.png` | LOR. maintainers | Show the real launcher in the English hero/gallery. | PNG, 672×704; fixed intrinsic dimensions and responsive rendering. | “A privacy-safe capture of the LOR. launcher shows the join form, recent rooms, and local-first controls.” | Captured from the local product with synthetic room code `mza-krfq-tqn`; no account, person, transcript, key, or self-view. AGPL-3.0 repository asset. | Shipped in #236. |
+| `landing/product-home-menu-crop.png` | LOR. maintainers | Show the same launcher with its navigation menu open, making the information architecture tangible. | PNG, 672×704; fixed intrinsic dimensions and responsive rendering. | “The LOR. launcher menu keeps meetings, saved evidence, and settings in one compact navigation.” | Same synthetic local capture and review rules as the hero image. | Shipped in #236. |
+| `landing/product-home-ar-crop.png` | LOR. maintainers | Provide an Arabic-first RTL capture for the Arabic landing page. | PNG, 672×704; fixed intrinsic dimensions and responsive rendering. | Equivalent Arabic description with isolated Latin product terms. | Same synthetic local capture and review rules as the hero image. | Shipped in #236. |
+| `landing/product-screenshot.webp` | LOR. maintainers | Optional future replacement for the vector when a wider real shipped screen is captured. | WebP, 1600×1000 source, responsive derivatives. | Same semantic description as the captured state. | Capture from a local synthetic room only; review before publishing; no private data. | Follow-up capture, not required for #236. |
 | `landing/walkthrough.webm` + `landing/walkthrough.vtt` | Community contributor via [#220](https://github.com/Lord-shaban/lor/issues/220) | Demonstrate one short path from link → call → retained evidence. | WebM, ≤45s, 1280×720; VTT captions and a poster. | Full transcript supplied beside the player; captions are not the only source. | Silent or captioned synthetic demo; no autoplay; pause when hidden; contributor credits and licence recorded with the asset. | Optional; do not invent a placeholder video. |
 
 The implementation must use `next/image` for raster images, reserve media dimensions to
@@ -82,7 +94,8 @@ transcript, keyboard operation, and a reduced-motion poster state.
 | Label | URL | Use |
 |---|---|---|
 | Try the live app | `https://lor-bay.vercel.app` | Primary CTA; opens the product launcher. |
-| View the source | `https://github.com/Lord-shaban/lor` | Primary CTA; repository, issues, and discussions. |
+| Product docs | `/docs` and `/en/docs` | Localized setup, workflow, boundaries, architecture, and contribution guide. |
+| View the source | `https://github.com/Lord-shaban/lor` | Secondary source/community path; repository, issues, and discussions. |
 | Setup guide | `https://github.com/Lord-shaban/lor#quick-start` | Contributor/developer onboarding. |
 | Contributing | `https://github.com/Lord-shaban/lor/blob/main/CONTRIBUTING.md` | Workflow, checks, and PR contract. |
 | Security | `https://github.com/Lord-shaban/lor/blob/main/SECURITY.md` | Privacy and disclosure boundary. |

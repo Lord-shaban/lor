@@ -13,7 +13,7 @@
 [![CI](https://github.com/Lord-shaban/lor/actions/workflows/ci.yml/badge.svg)](https://github.com/Lord-shaban/lor/actions/workflows/ci.yml)
 [![Roadmap](https://img.shields.io/badge/roadmap-v0.0%20%E2%86%92%20v1.0-6366f1)](https://github.com/Lord-shaban/lor/milestones)
 
-[English](README.md) · [خريطة الطريق](#خريطة-الطريق) · [الاستضافة الذاتية](#الاستضافة-الذاتية) · [المساهمة](CONTRIBUTING.md) · [خريطة open-source](docs/open-source.ar.md)
+[English](README.md) · [صفحة المشروع](https://lor-bay.vercel.app/about) · [الدوكس](https://lor-bay.vercel.app/docs) · [خريطة الطريق](#خريطة-الطريق) · [الاستضافة الذاتية](#الاستضافة-الذاتية) · [المساهمة](CONTRIBUTING.md) · [خريطة open-source](docs/open-source.ar.md)
 
 </div>
 
