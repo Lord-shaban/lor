@@ -31,7 +31,7 @@
     "livekit-client": "^2.22.2",
     "livekit-server-sdk": "^2.18.0",
     "next": "16.3.4",
-    "next-intl": "^4.14.2",
+    "next-intl": "^4.14.4",
     "qrcode-generator": "^2.0.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
