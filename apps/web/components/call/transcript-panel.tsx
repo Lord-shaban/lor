@@ -127,7 +127,7 @@ export function TranscriptPanel({
 
   return (
     <aside
-      className="absolute inset-y-0 end-0 z-30 flex w-full max-w-md flex-col border-s border-[#27272a] bg-[#111113] md:static md:z-auto md:w-[min(28rem,38vw)] md:shrink-0"
+      className="absolute inset-y-0 end-0 z-30 flex w-full max-w-md flex-col border-s border-[#27272a] bg-[#111113] lg:static lg:z-auto lg:w-[min(28rem,38vw)] lg:shrink-0"
       aria-label={t("title")}
     >
       <header className="flex items-baseline justify-between gap-2 border-b border-[#27272a] px-4 py-3">

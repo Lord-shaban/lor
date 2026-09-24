@@ -97,11 +97,12 @@ export function CallControls({
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled } =
     useLocalParticipant();
   const [screenShareSupported] = useState(canShareScreen);
-  const [openMenu, setOpenMenu] = useState<"workspaces" | "more" | null>(null);
+  const [openMenu, setOpenMenu] = useState<"workspaces" | "more" | "reactions" | null>(null);
   const dockRef = useRef<HTMLDivElement>(null);
   const chatTriggerRef = useRef<HTMLButtonElement>(null);
   const workspaceTriggerRef = useRef<HTMLButtonElement>(null);
   const moreTriggerRef = useRef<HTMLButtonElement>(null);
+  const reactionsTriggerRef = useRef<HTMLButtonElement>(null);
   const previousWorkspaceRef = useRef<CallWorkspace | null>(activeWorkspace);
 
   const screenShareOn = Boolean(
@@ -113,8 +114,7 @@ export function CallControls({
       participant.getTrackPublication(Track.Source.ScreenShare),
   );
   const workspaceOpen = activeWorkspace !== null && activeWorkspace !== "door" && activeWorkspace !== "chat";
-  const moreLive =
-    screenShareOn || captionsOn || recording.status === "recording";
+  const moreLive = recording.status === "recording";
 
   useEffect(() => {
     if (!openMenu) return;
@@ -134,8 +134,11 @@ export function CallControls({
     function onKeyDown(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
       event.preventDefault();
-      const trigger =
-        openMenu === "workspaces" ? workspaceTriggerRef.current : moreTriggerRef.current;
+      const trigger = openMenu === "workspaces"
+        ? workspaceTriggerRef.current
+        : openMenu === "reactions"
+          ? reactionsTriggerRef.current
+          : moreTriggerRef.current;
       setOpenMenu(null);
       requestAnimationFrame(() => trigger?.focus());
     }
@@ -163,10 +166,13 @@ export function CallControls({
     requestAnimationFrame(() => trigger?.focus());
   }, [activeWorkspace]);
 
-  function closeMenuAndFocus(menu: "workspaces" | "more") {
+  function closeMenuAndFocus(menu: "workspaces" | "more" | "reactions") {
     setOpenMenu(null);
-    const trigger =
-      menu === "workspaces" ? workspaceTriggerRef.current : moreTriggerRef.current;
+    const trigger = menu === "workspaces"
+      ? workspaceTriggerRef.current
+      : menu === "reactions"
+        ? reactionsTriggerRef.current
+        : moreTriggerRef.current;
     requestAnimationFrame(() => trigger?.focus());
   }
 
@@ -184,9 +190,9 @@ export function CallControls({
     >
       <div
         data-testid="call-dock"
-        className="grid h-16 grid-cols-5 items-stretch gap-2 px-2 py-2 lg:flex lg:items-center lg:justify-center lg:gap-2 lg:px-4"
+        className="relative grid h-16 grid-cols-5 items-stretch gap-2 px-2 py-2 lg:flex lg:items-center lg:justify-center lg:gap-2 lg:px-4"
       >
-        <div className="hidden min-w-0 lg:me-auto lg:block">
+        <div className="hidden min-w-0 lg:absolute lg:start-4 lg:top-1/2 lg:block lg:-translate-y-1/2">
           <RoomHeader code={code} inviteUrl={inviteUrl} />
         </div>
         <MediaButton
@@ -225,6 +231,43 @@ export function CallControls({
             />
           </div>
         )}
+
+        <div className="hidden lg:block">
+          <DockButton
+            icon={<HandIcon />}
+            label={handRaised ? t("hands.lower") : t("hands.raise")}
+            active={handRaised}
+            aria-pressed={handRaised}
+            onClick={onToggleHand}
+          />
+        </div>
+        <div className="hidden lg:block">
+          <DockButton
+            icon={<CaptionsIcon />}
+            label={captionsOn ? t("captions.turnOff") : t("captions.turnOn")}
+            active={captionsOn}
+            live={captionsOn}
+            aria-pressed={captionsOn}
+            onClick={onToggleCaptions}
+          />
+        </div>
+
+        <div className="relative hidden lg:block">
+          <DockButton
+            ref={reactionsTriggerRef}
+            icon={<ReactionIcon />}
+            label={t("reactions.open")}
+            active={openMenu === "reactions"}
+            aria-expanded={openMenu === "reactions"}
+            aria-controls="call-reactions-menu"
+            onClick={() => setOpenMenu((current) => current === "reactions" ? null : "reactions")}
+          />
+          {openMenu === "reactions" && (
+            <ControlPopover id="call-reactions-menu" menu="reactions" title={t("reactions.open")}>
+              <ReactionPicker onReact={onReact} onAfterAction={() => closeMenuAndFocus("reactions")} />
+            </ControlPopover>
+          )}
+        </div>
 
         <DockButton
           ref={chatTriggerRef}
@@ -345,9 +388,9 @@ export function CallControls({
               <div className="border-b border-[#2a2a2e] px-3 py-2 lg:hidden">
                 <RoomHeader code={code} inviteUrl={inviteUrl} inMenu />
               </div>
-              <MenuSection title={t("controls.participate")} columns={2}>
-                {canPublish && screenShareSupported && (
-                  <div className="lg:hidden">
+              <div className="lg:hidden">
+                <MenuSection title={t("controls.participate")} columns={2}>
+                  {canPublish && screenShareSupported && (
                     <MenuAction
                       label={screenShareOn ? t("stopSharing") : t("shareScreen")}
                       active={screenShareOn}
@@ -358,48 +401,31 @@ export function CallControls({
                         closeMenuAndFocus("more");
                       }}
                     />
-                  </div>
-                )}
-                <MenuAction
-                  label={handRaised ? t("hands.lower") : t("hands.raise")}
-                  active={handRaised}
-                  onClick={() => {
-                    onToggleHand();
-                    closeMenuAndFocus("more");
-                  }}
-                />
-                <div className="col-span-2 lg:col-span-1">
+                  )}
                   <MenuAction
-                    label={captionsOn ? t("captions.turnOff") : t("captions.turnOn")}
-                    active={captionsOn}
-                    live={captionsOn}
+                    label={handRaised ? t("hands.lower") : t("hands.raise")}
+                    active={handRaised}
                     onClick={() => {
-                      onToggleCaptions();
+                      onToggleHand();
                       closeMenuAndFocus("more");
                     }}
                   />
-                </div>
-              </MenuSection>
+                  <div className="col-span-2">
+                    <MenuAction
+                      label={captionsOn ? t("captions.turnOff") : t("captions.turnOn")}
+                      active={captionsOn}
+                      live={captionsOn}
+                      onClick={() => {
+                        onToggleCaptions();
+                        closeMenuAndFocus("more");
+                      }}
+                    />
+                  </div>
+                </MenuSection>
+              </div>
 
-              <div
-                role="group"
-                aria-label={t("reactions.open")}
-                className="grid grid-cols-6 gap-1 border-t border-[#2a2a2e] px-3 py-3"
-              >
-                {REACTIONS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    aria-label={t(`reactions.${REACTION_LABELS[emoji]}`)}
-                    onClick={() => {
-                      onReact(emoji);
-                      closeMenuAndFocus("more");
-                    }}
-                    className="h-11 min-w-0 rounded-md text-xl leading-none transition-colors duration-150 hover:bg-[#2a2a2e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f5]"
-                  >
-                    <span aria-hidden="true">{emoji}</span>
-                  </button>
-                ))}
+              <div className="lg:hidden">
+                <ReactionPicker onReact={onReact} onAfterAction={() => closeMenuAndFocus("more")} />
               </div>
 
               <div className="lg:hidden">
@@ -452,16 +478,18 @@ export function CallControls({
           )}
         </div>
 
-        <DockButton
-          icon={<LeaveIcon />}
-          label={t("leave")}
-          shortLabel={t("controls.leaveShort")}
-          danger
-          onClick={() => {
-            void room.disconnect();
-            onLeave();
-          }}
-        />
+        <div className="min-w-0 lg:ms-3">
+          <DockButton
+            icon={<LeaveIcon />}
+            label={t("leave")}
+            shortLabel={t("controls.leaveShort")}
+            danger
+            onClick={() => {
+              void room.disconnect();
+              onLeave();
+            }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -474,7 +502,7 @@ function ControlPopover({
   children,
 }: {
   id: string;
-  menu: "workspaces" | "more";
+  menu: "workspaces" | "more" | "reactions";
   title: string;
   children: ReactNode;
 }) {
@@ -568,6 +596,35 @@ function MenuAction({
         </span>
       )}
     </button>
+  );
+}
+
+function ReactionPicker({
+  onReact,
+  onAfterAction,
+}: {
+  onReact: (emoji: Reaction) => void;
+  onAfterAction: () => void;
+}) {
+  const t = useTranslations("call");
+
+  return (
+    <div role="group" aria-label={t("reactions.open")} className="grid grid-cols-6 gap-1 border-t border-[#2a2a2e] px-3 py-3">
+      {REACTIONS.map((emoji) => (
+        <button
+          key={emoji}
+          type="button"
+          aria-label={t(`reactions.${REACTION_LABELS[emoji]}`)}
+          onClick={() => {
+            onReact(emoji);
+            onAfterAction();
+          }}
+          className="h-11 min-w-0 rounded-md text-xl leading-none transition-colors duration-150 hover:bg-[#2a2a2e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f5]"
+        >
+          <span aria-hidden="true">{emoji}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -680,6 +737,7 @@ function DockButton({
   label,
   shortLabel,
   ariaLabel,
+  title,
   active = false,
   live = false,
   danger = false,
@@ -701,8 +759,9 @@ function DockButton({
       ref={ref}
       type="button"
       aria-label={ariaLabel ?? label}
+      title={title ?? label}
       className={cn(
-        "relative flex h-full w-full min-w-11 flex-col items-center justify-center gap-1 rounded-md px-1 text-[0.625rem] font-medium transition-colors duration-150 sm:h-11 sm:min-w-20 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm lg:w-auto",
+        "relative flex h-full w-full min-w-11 flex-col items-center justify-center gap-1 rounded-md px-1 text-[0.625rem] font-medium transition-colors duration-150 sm:h-11 sm:min-w-20 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm lg:w-11 lg:min-w-11 lg:flex-col lg:px-0",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f5] disabled:cursor-not-allowed disabled:opacity-50",
         danger
           ? "bg-[#f87171] text-[#0a0a0b] hover:opacity-90"
@@ -719,7 +778,7 @@ function DockButton({
         )}
       </span>
       <span className="max-w-full truncate sm:hidden">{shortLabel ?? label}</span>
-      <span className="hidden max-w-full truncate sm:inline">{label}</span>
+      <span className="hidden max-w-full truncate sm:inline lg:sr-only">{label}</span>
       {badge && (
         <span
           aria-hidden="true"
@@ -777,6 +836,32 @@ function ScreenShareIcon() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5" aria-hidden="true">
       <rect x="3" y="4" width="18" height="13" rx="2" />
       <path d="M8 21h8M12 17v4M9 11l3-3 3 3M12 8v6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function HandIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
+      <path d="M7 12V7a1.5 1.5 0 0 1 3 0v4-6a1.5 1.5 0 0 1 3 0v6-5a1.5 1.5 0 0 1 3 0v5-3a1.5 1.5 0 0 1 3 0v6c0 4-2.7 7-6.5 7h-2c-2.3 0-3.5-1-4.8-2.8L3.7 15a1.7 1.7 0 0 1 2.7-2Z" />
+    </svg>
+  );
+}
+
+function CaptionsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-5" aria-hidden="true">
+      <rect x="2.5" y="5" width="19" height="14" rx="2" />
+      <path d="M10 10H8a2 2 0 0 0 0 4h2M18 10h-2a2 2 0 0 0 0 4h2" />
+    </svg>
+  );
+}
+
+function ReactionIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 14.5a5 5 0 0 0 8 0M8.5 9.5h.01M15.5 9.5h.01" />
     </svg>
   );
 }
