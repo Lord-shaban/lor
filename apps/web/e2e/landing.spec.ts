@@ -17,7 +17,7 @@ const copy = {
     source: "استعرض الشيفرة",
     visual: "تصوّر توضيحي مبني على واجهة الاجتماع والقرارات؛ لا يعرض اجتماعاً حقيقياً أو بيانات مستخدمين.",
     product: "كل ما تحتاج إليه، في سياق الاجتماع.",
-    compare: "المكالمة بداية، مش أرشيف.",
+    compare: "أي مساحة تناسب اجتماعك؟",
     faq: "أسئلة تستاهل إجابة.",
     copy: "انسخ الأوامر",
   },
@@ -30,7 +30,7 @@ const copy = {
     source: "Open the source",
     visual: "Illustrative view based on the meeting and decision interfaces. It contains no real meeting or user data.",
     product: "What you need, in the meeting context.",
-    compare: "A call is the beginning, not the archive.",
+    compare: "Which space fits your meeting?",
     faq: "Questions worth answering.",
     copy: "Copy commands",
   },
@@ -70,8 +70,11 @@ test.describe("public project landing", () => {
           await expect(page.locator(`#${id}`)).toBeVisible();
         }
         await expect(page.locator("#compare table")).toHaveCount(1);
-        await expect(page.locator("#compare thead th")).toHaveCount(3);
-        await expect(page.locator("#compare tbody tr")).toHaveCount(7);
+        await expect(page.locator("#compare thead th")).toHaveCount(4);
+        await expect(page.locator("#compare tbody tr")).toHaveCount(5);
+        const comparison = width < 1024 ? page.locator("#compare article").first() : page.locator("#compare table");
+        await expect(comparison.getByText("Zoom", { exact: true }).first()).toBeVisible();
+        await expect(comparison.getByText("Google Meet", { exact: true }).first()).toBeVisible();
         await expect(page.getByRole("button", { name: text.copy, exact: true })).toBeVisible();
         await expect(page.locator("#faq details")).toHaveCount(5);
         await expect(page.locator('a[href="#product"]')).toHaveCount(1);

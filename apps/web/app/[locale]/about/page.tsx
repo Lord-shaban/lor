@@ -262,28 +262,47 @@ export default function PublicLanding({
               <p className="max-w-2xl text-base leading-7 text-muted sm:text-lg">{t("compare.intro")}</p>
             </div>
 
-            <div className="mt-12 overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-background">
-              <table className="w-full min-w-[42rem] border-collapse text-start text-sm">
+            <div className="mt-12 hidden overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-background lg:block">
+              <table className="w-full min-w-[48rem] border-collapse text-start text-sm">
                 <caption className="sr-only">{t("compare.caption")}</caption>
                 <thead className="bg-surface">
                   <tr className="border-b border-border">
-                    <th scope="col" className="w-[34%] px-5 py-4 font-medium">{t("compare.capability")}</th>
-                    <th scope="col" className="w-[33%] px-5 py-4 font-medium text-muted">{t("compare.baseline")}</th>
-                    <th scope="col" className="w-[33%] px-5 py-4 font-semibold">{t("compare.lor")}</th>
+                    <th scope="col" className="w-[22%] px-5 py-4 font-medium">{t("compare.capability")}</th>
+                    <th scope="col" className="w-[26%] px-5 py-4 font-semibold">{t("compare.lor")}</th>
+                    <th scope="col" className="w-[26%] px-5 py-4 font-medium">Zoom</th>
+                    <th scope="col" className="w-[26%] px-5 py-4 font-medium">Google Meet</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  <ComparisonRow label={t("compare.rows.join.label")} baseline={t("compare.rows.join.baseline")} lor={t("compare.rows.join.lor")} />
-                  <ComparisonRow label={t("compare.rows.collaboration.label")} baseline={t("compare.rows.collaboration.baseline")} lor={t("compare.rows.collaboration.lor")} />
-                  <ComparisonRow label={t("compare.rows.captions.label")} baseline={t("compare.rows.captions.baseline")} lor={t("compare.rows.captions.lor")} />
-                  <ComparisonRow label={t("compare.rows.record.label")} baseline={t("compare.rows.record.baseline")} lor={t("compare.rows.record.lor")} />
-                  <ComparisonRow label={t("compare.rows.evidence.label")} baseline={t("compare.rows.evidence.baseline")} lor={t("compare.rows.evidence.lor")} />
-                  <ComparisonRow label={t("compare.rows.search.label")} baseline={t("compare.rows.search.baseline")} lor={t("compare.rows.search.lor")} />
-                  <ComparisonRow label={t("compare.rows.ai.label")} baseline={t("compare.rows.ai.baseline")} lor={t("compare.rows.ai.lor")} />
+                  {(["join", "collaboration", "captions", "record", "evidence"] as const).map((row) => (
+                    <ComparisonRow key={row} label={t(`compare.rows.${row}.label`)} lor={t(`compare.rows.${row}.lor`)} zoom={t(`compare.rows.${row}.zoom`)} meet={t(`compare.rows.${row}.meet`)} />
+                  ))}
                 </tbody>
               </table>
             </div>
-            <p className="mt-4 text-sm leading-6 text-muted">{t("compare.note")}</p>
+            <div className="mt-10 grid gap-3 lg:hidden sm:grid-cols-2">
+              {(["join", "collaboration", "captions", "record", "evidence"] as const).map((row) => (
+                <article key={row} className="rounded-[var(--radius-lg)] border border-border bg-background p-5">
+                  <h3 className="font-semibold">{t(`compare.rows.${row}.label`)}</h3>
+                  <dl className="mt-4 grid gap-3 text-sm leading-6">
+                    <div><dt className="font-medium">{t("compare.lor")}</dt><dd className="mt-1 text-muted">{t(`compare.rows.${row}.lor`)}</dd></div>
+                    <div><dt className="font-medium">Zoom</dt><dd className="mt-1 text-muted">{t(`compare.rows.${row}.zoom`)}</dd></div>
+                    <div><dt className="font-medium">Google Meet</dt><dd className="mt-1 text-muted">{t(`compare.rows.${row}.meet`)}</dd></div>
+                  </dl>
+                </article>
+              ))}
+            </div>
+            <p className="mt-5 max-w-4xl text-sm leading-6 text-muted">{t("compare.note")}</p>
+            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+              <a className={TEXT_LINK} href="https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0059553">{t("compare.sources.zoomJoin")}</a>
+              <a className={TEXT_LINK} href="https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0058013">{t("compare.sources.zoomSummary")}</a>
+              <a className={TEXT_LINK} href="https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0059856">{t("compare.sources.zoomRecord")}</a>
+              <a className={TEXT_LINK} href="https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0058810">{t("compare.sources.zoomCaptions")}</a>
+              <a className={TEXT_LINK} href="https://support.google.com/meet/answer/9303069?hl=en">{t("compare.sources.meetJoin")}</a>
+              <a className={TEXT_LINK} href="https://support.google.com/meet/answer/14754931?hl=en">{t("compare.sources.meetNotes")}</a>
+              <a className={TEXT_LINK} href="https://support.google.com/meet/answer/9308681?hl=en">{t("compare.sources.meetRecord")}</a>
+              <a className={TEXT_LINK} href="https://support.google.com/meet/answer/15077804?hl=en">{t("compare.sources.meetCaptions")}</a>
+            </div>
           </div>
         </section>
 
@@ -418,8 +437,8 @@ function ResourceCard({ href, title, hint }: { href: string; title: string; hint
   return href.startsWith("/") ? <Link href={href} className={className}>{content}</Link> : <a href={href} className={className}>{content}</a>;
 }
 
-function ComparisonRow({ label, baseline, lor }: { label: string; baseline: string; lor: string }) {
-  return <tr><th scope="row" className="px-5 py-5 text-start font-medium">{label}</th><td className="px-5 py-5 text-muted">{baseline}</td><td className="px-5 py-5"><span className="inline-flex items-start gap-2 font-medium"><CheckIcon /><span>{lor}</span></span></td></tr>;
+function ComparisonRow({ label, lor, zoom, meet }: { label: string; lor: string; zoom: string; meet: string }) {
+  return <tr><th scope="row" className="px-5 py-5 text-start font-medium">{label}</th><td className="bg-surface/60 px-5 py-5 font-medium">{lor}</td><td className="px-5 py-5 text-muted">{zoom}</td><td className="px-5 py-5 text-muted">{meet}</td></tr>;
 }
 
 function FaqItem({ question, children }: { question: string; children: ReactNode }) {
