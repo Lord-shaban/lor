@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { use } from "react";
 import type { ReactNode } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -9,6 +8,7 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { LandingCopyCommand } from "@/components/landing-copy-command";
+import { LandingMeetingShowcase } from "@/components/landing-meeting-showcase";
 import {
   BoardIcon,
   CheckIcon,
@@ -52,11 +52,6 @@ export default function PublicLanding({
   setRequestLocale(locale);
 
   const t = useTranslations("landing");
-  const productHome =
-    locale === "ar"
-      ? "/landing/product-home-ar-crop.png"
-      : "/landing/product-home-crop.png";
-
   return (
     <div className="min-h-full bg-background text-foreground">
       <a
@@ -102,28 +97,13 @@ export default function PublicLanding({
         </div>
       </header>
 
-      <div className="border-b border-border bg-surface">
-        <div
-          className={`${CONTAINER} flex flex-wrap items-center justify-between gap-3 py-3 text-sm`}
-        >
-          <p className="flex items-center gap-2 text-muted">
-            <span className="h-2 w-2 rounded-full bg-live" aria-hidden="true" />
-            <span>{t("banner.label")}</span>
-          </p>
-          <Link className={`inline-flex items-center gap-2 ${TEXT_LINK}`} href="/docs">
-            {t("banner.link")}
-            <ArrowUpRightIcon />
-          </Link>
-        </div>
-      </div>
-
       <main id="main-content" tabIndex={-1}>
         <section
           aria-labelledby="landing-title"
           className="overflow-hidden border-b border-border"
         >
           <div
-            className={`${CONTAINER} grid gap-12 py-14 sm:py-20 lg:grid-cols-[0.86fr_1.14fr] lg:items-center lg:gap-20 lg:py-24`}
+            className={`${CONTAINER} grid gap-12 py-14 sm:py-20 lg:grid-cols-[0.86fr_1.14fr] lg:items-center lg:gap-16 lg:py-20`}
           >
             <div className="max-w-2xl">
               <div className="flex items-center gap-4">
@@ -136,14 +116,13 @@ export default function PublicLanding({
                 </div>
               </div>
 
-              <p className="mt-10 flex items-center gap-3 text-sm text-muted">
-                <span className="h-px w-8 bg-live" aria-hidden="true" />
+              <p className="mt-10 text-sm text-muted">
                 {t("hero.kicker")}
               </p>
 
               <h1
                 id="landing-title"
-                className="mt-5 max-w-[13ch] text-5xl font-semibold leading-[1.03] tracking-[-0.04em] sm:text-6xl lg:text-7xl"
+                className="mt-5 max-w-[15ch] text-4xl font-semibold leading-[1.15] tracking-tight sm:text-5xl lg:text-6xl"
               >
                 {t("hero.title")}
               </h1>
@@ -205,68 +184,24 @@ export default function PublicLanding({
               </ul>
             </div>
 
-            <ProductHeroMedia
-              src={productHome}
-              alt={t("hero.mediaAlt")}
-              caption={t("hero.mediaCaption")}
-              label={t("hero.mediaLabel")}
-              secondaryAlt={t("gallery.workspace.alt")}
-            />
+            <LandingMeetingShowcase />
           </div>
         </section>
 
         <section id="product" aria-labelledby="product-title" className="scroll-mt-24 bg-surface">
-          <div className={`${CONTAINER} py-16 sm:py-20 lg:py-28`}>
-            <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr] lg:items-end lg:gap-16">
-              <div>
-                <p className="text-sm text-muted">{t("gallery.eyebrow")}</p>
-                <h2 id="product-title" className="mt-4 max-w-xl text-3xl font-semibold tracking-tight sm:text-4xl">
-                  {t("gallery.title")}
-                </h2>
-              </div>
-              <p className="max-w-2xl text-base leading-7 text-muted sm:text-lg">
-                {t("gallery.intro")}
-              </p>
+          <div className={`${CONTAINER} grid gap-8 py-16 sm:py-20 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] lg:items-start lg:gap-20 lg:py-24`}>
+            <div>
+              <p className="text-sm text-muted">{t("gallery.eyebrow")}</p>
+              <h2 id="product-title" className="mt-4 max-w-xl text-3xl font-semibold tracking-tight sm:text-4xl">{t("gallery.title")}</h2>
             </div>
-
-            <div className="mt-12 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-              <ProductMediaCard
-                src={productHome}
-                alt={t("gallery.home.alt")}
-                eyebrow={t("gallery.home.eyebrow")}
-                title={t("gallery.home.title")}
-                body={t("gallery.home.body")}
-                width={672}
-                height={704}
-                sizes="(min-width: 1024px) 58vw, 100vw"
-              />
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
-                <ProductMediaCard
-                  src="/landing/product-home-menu-crop.png"
-                  alt={t("gallery.menu.alt")}
-                  eyebrow={t("gallery.menu.eyebrow")}
-                  title={t("gallery.menu.title")}
-                  body={t("gallery.menu.body")}
-                  width={672}
-                  height={704}
-                  sizes="(min-width: 1024px) 35vw, 100vw"
-                />
-                <ProductMediaCard
-                  src="/landing/product-preview.svg"
-                  alt={t("gallery.workspace.alt")}
-                  eyebrow={t("gallery.workspace.eyebrow")}
-                  title={t("gallery.workspace.title")}
-                  body={t("gallery.workspace.body")}
-                  width={1440}
-                  height={900}
-                  sizes="(min-width: 1024px) 35vw, 100vw"
-                />
+            <div>
+              <p className="max-w-2xl text-lg leading-8 text-muted">{t("gallery.intro")}</p>
+              <div className="mt-8 grid gap-4 border-t border-border pt-6 sm:grid-cols-3">
+                <p className="text-sm leading-6">{t("gallery.home.body")}</p>
+                <p className="text-sm leading-6">{t("gallery.menu.body")}</p>
+                <p className="text-sm leading-6">{t("gallery.workspace.body")}</p>
               </div>
             </div>
-
-            <p className="mt-5 max-w-3xl text-sm leading-6 text-muted">
-              {t("gallery.disclosure")}
-            </p>
           </div>
         </section>
 
@@ -462,33 +397,6 @@ export default function PublicLanding({
         </div>
       </footer>
     </div>
-  );
-}
-
-function ProductHeroMedia({ src, alt, caption, label, secondaryAlt }: { src: string; alt: string; caption: string; label: string; secondaryAlt: string }) {
-  return (
-    <figure className="min-w-0">
-      <div className="relative overflow-hidden rounded-[var(--radius-lg)] border border-border bg-background p-2 sm:p-3">
-        <div className="absolute inset-x-6 top-6 z-10 flex items-center justify-between text-xs font-medium text-on-foreground sm:inset-x-8 sm:top-8">
-          <span className="rounded-full bg-foreground/85 px-3 py-1.5">{label}</span>
-          <span className="flex items-center gap-2 rounded-full bg-foreground/85 px-3 py-1.5"><span className="h-1.5 w-1.5 rounded-full bg-live" aria-hidden="true" /><span dir="ltr">LOR.</span></span>
-        </div>
-        <Image src={src} alt={alt} width={672} height={704} priority sizes="(min-width: 1024px) 56vw, 100vw" className="h-auto w-full rounded-[calc(var(--radius-lg)-4px)] border border-border" />
-      </div>
-      <figcaption className="mt-4 flex flex-col gap-2 text-sm text-muted sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-        <span className="max-w-xl leading-6">{caption}</span>
-        <details className="shrink-0"><summary className="cursor-pointer underline underline-offset-4">{label}</summary><p className="mt-2 max-w-sm leading-6">{alt}</p><p className="mt-2 max-w-sm leading-6">{secondaryAlt}</p></details>
-      </figcaption>
-    </figure>
-  );
-}
-
-function ProductMediaCard({ src, alt, eyebrow, title, body, width, height, sizes }: { src: string; alt: string; eyebrow: string; title: string; body: string; width: number; height: number; sizes: string }) {
-  return (
-    <article className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-background">
-      <div className="aspect-[16/10] overflow-hidden border-b border-border bg-surface"><Image src={src} alt={alt} width={width} height={height} sizes={sizes} className="h-full w-full object-cover object-top" /></div>
-      <div className="p-5 sm:p-6"><p className="text-sm text-muted">{eyebrow}</p><h3 className="mt-3 text-xl font-medium tracking-tight">{title}</h3><p className="mt-3 text-base leading-7 text-muted">{body}</p></div>
-    </article>
   );
 }
 
