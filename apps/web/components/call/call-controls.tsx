@@ -157,7 +157,9 @@ export function CallControls({
       ? moreTriggerRef.current
       : previous === "chat"
         ? chatTriggerRef.current
-        : workspaceTriggerRef.current;
+        : workspaceTriggerRef.current?.getClientRects().length
+          ? workspaceTriggerRef.current
+          : moreTriggerRef.current;
     requestAnimationFrame(() => trigger?.focus());
   }, [activeWorkspace]);
 
@@ -182,9 +184,9 @@ export function CallControls({
     >
       <div
         data-testid="call-dock"
-        className="grid grid-cols-6 grid-rows-[2.75rem_3.5rem] items-stretch gap-x-1 gap-y-1 px-2 py-1 lg:flex lg:h-16 lg:items-center lg:justify-center lg:gap-2 lg:px-4"
+        className="grid h-16 grid-cols-5 items-stretch gap-2 px-2 py-2 lg:flex lg:items-center lg:justify-center lg:gap-2 lg:px-4"
       >
-        <div className="col-span-6 min-w-0 lg:me-auto">
+        <div className="hidden min-w-0 lg:me-auto lg:block">
           <RoomHeader code={code} inviteUrl={inviteUrl} />
         </div>
         <MediaButton
@@ -210,7 +212,7 @@ export function CallControls({
         />
 
         {canPublish && screenShareSupported && (
-          <div className="hidden sm:block sm:h-11">
+          <div className="hidden lg:block lg:h-11">
             <DockButton
               icon={<ScreenShareIcon />}
               label={screenShareOn ? t("stopSharing") : t("shareScreen")}
@@ -236,7 +238,7 @@ export function CallControls({
           onClick={() => chooseWorkspace("chat")}
         />
 
-        <div className="relative min-w-0">
+        <div className="relative hidden min-w-0 lg:block">
           <DockButton
             ref={workspaceTriggerRef}
             icon={<WorkspaceIcon />}
@@ -340,9 +342,12 @@ export function CallControls({
               menu="more"
               title={t("controls.more")}
             >
-              <MenuSection title={t("controls.callSettings")}>
+              <div className="border-b border-[#2a2a2e] px-3 py-2 lg:hidden">
+                <RoomHeader code={code} inviteUrl={inviteUrl} inMenu />
+              </div>
+              <MenuSection title={t("controls.participate")} columns={2}>
                 {canPublish && screenShareSupported && (
-                  <div className="sm:hidden">
+                  <div className="lg:hidden">
                     <MenuAction
                       label={screenShareOn ? t("stopSharing") : t("shareScreen")}
                       active={screenShareOn}
@@ -355,19 +360,6 @@ export function CallControls({
                     />
                   </div>
                 )}
-                {canPublish && (
-                  <RecordingControls
-                    recording={recording}
-                    onAfterAction={() => closeMenuAndFocus("more")}
-                  />
-                )}
-              </MenuSection>
-
-              <div className="border-t border-[#2a2a2e] px-3 py-3">
-                <VideoModeControl mode={videoMode} onChoose={onChooseVideoMode} />
-              </div>
-
-              <MenuSection title={t("controls.participate")} columns={2}>
                 <MenuAction
                   label={handRaised ? t("hands.lower") : t("hands.raise")}
                   active={handRaised}
@@ -376,15 +368,17 @@ export function CallControls({
                     closeMenuAndFocus("more");
                   }}
                 />
-                <MenuAction
-                  label={captionsOn ? t("captions.turnOff") : t("captions.turnOn")}
-                  active={captionsOn}
-                  live={captionsOn}
-                  onClick={() => {
-                    onToggleCaptions();
-                    closeMenuAndFocus("more");
-                  }}
-                />
+                <div className="col-span-2 lg:col-span-1">
+                  <MenuAction
+                    label={captionsOn ? t("captions.turnOff") : t("captions.turnOn")}
+                    active={captionsOn}
+                    live={captionsOn}
+                    onClick={() => {
+                      onToggleCaptions();
+                      closeMenuAndFocus("more");
+                    }}
+                  />
+                </div>
               </MenuSection>
 
               <div
@@ -406,6 +400,33 @@ export function CallControls({
                     <span aria-hidden="true">{emoji}</span>
                   </button>
                 ))}
+              </div>
+
+              <div className="lg:hidden">
+                <MenuSection title={t("controls.together")}>
+                  <MenuAction label={t("whiteboard.title")} active={activeWorkspace === "whiteboard"} onClick={() => chooseWorkspace("whiteboard")} />
+                  <MenuAction label={t("notes.title")} active={activeWorkspace === "notes"} onClick={() => chooseWorkspace("notes")} />
+                </MenuSection>
+                <MenuSection title={t("controls.after")} columns={2}>
+                  <MenuAction label={t("keeping.open")} active={activeWorkspace === "transcript"} onClick={() => chooseWorkspace("transcript")} />
+                  <MenuAction label={t("keeping.decisions")} active={activeWorkspace === "decisions"} onClick={() => chooseWorkspace("decisions")} />
+                  <MenuAction label={t("keeping.actionItems")} active={activeWorkspace === "action-items"} onClick={() => chooseWorkspace("action-items")} />
+                  <MenuAction label={t("keeping.timeline")} active={activeWorkspace === "timeline"} onClick={() => chooseWorkspace("timeline")} />
+                  <MenuAction label={t("keeping.memory")} active={activeWorkspace === "memory"} onClick={() => chooseWorkspace("memory")} />
+                  <MenuAction label={t("keeping.search")} active={activeWorkspace === "search"} onClick={() => chooseWorkspace("search")} />
+                </MenuSection>
+              </div>
+              <MenuSection title={t("controls.callSettings")}>
+                {canPublish && (
+                  <RecordingControls
+                    recording={recording}
+                    onAfterAction={() => closeMenuAndFocus("more")}
+                  />
+                )}
+              </MenuSection>
+
+              <div className="border-t border-[#2a2a2e] px-3 py-3">
+                <VideoModeControl mode={videoMode} onChoose={onChooseVideoMode} />
               </div>
 
               {isHost && (
@@ -464,7 +485,7 @@ function ControlPopover({
       role="dialog"
       aria-modal="false"
       aria-label={title}
-      className="fixed inset-x-3 bottom-[7rem] z-50 max-h-[min(70dvh,36rem)] overflow-y-auto rounded-lg border border-[#2a2a2e] bg-[#141416] lg:absolute lg:inset-x-auto lg:bottom-full lg:left-1/2 lg:mb-2 lg:w-80 lg:-translate-x-1/2"
+      className="fixed inset-x-3 bottom-16 z-50 max-h-[min(70dvh,36rem)] overflow-y-auto rounded-lg border border-[#2a2a2e] bg-[#141416] lg:absolute lg:inset-x-auto lg:bottom-full lg:left-1/2 lg:mb-2 lg:w-80 lg:-translate-x-1/2"
     >
       <p className="border-b border-[#2a2a2e] px-3 py-2 text-sm font-medium">
         {title}
@@ -524,7 +545,7 @@ function MenuAction({
       aria-pressed={active || undefined}
       onClick={onClick}
       className={cn(
-        "flex min-h-11 min-w-0 items-center gap-2 rounded-md px-3 py-2 text-start text-sm transition-colors duration-150",
+        "flex min-h-11 w-full min-w-0 items-center gap-2 rounded-md px-3 py-2 text-start text-sm transition-colors duration-150",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f5] disabled:cursor-not-allowed disabled:opacity-50",
         active
           ? "bg-[#f4f4f5] text-[#0a0a0b]"
@@ -681,7 +702,7 @@ function DockButton({
       type="button"
       aria-label={ariaLabel ?? label}
       className={cn(
-        "relative flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 text-[0.625rem] font-medium transition-colors duration-150 sm:h-11 sm:min-w-20 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm",
+        "relative flex h-full w-full min-w-11 flex-col items-center justify-center gap-1 rounded-md px-1 text-[0.625rem] font-medium transition-colors duration-150 sm:h-11 sm:min-w-20 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm lg:w-auto",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f5] disabled:cursor-not-allowed disabled:opacity-50",
         danger
           ? "bg-[#f87171] text-[#0a0a0b] hover:opacity-90"
