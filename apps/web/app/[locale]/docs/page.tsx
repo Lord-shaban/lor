@@ -125,27 +125,11 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
                   {t("title")}
                 </h1>
                 <p className="mt-6 max-w-3xl text-lg leading-8 text-muted sm:text-xl">{t("intro")}</p>
-              </section>
-
-              <section aria-labelledby="quick-start-title" className="mt-14 scroll-mt-28 rounded-[var(--radius-lg)] bg-foreground p-6 text-on-foreground sm:p-8">
-                <p className="text-sm opacity-65">{t("quickStart.eyebrow")}</p>
-                <div className="mt-3 flex flex-col gap-7 xl:flex-row xl:items-end xl:justify-between xl:gap-12">
-                  <div className="max-w-2xl">
-                    <h2 id="quick-start-title" className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("quickStart.title")}</h2>
-                    <p className="mt-4 text-base leading-7 opacity-75">{t("quickStart.intro")}</p>
-                  </div>
-                  <Link href="#architecture" className="inline-flex shrink-0 items-center gap-2 text-sm underline underline-offset-4 decoration-on-foreground/40 hover:decoration-on-foreground">
-                    {t("quickStart.details")}<ArrowDownIcon />
-                  </Link>
-                </div>
-                <div className="mt-8 overflow-hidden rounded-[var(--radius-md)] border border-on-foreground/20 bg-background text-foreground">
-                  <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-5 py-4">
-                    <div><p className="text-sm font-medium">{t("quickStart.label")}</p><p className="mt-1 text-sm text-muted">{t("quickStart.hint")}</p></div>
-                    <LandingCopyCommand value={QUICK_START} copyLabel={t("quickStart.copy")} copiedLabel={t("quickStart.copied")} />
-                  </div>
-                  <pre className="overflow-x-auto p-5 text-sm leading-7"><code>{QUICK_START}</code></pre>
-                  <p className="border-t border-border px-5 py-4 text-sm leading-6 text-muted">{t("quickStart.note")}</p>
-                </div>
+                <nav aria-label={t("paths.label")} className="mt-10 grid gap-3 sm:grid-cols-3">
+                  <DocsPath href="#workflow" title={t("paths.join.title")}>{t("paths.join.body")}</DocsPath>
+                  <DocsPath href="#boundaries" title={t("paths.record.title")}>{t("paths.record.body")}</DocsPath>
+                  <DocsPath href="#architecture" title={t("paths.build.title")}>{t("paths.build.body")}</DocsPath>
+                </nav>
               </section>
 
               <section id="what" aria-labelledby="what-title" className="mt-20 scroll-mt-28 border-t border-border pt-14 sm:mt-24 sm:pt-20">
@@ -171,7 +155,7 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
                 <SectionIntro id="boundaries-title" eyebrow={t("boundaries.eyebrow")} title={t("boundaries.title")}>
                   <p>{t("boundaries.intro")}</p>
                 </SectionIntro>
-                <div className="mt-10 overflow-x-auto rounded-[var(--radius-lg)] border border-border">
+                <div className="mt-10 hidden overflow-x-auto rounded-[var(--radius-lg)] border border-border lg:block">
                   <table className="w-full min-w-[48rem] border-collapse text-start text-sm">
                     <caption className="sr-only">{t("boundaries.caption")}</caption>
                     <thead className="bg-surface"><tr className="border-b border-border"><th scope="col" className="w-[25%] px-5 py-4 font-medium">{t("boundaries.capability")}</th><th scope="col" className="w-[37.5%] px-5 py-4 font-medium">{t("boundaries.today")}</th><th scope="col" className="w-[37.5%] px-5 py-4 font-medium text-muted">{t("boundaries.planned")}</th></tr></thead>
@@ -183,14 +167,47 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
                     </tbody>
                   </table>
                 </div>
+                <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:hidden">
+                  {(["call", "evidence", "privacy", "extension"] as const).map((row) => (
+                    <article key={row} className="rounded-[var(--radius-lg)] border border-border bg-surface p-5">
+                      <h3 className="font-semibold">{t(`boundaries.rows.${row}.label`)}</h3>
+                      <p className="mt-3 text-sm font-medium">{t("boundaries.today")}</p>
+                      <p className="mt-1 text-sm leading-6 text-muted">{t(`boundaries.rows.${row}.today`)}</p>
+                      <p className="mt-4 text-sm font-medium">{t("boundaries.planned")}</p>
+                      <p className="mt-1 text-sm leading-6 text-muted">{t(`boundaries.rows.${row}.planned`)}</p>
+                    </article>
+                  ))}
+                </div>
               </section>
 
               <section id="architecture" aria-labelledby="architecture-title" className="mt-20 scroll-mt-28 border-t border-border pt-14 sm:mt-24 sm:pt-20">
                 <SectionIntro id="architecture-title" eyebrow={t("architecture.eyebrow")} title={t("architecture.title")}>
                   <p>{t("architecture.intro")}</p>
                 </SectionIntro>
-                <pre dir="ltr" className="mt-10 overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-surface p-5 text-xs leading-7 text-foreground sm:p-7 sm:text-sm"><code>{t("architecture.code")}</code></pre>
+                <ol className="mt-10 grid gap-3 sm:grid-cols-3">
+                  {(["browser", "room", "record"] as const).map((step, index) => (
+                    <li key={step} className="rounded-[var(--radius-md)] border border-border bg-surface p-5">
+                      <span className="font-mono text-xs tabular-nums text-muted">0{index + 1}</span>
+                      <h3 className="mt-4 font-semibold">{t(`architecture.flow.${step}.title`)}</h3>
+                      <p className="mt-2 text-sm leading-6 text-muted">{t(`architecture.flow.${step}.body`)}</p>
+                    </li>
+                  ))}
+                </ol>
                 <p className="mt-5 max-w-3xl text-base leading-7 text-muted">{t("architecture.note")}</p>
+              </section>
+
+              <section aria-labelledby="quick-start-title" className="mt-16 scroll-mt-28 rounded-[var(--radius-lg)] bg-foreground p-6 text-on-foreground sm:p-8">
+                <p className="text-sm opacity-65">{t("quickStart.eyebrow")}</p>
+                <h2 id="quick-start-title" className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">{t("quickStart.title")}</h2>
+                <p className="mt-4 max-w-2xl text-base leading-7 opacity-75">{t("quickStart.intro")}</p>
+                <div className="mt-8 overflow-hidden rounded-[var(--radius-md)] border border-on-foreground/20 bg-background text-foreground">
+                  <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-5 py-4">
+                    <div><p className="text-sm font-medium">{t("quickStart.label")}</p><p className="mt-1 text-sm text-muted">{t("quickStart.hint")}</p></div>
+                    <LandingCopyCommand value={QUICK_START} copyLabel={t("quickStart.copy")} copiedLabel={t("quickStart.copied")} />
+                  </div>
+                  <pre dir="ltr" className="overflow-x-auto p-5 text-start text-sm leading-7"><code>{QUICK_START}</code></pre>
+                  <p className="border-t border-border px-5 py-4 text-sm leading-6 text-muted">{t("quickStart.note")}</p>
+                </div>
               </section>
 
               <section id="contribute" aria-labelledby="contribute-title" className="mt-20 scroll-mt-28 border-t border-border pt-14 sm:mt-24 sm:pt-20">
@@ -248,6 +265,10 @@ function DocsNavLink({ href, children }: { href: string; children: ReactNode }) 
   return <a href={href} className="flex min-h-11 items-center rounded-sm px-3 text-sm text-muted transition-colors duration-150 hover:bg-surface hover:text-foreground focus-visible:bg-surface">{children}</a>;
 }
 
+function DocsPath({ href, title, children }: { href: string; title: string; children: ReactNode }) {
+  return <a href={href} className="group flex min-h-32 flex-col justify-between rounded-[var(--radius-md)] border border-border bg-surface p-5 transition-colors duration-150 hover:bg-surface-strong"><span className="font-semibold group-hover:underline group-hover:underline-offset-4">{title}</span><span className="mt-3 text-sm leading-6 text-muted">{children}</span></a>;
+}
+
 function DocsStep({ number, title, children }: { number: string; title: string; children: ReactNode }) {
   return <li className="border-t border-border pt-5"><span dir="ltr" className="font-mono text-xs tabular-nums text-muted">{number}</span><h3 className="mt-7 text-xl font-medium tracking-tight">{title}</h3><div className="mt-3 text-base leading-7 text-muted">{children}</div></li>;
 }
@@ -270,10 +291,6 @@ function LorWordmark({ className = "" }: { className?: string }) {
 
 function ArrowUpRightIcon() {
   return <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-4 w-4"><path d="M5.5 14.5 14.5 5.5M7 5.5h7.5V13" strokeLinecap="round" strokeLinejoin="round" /></svg>;
-}
-
-function ArrowDownIcon() {
-  return <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-4 w-4"><path d="M10 4v12m0 0-4-4m4 4 4-4" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
 function ChevronDownIcon({ className = "" }: { className?: string }) {
