@@ -63,11 +63,19 @@ test.describe("public documentation hub", () => {
         await expect(page.locator("#boundaries table")).toHaveCount(1);
         await expect(page.locator("#boundaries thead th")).toHaveCount(3);
         await expect(page.locator("#boundaries tbody tr")).toHaveCount(4);
-        await expect(page.locator("aside nav a")).toHaveCount(7);
         await expect(page.locator("#help details")).toHaveCount(4);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
-        const firstNav = page.locator("aside nav a").first();
+        const mobileToc = page.locator("aside details");
+        if (width < 1024) {
+          await expect(mobileToc.locator("summary")).toBeVisible();
+          await mobileToc.locator("summary").click();
+          await expect(mobileToc).toHaveAttribute("open", "");
+        }
+        const firstNav = width < 1024
+          ? mobileToc.locator("nav a").first()
+          : page.locator("aside > div nav a").first();
+        await expect(firstNav).toBeVisible();
         await firstNav.focus();
         await expect(firstNav).toBeFocused();
       }

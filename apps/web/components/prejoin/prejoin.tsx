@@ -172,7 +172,7 @@ export function Prejoin({
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-8 lg:grid-cols-[1fr_20rem]">
+    <form onSubmit={submit} className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(19rem,1fr)] lg:gap-8">
       <div>
         {/* The preview is always dark. A bright surround around a video frame
             is fatiguing, and the call itself is dark for the same reason. */}
@@ -202,7 +202,7 @@ export function Prejoin({
           )}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-3">
+        <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-3">
           <Button
             type="button"
             variant={micOff ? "danger" : "secondary"}
@@ -260,7 +260,7 @@ export function Prejoin({
         )}
       </div>
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-5 sm:p-6">
         <div>
           <label htmlFor={`${fieldId}-name`} className="mb-2 block text-sm">
             {t("nameLabel")}
@@ -278,7 +278,7 @@ export function Prejoin({
 
         <details
           data-testid="device-settings"
-          className="group rounded-md border border-border bg-surface/40"
+          className="group rounded-md border border-border bg-background"
         >
           <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm select-none">
             <DeviceSettingsIcon />

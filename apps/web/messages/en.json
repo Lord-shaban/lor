@@ -4,13 +4,13 @@
     "description": "Open-source video meetings that remember. No account, no time limit, no download."
   },
   "offline": {
+    "backHome": "Back to meetings",
     "title": "No connection",
     "body": "This page needs the network. Once you are back online, open your meeting link again."
   },
   "home": {
     "title": "Start or join a meeting",
     "tagline": "Open-source video meetings that remember. No account, no time limit, no download.",
-    "codeSwitchExample": "And it understands you when you say «عملت الـ <term>deploy</term> على الـ <term>server</term>».",
     "trust": {
       "label": "What to expect",
       "noAccount": "No account",
@@ -1139,6 +1139,7 @@
     }
   },
   "keys": {
+    "backHome": "Back to meetings",
     "title": "Getting a key",
     "intro": "Captions send audio to a transcription service, and that costs somebody money. This server may offer a free allowance; when it runs out, or when there is none, you can use your own key instead. Here is where one comes from.",
     "checked": "checked <d>{date}</d>",

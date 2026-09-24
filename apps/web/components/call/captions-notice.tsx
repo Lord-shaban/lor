@@ -35,14 +35,14 @@ export function CaptionsNotice({
   return (
     <div
       data-testid="captions-notice"
-      className="pointer-events-auto flex min-h-[3.25rem] items-center gap-2 overflow-x-auto border-t border-[#27272a] bg-[#18181b] px-3 py-1 text-xs text-[#d4d4d8]"
+      className="pointer-events-auto grid min-h-[3.25rem] grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-1 border-t border-[#27272a] bg-[#18181b] px-2 py-1 text-xs text-[#d4d4d8] sm:flex sm:gap-2 sm:px-3"
     >
-      <span className="flex min-w-32 flex-1 items-center gap-1.5">
+      <span className="flex min-w-0 flex-1 items-center gap-1.5">
         <span
           aria-hidden
           className="inline-block size-1.5 shrink-0 rounded-full bg-[#f87171]"
         />
-        <span className="sm:hidden">
+        <span className="truncate sm:hidden">
           {captions.sharing ? t("noticeShortOn") : t("noticeShortNotYou")}
         </span>
         <span className="hidden sm:inline">
@@ -54,7 +54,7 @@ export function CaptionsNotice({
           on a screen is not agreeing that they are written down, so the record
           announces itself separately or it has not been announced. */}
       {captions.keeping && (
-        <span className="hidden shrink-0 text-[#fbbf24] lg:inline">
+        <span className="hidden max-w-48 truncate text-[#fbbf24] lg:inline">
           {keeping("notice")}
         </span>
       )}
@@ -83,29 +83,31 @@ export function CaptionsNotice({
           is worth mentioning — a room warned at eighty per cent can fetch a
           key, and one told at a hundred has already lost its captions
           mid-sentence. */}
-      {!captions.error && captions.quota && (
-        <span className="min-w-48 shrink-0 text-[#fbbf24]">
-          {t("runningLow", { minutes: Math.max(1, Math.round(captions.quota.remaining / 60)) })}
-        </span>
-      )}
+      <div className="col-span-3 flex min-w-0 items-center gap-2 sm:contents">
+        {!captions.error && captions.quota && (
+          <span className="min-w-0 flex-1 break-words text-[#fbbf24] sm:truncate" title={t("runningLow", { minutes: Math.max(1, Math.round(captions.quota.remaining / 60)) })}>
+            {t("runningLow", { minutes: Math.max(1, Math.round(captions.quota.remaining / 60)) })}
+          </span>
+        )}
 
-      {captions.error && (
-        <span className="min-w-48 shrink-0 text-[#fca5a5]">
-          {t(`error.${captions.error}`)}
-        </span>
-      )}
+        {captions.error && (
+          <span className="min-w-0 flex-1 break-words text-[#fca5a5] sm:truncate" title={t(`error.${captions.error}`)}>
+            {t(`error.${captions.error}`)}
+          </span>
+        )}
 
-      {/* The way past the wall, next to the wall. A message telling somebody to
+        {/* The way past the wall, next to the wall. A message telling somebody to
           add a key, with nowhere to add one, is not a hand-off. */}
-      {(captions.error === "quota" || captions.error === "no_key" || captions.quota) && (
-        <button
-          type="button"
-          onClick={onOpenKeys}
-          className="min-h-11 shrink-0 rounded-md px-2 py-0.5 font-medium text-[#fafafa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:decoration-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f5]"
-        >
-          {keys("open")}
-        </button>
-      )}
+        {(captions.error === "quota" || captions.error === "no_key" || captions.quota) && (
+          <button
+            type="button"
+            onClick={onOpenKeys}
+            className="min-h-11 shrink-0 rounded-md px-2 py-0.5 font-medium text-[#fafafa] underline decoration-[#52525b] underline-offset-2 transition-colors hover:decoration-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4f4f5]"
+          >
+            {keys("open")}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

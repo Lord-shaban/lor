@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { LandingCopyCommand } from "@/components/landing-copy-command";
 
 const REPO = "https://github.com/Lord-shaban/lor";
-const LIVE_APP = "https://lor-bay.vercel.app";
 const CONTAINER = "mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-12";
 const TEXT_LINK =
   "underline decoration-border underline-offset-4 transition-colors duration-150 hover:decoration-foreground";
@@ -67,7 +66,7 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
               <a className={TEXT_LINK} href={`${REPO}/discussions`}>{t("nav.community")}</a>
             </nav>
             <div className="flex items-center justify-self-end gap-2 sm:gap-3">
-              <Button asChild size="sm"><a href={LIVE_APP}>{t("nav.try")}</a></Button>
+              <Button asChild size="md"><Link href="/">{t("nav.try")}</Link></Button>
               <ThemeToggle />
               <LocaleSwitcher />
             </div>
@@ -85,23 +84,40 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
 
           <div className="mt-8 grid gap-12 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-20">
             <aside className="lg:sticky lg:top-28 lg:self-start">
-              <p className="text-sm font-medium">{t("toc.label")}</p>
-              <nav aria-label={t("toc.label")} className="mt-4 grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-1">
-                <DocsNavLink href="#start">{t("toc.start")}</DocsNavLink>
-                <DocsNavLink href="#what">{t("toc.what")}</DocsNavLink>
-                <DocsNavLink href="#workflow">{t("toc.workflow")}</DocsNavLink>
-                <DocsNavLink href="#boundaries">{t("toc.boundaries")}</DocsNavLink>
-                <DocsNavLink href="#architecture">{t("toc.architecture")}</DocsNavLink>
-                <DocsNavLink href="#contribute">{t("toc.contribute")}</DocsNavLink>
-                <DocsNavLink href="#help">{t("toc.help")}</DocsNavLink>
-              </nav>
+              <details className="group rounded-md border border-border bg-surface lg:hidden">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-4 text-sm font-medium [&::-webkit-details-marker]:hidden">
+                  {t("toc.label")}
+                  <ChevronDownIcon className="h-4 w-4 text-muted transition-transform group-open:rotate-180" />
+                </summary>
+                <nav aria-label={t("toc.label")} className="grid gap-1 border-t border-border p-2">
+                  <DocsNavLink href="#start">{t("toc.start")}</DocsNavLink>
+                  <DocsNavLink href="#what">{t("toc.what")}</DocsNavLink>
+                  <DocsNavLink href="#workflow">{t("toc.workflow")}</DocsNavLink>
+                  <DocsNavLink href="#boundaries">{t("toc.boundaries")}</DocsNavLink>
+                  <DocsNavLink href="#architecture">{t("toc.architecture")}</DocsNavLink>
+                  <DocsNavLink href="#contribute">{t("toc.contribute")}</DocsNavLink>
+                  <DocsNavLink href="#help">{t("toc.help")}</DocsNavLink>
+                </nav>
+              </details>
+              <div className="hidden lg:block">
+                <p className="text-sm font-medium">{t("toc.label")}</p>
+                <nav aria-label={t("toc.label")} className="mt-4 grid gap-1">
+                  <DocsNavLink href="#start">{t("toc.start")}</DocsNavLink>
+                  <DocsNavLink href="#what">{t("toc.what")}</DocsNavLink>
+                  <DocsNavLink href="#workflow">{t("toc.workflow")}</DocsNavLink>
+                  <DocsNavLink href="#boundaries">{t("toc.boundaries")}</DocsNavLink>
+                  <DocsNavLink href="#architecture">{t("toc.architecture")}</DocsNavLink>
+                  <DocsNavLink href="#contribute">{t("toc.contribute")}</DocsNavLink>
+                  <DocsNavLink href="#help">{t("toc.help")}</DocsNavLink>
+                </nav>
+              </div>
             </aside>
 
             <article className="min-w-0">
               <section id="start" aria-labelledby="docs-title" className="scroll-mt-28">
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
                   <span className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-live" aria-hidden="true" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-muted" aria-hidden="true" />
                     <span>{t("status")}</span>
                   </span>
                 </div>
@@ -113,7 +129,7 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
 
               <section aria-labelledby="quick-start-title" className="mt-14 scroll-mt-28 rounded-[var(--radius-lg)] bg-foreground p-6 text-on-foreground sm:p-8">
                 <p className="text-sm opacity-65">{t("quickStart.eyebrow")}</p>
-                <div className="mt-3 flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
+                <div className="mt-3 flex flex-col gap-7 xl:flex-row xl:items-end xl:justify-between xl:gap-12">
                   <div className="max-w-2xl">
                     <h2 id="quick-start-title" className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("quickStart.title")}</h2>
                     <p className="mt-4 text-base leading-7 opacity-75">{t("quickStart.intro")}</p>
@@ -207,7 +223,7 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
               <aside className="mt-20 rounded-[var(--radius-lg)] border border-border bg-surface p-6 sm:mt-24 sm:p-8">
                 <h2 className="text-2xl font-semibold tracking-tight">{t("next.title")}</h2>
                 <p className="mt-3 max-w-2xl text-base leading-7 text-muted">{t("next.body")}</p>
-                <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-sm"><Link className={TEXT_LINK} href="/about">{t("next.project")}</Link><a className={TEXT_LINK} href={LIVE_APP}>{t("next.try")}</a><a className={TEXT_LINK} href={REPO}>{t("next.source")}</a></div>
+                <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-sm"><Link className={TEXT_LINK} href="/about">{t("next.project")}</Link><Link className={TEXT_LINK} href="/">{t("next.try")}</Link><a className={TEXT_LINK} href={REPO}>{t("next.source")}</a></div>
               </aside>
             </article>
           </div>
