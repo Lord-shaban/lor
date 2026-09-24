@@ -11,13 +11,12 @@ const copy = {
   ar: {
     path: "/ar/about",
     direction: "rtl",
-    title: "المكالمة شغالة. والخيط المفيد مكمل.",
-    live: "جرّب الموقع المباشر",
-    docs: "اقرأ الدوكس",
-    source: "افتح المصدر",
-    visual: "شايفه جوّه المنتج",
-    alt: "شاشة البداية الحقيقية لمنتج LOR.‎ بتعرض مسار ابدأ أو ادخل اجتماع، من غير حساب ولا تحميل، مع مشغّل الاجتماع.",
-    product: "شوف السطح قبل ما تثق في الحكاية.",
+    title: "من اجتماع مباشر إلى قرار يمكن تتبّعه.",
+    live: "ابدأ اجتماعاً",
+    docs: "استكشف الدليل",
+    source: "استعرض الشيفرة",
+    visual: "تصوّر توضيحي مبني على واجهة الاجتماع والقرارات؛ لا يعرض اجتماعاً حقيقياً أو بيانات مستخدمين.",
+    product: "كل ما تحتاج إليه، في سياق الاجتماع.",
     compare: "المكالمة بداية، مش أرشيف.",
     faq: "أسئلة تستاهل إجابة.",
     copy: "انسخ الأوامر",
@@ -25,13 +24,12 @@ const copy = {
   en: {
     path: "/en/about",
     direction: "ltr",
-    title: "The meeting is live. The useful thread stays.",
-    live: "Try the live app",
-    docs: "Read the docs",
+    title: "From a live meeting to a decision you can trace.",
+    live: "Start a meeting",
+    docs: "Explore the guide",
     source: "Open the source",
-    visual: "Seen in the product",
-    alt: "A real LOR. product home screen shows the focused start-or-join flow with no account, no download, and the meeting launcher.",
-    product: "See the surface before you trust the story.",
+    visual: "Illustrative view based on the meeting and decision interfaces. It contains no real meeting or user data.",
+    product: "What you need, in the meeting context.",
     compare: "A call is the beginning, not the archive.",
     faq: "Questions worth answering.",
     copy: "Copy commands",
@@ -50,7 +48,7 @@ test.describe("public project landing", () => {
 
         await expect(page.locator("html")).toHaveAttribute("dir", text.direction);
         await expect(page.getByRole("heading", { level: 1, name: text.title })).toBeVisible();
-        await expect(page.getByRole("link", { name: text.live, exact: true })).toHaveAttribute(
+        await expect(page.getByRole("link", { name: text.live, exact: true }).first()).toHaveAttribute(
           "href",
           "https://lor-bay.vercel.app",
         );
@@ -63,10 +61,7 @@ test.describe("public project landing", () => {
           /docs/,
         );
 
-        const preview = page.getByRole("img", { name: text.alt });
-        await expect(preview).toBeVisible();
-        await expect(preview).toHaveAttribute("src", /product-home/);
-        await expect(page.getByRole("figure").first().getByText(text.visual, { exact: true }).first()).toBeVisible();
+        await expect(page.getByRole("figure").first().getByText(text.visual, { exact: true })).toBeVisible();
 
         await expect(page.getByRole("heading", { level: 2, name: text.product })).toBeVisible();
         await expect(page.getByRole("heading", { level: 2, name: text.compare })).toBeVisible();
@@ -86,13 +81,6 @@ test.describe("public project landing", () => {
           await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
         ).toBe(true);
 
-        const mediaDetails = page.locator("figure details");
-        const mediaSummary = mediaDetails.locator("summary");
-        await mediaSummary.focus();
-        await page.keyboard.press("Enter");
-        await expect(mediaDetails).toHaveAttribute("open", "");
-        await expect(mediaDetails.getByText(text.alt, { exact: true })).toBeVisible();
-
         const faq = page.locator("#faq details").first();
         await faq.locator("summary").focus();
         await page.keyboard.press("Enter");
@@ -104,8 +92,8 @@ test.describe("public project landing", () => {
   test("keeps the primary actions reachable in keyboard order", async ({ page }) => {
     await page.goto("/en/about");
 
-    const heroLive = page.getByRole("link", { name: "Try the live app", exact: true });
-    const heroSource = page.locator("main").getByRole("link", { name: "Read the docs", exact: true }).first();
+    const heroLive = page.getByRole("link", { name: "Start a meeting", exact: true });
+    const heroSource = page.locator("main").getByRole("link", { name: "Explore the guide", exact: true }).first();
     await heroLive.focus();
     await expect(heroLive).toBeFocused();
     await page.keyboard.press("Tab");

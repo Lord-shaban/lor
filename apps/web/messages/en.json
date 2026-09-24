@@ -54,11 +54,11 @@
     },
     "hero": {
       "kicker": "Open source · Arabic-first",
-      "title": "The meeting is live. The useful thread stays.",
-      "description": "<brand>LOR.</brand> is an open-source video meeting room for conversations that should leave something useful behind.",
-      "supporting": "A familiar link-in, a shared workspace, and a record you can return to when the call is over. Built for the way real teams speak, switch languages, and decide.",
-      "liveCta": "Try the live app",
-      "docsCta": "Read the docs",
+      "title": "From a live meeting to a decision you can trace.",
+      "description": "<brand>LOR.</brand> brings the conversation, shared work, and decision record into one room, so you can find what was agreed and why after the call.",
+      "supporting": "Join with a link and a name. Use audio, video, the board, and notes without an AI key, and enable optional features when you need them.",
+      "liveCta": "Start a meeting",
+      "docsCta": "Explore the guide",
       "sourceLead": "Want to inspect the build?",
       "sourceCta": "Open the source",
       "trustLabel": "Good to know",
@@ -71,26 +71,41 @@
       "mediaCaption": "Captured from the shipped product in a clean local session. No room code, participant, transcript, or key is present.",
       "mediaLabel": "Seen in the product"
     },
+    "showcase": {
+      "live": "Live meeting",
+      "room": "Meeting workspace",
+      "speaker": "Participant 1",
+      "participant": "Participant 2",
+      "captionLabel": "Live captions",
+      "caption": "We will review the plan today, then assign the next step.",
+      "panelEyebrow": "After review",
+      "panelTitle": "Meeting decision",
+      "decision": "Approve the team pilot plan.",
+      "sourceLabel": "From retained text",
+      "source": "“We will start the pilot plan this week.”",
+      "review": "Linked to room evidence",
+      "disclosure": "Illustrative view based on the meeting and decision interfaces. It contains no real meeting or user data."
+    },
     "gallery": {
-      "eyebrow": "Product, not a moodboard",
-      "title": "See the surface before you trust the story.",
-      "intro": "The first screen gets people into a room. The shared workspace keeps the conversation close to the work. Each frame below is a privacy-safe capture of shipped UI language.",
+      "eyebrow": "How LOR. helps",
+      "title": "What you need, in the meeting context.",
+      "intro": "Start with a simple join flow, work together in one space, then return to decisions linked to the words behind them.",
       "home": {
         "eyebrow": "Start here",
         "title": "A focused door into the room",
-        "body": "Create a room or paste an invitation link. The path is short, legible, and ready before optional AI features.",
+        "body": "Create a room or open an invitation link, then check your devices before joining.",
         "alt": "The shipped LOR. product home shows Start or join a meeting, a create-room action, a room-code field, and trust notes."
       },
       "menu": {
         "eyebrow": "Stay oriented",
         "title": "Help is nearby, never in the way",
-        "body": "Docs, security, contribution, roadmap, and the product entry point live together as quiet secondary routes.",
+        "body": "Keep the conversation, board, notes, and screen sharing in one workspace.",
         "alt": "The shipped LOR. product home has its Help and source menu open with About, Source, Privacy and security, Help, Contributing, Roadmap, and AGPL-3.0."
       },
       "workspace": {
         "eyebrow": "In the room",
         "title": "Keep the live moment and the record together",
-        "body": "Captions, shared work, and evidence-backed decisions stay close without making the call depend on a dashboard.",
+        "body": "Review decisions and action items with the source quote and timestamp in the same room.",
         "alt": "A privacy-safe synthetic LOR. meeting workspace shows two call tiles beside live captions and a retained record panel."
       },
       "disclosure": "The PNG captures are generated from the current local product UI with placeholder content only. The workspace illustration is synthetic until a reviewed community walkthrough lands."
