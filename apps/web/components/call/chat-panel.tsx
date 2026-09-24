@@ -76,12 +76,12 @@ export function ChatPanel({
   return (
     <aside
       aria-label={t("chat.title")}
-      // Full screen on a phone, a column beside the grid from md up. The video
+      // Full screen on a phone or tablet, a column beside the grid from lg up. The video
       // grid measures its own container, so taking width from it here is all
       // the relayout it needs.
       className={cn(
         "absolute inset-0 z-20 flex flex-col bg-[#0a0a0b]",
-        "md:static md:z-auto md:w-[min(24rem,36vw)] md:shrink-0 md:border-s md:border-[#2a2a2e]",
+        "lg:static lg:z-auto lg:w-[min(24rem,36vw)] lg:shrink-0 lg:border-s lg:border-[#2a2a2e]",
       )}
     >
       <header className="flex shrink-0 items-center justify-between border-b border-[#2a2a2e] px-4 py-3">
@@ -90,7 +90,7 @@ export function ChatPanel({
           type="button"
           onClick={onClose}
           aria-label={t("chat.close")}
-          className="h-9 rounded-md px-3 text-sm text-[#a1a1aa] transition-colors duration-150 hover:bg-[#1e1e21] hover:text-[#f4f4f5]"
+          className="h-11 rounded-md px-3 text-sm text-[#a1a1aa] transition-colors duration-150 hover:bg-[#1e1e21] hover:text-[#f4f4f5]"
         >
           {t("chat.closeShort")}
         </button>

@@ -510,8 +510,8 @@
       "callSettings": "الصوت والفيديو",
       "participate": "المشاركة",
       "host": "إدارة الاجتماع",
-      "microphoneShort": "الميكروفون",
-      "cameraShort": "الكاميرا",
+      "microphoneShort": "الصوت",
+      "cameraShort": "الفيديو",
       "chatShort": "محادثة",
       "workspacesShort": "الأدوات",
       "leaveShort": "مغادرة"
