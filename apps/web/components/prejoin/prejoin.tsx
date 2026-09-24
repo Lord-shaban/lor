@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,10 +36,12 @@ export function Prejoin({
   onJoin,
   joining,
   joinError,
+  invitation,
 }: {
   onJoin: (details: JoinDetails) => void;
   joining: boolean;
   joinError?: string | null;
+  invitation: ReactNode;
 }) {
   const t = useTranslations("prejoin");
   const fieldId = useId();
@@ -172,11 +174,11 @@ export function Prejoin({
   }
 
   return (
-    <form onSubmit={submit} className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(19rem,1fr)] lg:gap-8">
-      <div>
+    <form onSubmit={submit} className="grid min-w-0 grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.85fr)] lg:gap-10">
+      <div className="min-w-0">
         {/* The preview is always dark. A bright surround around a video frame
             is fatiguing, and the call itself is dark for the same reason. */}
-        <div className="relative aspect-video overflow-hidden rounded-lg bg-[#141416]">
+        <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-[#141416]">
           <video
             ref={videoRef}
             autoPlay
@@ -260,7 +262,7 @@ export function Prejoin({
         )}
       </div>
 
-      <div className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-5 sm:p-6">
+      <div className="flex min-w-0 flex-col gap-5 rounded-lg border border-border bg-surface p-5 sm:p-6">
         <div>
           <label htmlFor={`${fieldId}-name`} className="mb-2 block text-sm">
             {t("nameLabel")}
@@ -358,6 +360,8 @@ export function Prejoin({
             {joinError}
           </p>
         )}
+
+        <div className="border-t border-border pt-5">{invitation}</div>
       </div>
     </form>
   );

@@ -229,12 +229,33 @@ export function RoomEntry({
     );
   }
 
+  const invitation = (
+    <div>
+      <h2 className="text-sm font-medium">{t("inviteTitle")}</h2>
+      <p className="mt-1 text-sm leading-6 text-muted">{t("shareToInvite")}</p>
+      <div className="mt-4"><CopyLink url={inviteUrl} /></div>
+      {qr && (
+        <details className="mt-4 text-sm">
+          <summary className="flex min-h-11 cursor-pointer items-center font-medium underline decoration-border underline-offset-4">
+            {t("showQr")}
+          </summary>
+          <div className="mt-3">{qr}</div>
+        </details>
+      )}
+    </div>
+  );
+
   // The prejoin brings its own page chrome; the call deliberately has none.
   return (
     <main className="flex flex-1 justify-center px-4 py-6 sm:px-8 sm:py-10">
-      <div className="w-full max-w-5xl">
-        <h1 className="text-xl font-semibold tracking-tight">{t("getReady")}</h1>
-        <p className="mt-2 text-base text-muted">{t("checkBeforeJoining")}</p>
+      <div className="w-full max-w-6xl">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-6">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("getReady")}</h1>
+            <p className="mt-2 text-base text-muted">{t("checkBeforeJoining")}</p>
+          </div>
+          <code dir="ltr" className="rounded-md bg-surface px-3 py-2 font-mono text-sm text-muted"><bdi>{code}</bdi></code>
+        </div>
 
         <div className="mt-6 sm:mt-8">
           {waiting ? (
@@ -244,15 +265,11 @@ export function RoomEntry({
               onCancel={() => setWaiting(null)}
             />
           ) : (
-            <Prejoin onJoin={join} joining={joining} joinError={error} />
+            <Prejoin onJoin={join} joining={joining} joinError={error} invitation={invitation} />
           )}
         </div>
 
-        <div className="mt-8 border-t border-border pt-6">
-          <p className="mb-3 text-sm text-muted">{t("shareToInvite")}</p>
-          <CopyLink url={inviteUrl} />
-          {qr && <div className="mt-5">{qr}</div>}
-        </div>
+        {waiting && <div className="mt-6 max-w-xl rounded-lg border border-border bg-surface p-5">{invitation}</div>}
       </div>
     </main>
   );

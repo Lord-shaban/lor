@@ -81,7 +81,7 @@ export function ChatPanel({
       // the relayout it needs.
       className={cn(
         "absolute inset-0 z-20 flex flex-col bg-[#0a0a0b]",
-        "md:static md:z-auto md:w-80 md:shrink-0 md:border-s md:border-[#2a2a2e]",
+        "md:static md:z-auto md:w-[min(24rem,36vw)] md:shrink-0 md:border-s md:border-[#2a2a2e]",
       )}
     >
       <header className="flex shrink-0 items-center justify-between border-b border-[#2a2a2e] px-4 py-3">

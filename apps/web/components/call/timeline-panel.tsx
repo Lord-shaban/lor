@@ -311,7 +311,7 @@ export function TimelinePanel({
     <aside
       data-testid="timeline-panel"
       aria-label={t("title")}
-      className="absolute inset-y-0 end-0 z-30 flex w-full max-w-md flex-col border-s border-[#27272a] bg-[#111113]"
+      className="absolute inset-y-0 end-0 z-30 flex w-full max-w-md flex-col border-s border-[#27272a] bg-[#111113] md:static md:z-auto md:w-[min(28rem,38vw)] md:shrink-0"
     >
       <header className="flex items-center justify-between gap-3 border-b border-[#27272a] px-4 py-3">
         <div className="min-w-0">
