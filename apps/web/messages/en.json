@@ -203,51 +203,55 @@
       }
     },
     "compare": {
-      "eyebrow": "Choose the right kind of room",
-      "title": "A call is the beginning, not the archive.",
-      "intro": "This is a capability map, not a competitor scorecard. It shows where a familiar video room stops and what LOR. keeps connected.",
-      "caption": "Capability comparison between a conventional video-room baseline and LOR.",
-      "capability": "Capability",
-      "baseline": "Conventional room",
+      "eyebrow": "A clear comparison",
+      "title": "Which space fits your meeting?",
+      "intro": "All three services run real video meetings. The differences lie in joining, working together, and reviewing what came out of the call.",
+      "caption": "Comparison of LOR., Zoom, and Google Meet",
+      "capability": "Need",
       "lor": "LOR.",
       "rows": {
         "join": {
           "label": "Joining",
-          "baseline": "Link and meeting",
-          "lor": "Link, name, and in"
+          "lor": "Link and name; no account",
+          "zoom": "Guests can join without an account, subject to host settings",
+          "meet": "Guests can join without an account after admission"
         },
         "collaboration": {
           "label": "Shared work",
-          "baseline": "Usually another tool",
-          "lor": "Board, notes, and chat in the room"
+          "lor": "Chat, board, notes, and screen sharing in the room",
+          "zoom": "Chat, screen sharing, and Zoom Whiteboard",
+          "meet": "Chat, screen sharing, and Google tool integrations"
         },
         "captions": {
-          "label": "Mixed-language captions",
-          "baseline": "Depends on the service",
-          "lor": "Arabic and English, with source text"
+          "label": "Live text",
+          "lor": "Optional Arabic and English transcription with retention when enabled",
+          "zoom": "Automated captions when enabled",
+          "meet": "Live captions in multiple languages"
         },
         "record": {
           "label": "Recording",
-          "baseline": "Cloud or manual export",
-          "lor": "Local WebM in your tab"
+          "lor": "Local file stays in the browser tab",
+          "zoom": "Computer recording; cloud recording on eligible plans",
+          "meet": "Drive recording on eligible plans"
         },
         "evidence": {
-          "label": "Decisions and tasks",
-          "baseline": "Notes after the call",
-          "lor": "Host-reviewed and source-backed"
-        },
-        "search": {
-          "label": "Returning to the record",
-          "baseline": "Find the recording first",
-          "lor": "Room-scoped timeline, memory, and search"
-        },
-        "ai": {
-          "label": "AI dependency",
-          "baseline": "Varies by feature",
-          "lor": "The call works without AI or a key"
+          "label": "Meeting outcomes",
+          "lor": "Host-reviewed decisions and tasks linked to a source quote",
+          "zoom": "AI Companion summary and transcript on eligible plans",
+          "meet": "Gemini notes on eligible plans, saved in Docs"
         }
       },
-      "note": "The baseline describes a common meeting flow, not a claim about any named product. See the README for the exact shipped boundaries."
+      "note": "Based on product documentation in September 2026. Availability varies by plan, settings, and region. Official sources:",
+      "sources": {
+        "zoomJoin": "Zoom guest access",
+        "zoomSummary": "Zoom meeting summary",
+        "zoomRecord": "Zoom recording",
+        "zoomCaptions": "Zoom captions",
+        "meetJoin": "Meet guest access",
+        "meetNotes": "Meet notes",
+        "meetRecord": "Meet recording",
+        "meetCaptions": "Meet captions"
+      }
     },
     "control": {
       "eyebrow": "Designed with boundaries",
