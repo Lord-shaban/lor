@@ -390,9 +390,9 @@ export default function PublicLanding({
               <GuardrailCard icon={<RecordIcon />} title={t("control.cards.local.title")}>{t("control.cards.local.body")}</GuardrailCard>
               <GuardrailCard icon={<CodeIcon />} title={t("control.cards.keys.title")}>{t("control.cards.keys.body")}</GuardrailCard>
             </div>
-            <a className={`mt-8 inline-flex items-center gap-2 ${TEXT_LINK}`} href={`${REPO}/blob/main/SECURITY.md`}>
+            <Link className={`mt-8 inline-flex items-center gap-2 ${TEXT_LINK}`} href="/resources/security">
               {t("control.security")}<ArrowUpRightIcon />
-            </a>
+            </Link>
           </div>
         </section>
 
@@ -407,8 +407,8 @@ export default function PublicLanding({
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <ResourceCard href={REPO} title={t("openSource.source")} hint={t("openSource.sourceHint")} />
-                <ResourceCard href={`${REPO}/blob/main/CONTRIBUTING.md`} title={t("openSource.contribute")} hint={t("openSource.contributeHint")} />
-                <ResourceCard href={`${REPO}/milestones`} title={t("openSource.roadmap")} hint={t("openSource.roadmapHint")} />
+                <ResourceCard href="/resources/contributing" title={t("openSource.contribute")} hint={t("openSource.contributeHint")} />
+                <ResourceCard href="/resources/roadmap" title={t("openSource.roadmap")} hint={t("openSource.roadmapHint")} />
               </div>
             </div>
           </div>
@@ -456,7 +456,7 @@ export default function PublicLanding({
           <nav aria-label={t("footer.label")} className="grid grid-cols-2 gap-x-8 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-6">
             <Link className={TEXT_LINK} href="/docs">{t("footer.docs")}</Link>
             <Link className={TEXT_LINK} href="/">{t("footer.product")}</Link>
-            <a className={TEXT_LINK} href={`${REPO}/blob/main/SECURITY.md`}>{t("footer.security")}</a>
+            <Link className={TEXT_LINK} href="/resources/security">{t("footer.security")}</Link>
             <a className={TEXT_LINK} href={REPO}>{t("footer.source")}</a>
           </nav>
         </div>
@@ -505,7 +505,9 @@ function GuardrailCard({ icon, title, children }: { icon: ReactNode; title: stri
 }
 
 function ResourceCard({ href, title, hint }: { href: string; title: string; hint: string }) {
-  return <a href={href} className="group flex min-h-16 items-center justify-between gap-4 rounded-[var(--radius-md)] border border-border bg-surface px-5 py-3 transition-colors duration-150 hover:bg-surface-strong"><span className="min-w-0"><span className="block font-medium">{title}</span><span className="mt-1 block text-sm leading-5 text-muted">{hint}</span></span><ArrowUpRightIcon className="shrink-0 transition-transform duration-150 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" /></a>;
+  const className = "group flex min-h-16 items-center justify-between gap-4 rounded-[var(--radius-md)] border border-border bg-surface px-5 py-3 transition-colors duration-150 hover:bg-surface-strong";
+  const content = <><span className="min-w-0"><span className="block font-medium">{title}</span><span className="mt-1 block text-sm leading-5 text-muted">{hint}</span></span><ArrowUpRightIcon className="shrink-0 transition-transform duration-150 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" /></>;
+  return href.startsWith("/") ? <Link href={href} className={className}>{content}</Link> : <a href={href} className={className}>{content}</a>;
 }
 
 function ComparisonRow({ label, baseline, lor }: { label: string; baseline: string; lor: string }) {

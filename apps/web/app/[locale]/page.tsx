@@ -62,21 +62,21 @@ export default function Home({ params }: PageProps<"/[locale]">) {
                 <a className={MENU_LINK_CLASS} href={REPO}>
                   {t("links.source")}
                 </a>
-                <a className={MENU_LINK_CLASS} href={`${REPO}/blob/main/SECURITY.md`}>
+                <Link className={MENU_LINK_CLASS} href="/resources/security">
                   {t("links.privacy")}
-                </a>
-                <a className={MENU_LINK_CLASS} href={`${REPO}/issues`}>
+                </Link>
+                <Link className={MENU_LINK_CLASS} href="/resources/help">
                   {t("links.help")}
-                </a>
-                <a className={MENU_LINK_CLASS} href={`${REPO}/blob/main/CONTRIBUTING.md`}>
+                </Link>
+                <Link className={MENU_LINK_CLASS} href="/resources/contributing">
                   {t("links.contributing")}
-                </a>
-                <a className={MENU_LINK_CLASS} href={`${REPO}/milestones`}>
+                </Link>
+                <Link className={MENU_LINK_CLASS} href="/resources/roadmap">
                   {t("links.roadmap")}
-                </a>
-                <a className={MENU_LINK_CLASS} href={`${REPO}/blob/main/LICENSE`}>
+                </Link>
+                <Link className={MENU_LINK_CLASS} href="/resources/license">
                   <span dir="ltr">{t("links.license")}</span>
-                </a>
+                </Link>
               </nav>
             </details>
             <ThemeToggle />

@@ -63,7 +63,7 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
             >
               <Link className={TEXT_LINK} href="/about">{t("nav.product")}</Link>
               <span className="font-medium text-foreground">{t("nav.docs")}</span>
-              <a className={TEXT_LINK} href={`${REPO}/discussions`}>{t("nav.community")}</a>
+              <Link className={TEXT_LINK} href="/resources/help">{t("nav.community")}</Link>
             </nav>
             <div className="flex items-center justify-self-end gap-2 sm:gap-3">
               <Button asChild size="md"><Link href="/">{t("nav.try")}</Link></Button>
@@ -203,8 +203,8 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
                   <ContributeRow number="03">{t("contribute.steps.verify")}</ContributeRow>
                 </ol>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <a href={`${REPO}/blob/main/CONTRIBUTING.md`} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-foreground px-5 text-sm font-medium text-on-foreground transition-opacity duration-150 hover:opacity-85">{t("contribute.cta")}<ArrowUpRightIcon /></a>
-                  <a href={`${REPO}/blob/main/docs/open-source.md`} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-border px-5 text-sm font-medium transition-colors duration-150 hover:bg-surface ${TEXT_LINK}`}>{t("contribute.roadmap")}<ArrowUpRightIcon /></a>
+                  <Link href="/resources/contributing" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-foreground px-5 text-sm font-medium text-on-foreground transition-opacity duration-150 hover:opacity-85">{t("contribute.cta")}<ArrowUpRightIcon /></Link>
+                  <Link href="/resources/roadmap" className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-border px-5 text-sm font-medium transition-colors duration-150 hover:bg-surface ${TEXT_LINK}`}>{t("contribute.roadmap")}<ArrowUpRightIcon /></Link>
                 </div>
               </section>
 
@@ -233,7 +233,7 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
       <footer className="border-t border-border">
         <div className={`${CONTAINER} flex flex-col gap-6 py-9 text-sm text-muted sm:flex-row sm:items-start sm:justify-between`}>
           <div><div className="flex items-center gap-3"><LorWordmark className="h-7 w-auto" /><span>{t("footer.license")}</span></div><p className="mt-3 max-w-sm leading-6">{t("footer.tagline")}</p></div>
-          <nav aria-label={t("footer.label")} className="grid grid-cols-2 gap-x-8 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-6"><Link className={TEXT_LINK} href="/about">{t("footer.landing")}</Link><Link className={TEXT_LINK} href="/">{t("footer.product")}</Link><a className={TEXT_LINK} href={`${REPO}/blob/main/SECURITY.md`}>{t("footer.security")}</a><a className={TEXT_LINK} href={REPO}>{t("footer.source")}</a></nav>
+          <nav aria-label={t("footer.label")} className="grid grid-cols-2 gap-x-8 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-6"><Link className={TEXT_LINK} href="/about">{t("footer.landing")}</Link><Link className={TEXT_LINK} href="/">{t("footer.product")}</Link><Link className={TEXT_LINK} href="/resources/security">{t("footer.security")}</Link><a className={TEXT_LINK} href={REPO}>{t("footer.source")}</a></nav>
         </div>
       </footer>
     </div>
