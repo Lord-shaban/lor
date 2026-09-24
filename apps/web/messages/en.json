@@ -36,10 +36,6 @@
       "description": "Meet, collaborate, and keep the useful record. LOR. is an Arabic-first open-source video meeting product."
     },
     "skip": "Skip to the project",
-    "banner": {
-      "label": "Open source · Arabic-first · AGPL-3.0",
-      "link": "Read the product guide"
-    },
     "brand": {
       "name": "Live Open Rooms",
       "tagline": "The room stays open. The thread stays useful."
@@ -66,10 +62,7 @@
         "noAccount": "No account",
         "local": "Local recording stays in your tab",
         "ai": "The call works without <term>AI</term>"
-      },
-      "mediaAlt": "A real LOR. product home screen shows the focused start-or-join flow with no account, no download, and the meeting launcher.",
-      "mediaCaption": "Captured from the shipped product in a clean local session. No room code, participant, transcript, or key is present.",
-      "mediaLabel": "Seen in the product"
+      }
     },
     "showcase": {
       "live": "Live meeting",
@@ -91,48 +84,19 @@
       "title": "What you need, in the meeting context.",
       "intro": "Start with a simple join flow, work together in one space, then return to decisions linked to the words behind them.",
       "home": {
-        "eyebrow": "Start here",
-        "title": "A focused door into the room",
-        "body": "Create a room or open an invitation link, then check your devices before joining.",
-        "alt": "The shipped LOR. product home shows Start or join a meeting, a create-room action, a room-code field, and trust notes."
+        "body": "Create a room or open an invitation link, then check your devices before joining."
       },
       "menu": {
-        "eyebrow": "Stay oriented",
-        "title": "Help is nearby, never in the way",
-        "body": "Keep the conversation, board, notes, and screen sharing in one workspace.",
-        "alt": "The shipped LOR. product home has its Help and source menu open with About, Source, Privacy and security, Help, Contributing, Roadmap, and AGPL-3.0."
+        "body": "Keep the conversation, board, notes, and screen sharing in one workspace."
       },
       "workspace": {
-        "eyebrow": "In the room",
-        "title": "Keep the live moment and the record together",
-        "body": "Review decisions and action items with the source quote and timestamp in the same room.",
-        "alt": "A privacy-safe synthetic LOR. meeting workspace shows two call tiles beside live captions and a retained record panel."
-      },
-      "disclosure": "The PNG captures are generated from the current local product UI with placeholder content only. The workspace illustration is synthetic until a reviewed community walkthrough lands."
-    },
-    "overview": {
-      "eyebrow": "The LOR. difference",
-      "title": "A calmer meeting, a stronger handoff.",
-      "intro": "LOR. keeps the live call lightweight, then gives the work a place to land—without turning the meeting into a dashboard.",
-      "cards": {
-        "conversation": {
-          "title": "Keep the conversation human",
-          "body": "Open a link, enter your name, and get into the room. The call works before any optional AI feature does."
-        },
-        "work": {
-          "title": "Make the room useful",
-          "body": "Board, notes, chat, captions, and local recording stay close to the people doing the work."
-        },
-        "record": {
-          "title": "Leave with the thread",
-          "body": "Decisions, commitments, timeline, memory, and search point back to retained room evidence."
-        }
+        "body": "Review decisions and action items with the source quote and timestamp in the same room."
       }
     },
     "story": {
       "eyebrow": "One simple path",
-      "title": "From a link to a useful record.",
-      "intro": "LOR. keeps the meeting itself simple, then makes the result easier to return to.",
+      "title": "Join, collaborate, and return to the outcome.",
+      "intro": "Keep the conversation first, with work tools and the record available when needed.",
       "steps": {
         "join": {
           "title": "Join without ceremony",
@@ -148,33 +112,10 @@
         }
       }
     },
-    "proof": {
-      "title": "Proof over promises.",
-      "intro": "The shipped product is deliberately bounded. Each capability has a clear place and a clear edge.",
-      "releases": "See shipped releases",
-      "rows": {
-        "captions": {
-          "label": "Mixed-language captions",
-          "body": "Arabic and English can stay in the scripts people actually use, with an evaluation set behind the claim."
-        },
-        "collaboration": {
-          "label": "Live collaboration",
-          "body": "The shared board, notes, chat, and local recording stay in the call without an AI key."
-        },
-        "decisions": {
-          "label": "Evidence-backed records",
-          "body": "Decisions and clear commitments keep their exact retained source instead of becoming loose summaries."
-        },
-        "search": {
-          "label": "Room-scoped search",
-          "body": "Past evidence can be found on demand, never mixed with another room or the live conversation."
-        }
-      }
-    },
     "features": {
       "eyebrow": "What is already here",
-      "title": "Everything the conversation needs.",
-      "intro": "The useful parts are built into the room, with clear boundaries around what is live, what is retained, and what stays optional.",
+      "title": "Useful tools before and after the call.",
+      "intro": "The call and core collaboration tools work without an AI key. Text-processing features remain optional.",
       "cards": {
         "captions": {
           "title": "Mixed-language captions",
@@ -293,13 +234,13 @@
     },
     "docsCta": {
       "eyebrow": "A better next click",
-      "title": "Learn the shape of LOR. before you leave the page.",
-      "body": "The local docs explain the room, the evidence boundary, the stack, and the contributor path in one calm place. GitHub is there when you are ready to inspect or change the code.",
+      "title": "Find the guide for your next step.",
+      "body": "Learn how to use the room, understand retention, and run the project locally in one guide.",
       "cta": "Open the docs hub"
     },
     "faq": {
       "eyebrow": "Before you join",
-      "title": "Questions worth answering.",
+      "title": "Questions before you join.",
       "intro": "No marketing maze. These are the boundaries that shape the product today.",
       "items": {
         "account": {
@@ -326,7 +267,7 @@
     },
     "final": {
       "eyebrow": "Your next meeting can leave more behind",
-      "title": "Start with a real meeting.",
+      "title": "Make the meeting outcome easy to revisit.",
       "body": "Try the hosted app, then open the source when you want to see how it works or help shape what comes next.",
       "liveCta": "Open the live app",
       "docsCta": "Read the docs"
