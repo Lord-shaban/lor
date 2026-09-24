@@ -17,6 +17,7 @@ import { Track } from "livekit-client";
 import { REACTIONS, type Reaction } from "@/lib/data-channel";
 import type { VideoMode } from "@/lib/video-mode";
 import { VideoModeControl } from "@/components/call/video-mode-control";
+import { RoomHeader } from "@/components/call/room-header";
 import { cn } from "@/lib/cn";
 import type { LocalRecording } from "@/components/call/use-local-recording";
 
@@ -51,6 +52,8 @@ function canShareScreen(): boolean {
  * Everything else is grouped by the job it serves, without hiding live state.
  */
 export function CallControls({
+  code,
+  inviteUrl,
   canPublish,
   activeWorkspace,
   unread,
@@ -68,6 +71,8 @@ export function CallControls({
   onChooseVideoMode,
   onLeave,
 }: {
+  code: string;
+  inviteUrl: string;
   canPublish: boolean;
   activeWorkspace: CallWorkspace | null;
   unread: number;
@@ -177,8 +182,11 @@ export function CallControls({
     >
       <div
         data-testid="call-dock"
-        className="mx-auto grid h-[4.75rem] grid-cols-6 items-stretch gap-1 px-2 py-2 sm:flex sm:h-[4.5rem] sm:items-center sm:justify-center sm:gap-2 sm:px-4"
+        className="grid grid-cols-6 grid-rows-[2.75rem_3.5rem] items-stretch gap-x-1 gap-y-1 px-2 py-1 lg:flex lg:h-16 lg:items-center lg:justify-center lg:gap-2 lg:px-4"
       >
+        <div className="col-span-6 min-w-0 lg:me-auto">
+          <RoomHeader code={code} inviteUrl={inviteUrl} />
+        </div>
         <MediaButton
           kind="microphone"
           enabled={isMicrophoneEnabled}
@@ -456,7 +464,7 @@ function ControlPopover({
       role="dialog"
       aria-modal="false"
       aria-label={title}
-      className="fixed inset-x-3 bottom-[4.75rem] z-50 max-h-[min(70dvh,36rem)] overflow-y-auto rounded-lg border border-[#2a2a2e] bg-[#141416] sm:absolute sm:inset-x-auto sm:bottom-full sm:left-1/2 sm:mb-2 sm:w-80 sm:-translate-x-1/2"
+      className="fixed inset-x-3 bottom-[7rem] z-50 max-h-[min(70dvh,36rem)] overflow-y-auto rounded-lg border border-[#2a2a2e] bg-[#141416] lg:absolute lg:inset-x-auto lg:bottom-full lg:left-1/2 lg:mb-2 lg:w-80 lg:-translate-x-1/2"
     >
       <p className="border-b border-[#2a2a2e] px-3 py-2 text-sm font-medium">
         {title}

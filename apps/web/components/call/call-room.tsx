@@ -39,7 +39,6 @@ import { useCarryOver } from "@/components/call/use-carry-over";
 import { useVideoMode } from "@/components/call/use-video-mode";
 import { useLocalRecording } from "@/components/call/use-local-recording";
 import { RecordingNotice, RecordingStatus } from "@/components/call/recording-notice";
-import { RoomHeader } from "@/components/call/room-header";
 import { YjsRoomLifecycle } from "@/components/call/use-yjs-room";
 import { unreadCount } from "@/lib/chat-log";
 import type { JoinDetails } from "@/components/prejoin/prejoin";
@@ -155,10 +154,9 @@ export function CallRoom({
         className="flex min-h-0 flex-1 flex-col"
       >
         <SharingBanner />
-        <RoomHeader code={code} inviteUrl={inviteUrl} />
-
         <CallStage
           code={code}
+          inviteUrl={inviteUrl}
           canPublish={connection.canPublish}
           startedAsHost={connection.isHost}
           meetingId={connection.meeting?.id ?? null}
@@ -187,12 +185,14 @@ export function CallRoom({
  */
 function CallStage({
   code,
+  inviteUrl,
   canPublish,
   startedAsHost,
   meetingId,
   onLeave,
 }: {
   code: string;
+  inviteUrl: string;
   canPublish: boolean;
   /** Whether the token minted at join said host. The seat can move afterwards. */
   startedAsHost: boolean;
@@ -203,6 +203,7 @@ function CallStage({
     <YjsRoomLifecycle roomKey={code}>
       <CallStageContent
         code={code}
+        inviteUrl={inviteUrl}
         canPublish={canPublish}
         startedAsHost={startedAsHost}
         meetingId={meetingId}
@@ -214,12 +215,14 @@ function CallStage({
 
 function CallStageContent({
   code,
+  inviteUrl,
   canPublish,
   startedAsHost,
   meetingId,
   onLeave,
 }: {
   code: string;
+  inviteUrl: string;
   canPublish: boolean;
   startedAsHost: boolean;
   meetingId: string | null;
@@ -476,6 +479,8 @@ function CallStageContent({
       />
 
       <CallControls
+        code={code}
+        inviteUrl={inviteUrl}
         canPublish={canPublish}
         activeWorkspace={activeWorkspace}
         unread={unreadCount({ received, read, open: chatOpen })}
