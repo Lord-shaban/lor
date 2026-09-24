@@ -1,6 +1,7 @@
+import type { Metadata } from "next";
 import { use } from "react";
 import { useTranslations } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -9,6 +10,12 @@ import { RoomLauncher } from "@/components/room-launcher";
 const REPO = "https://github.com/Lord-shaban/lor";
 const MENU_LINK_CLASS =
   "flex min-h-11 items-center rounded-sm px-3 py-2 text-sm text-foreground transition-colors duration-150 hover:bg-surface-strong focus-visible:bg-surface-strong";
+
+export async function generateMetadata({ params }: PageProps<"/[locale]">): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "home" });
+  return { description: t("tagline") };
+}
 
 export default function Home({ params }: PageProps<"/[locale]">) {
   // params is a promise in Next 16. This stays a sync Server Component so
@@ -78,30 +85,32 @@ export default function Home({ params }: PageProps<"/[locale]">) {
         </div>
       </header>
 
-      <main className="flex flex-1 justify-center px-6 py-10 sm:px-8 sm:py-16 lg:items-center">
-        <div className="w-full max-w-5xl">
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-            {t("title")}
-          </h1>
+      <main className="flex flex-1 items-center justify-center px-6 py-10 sm:px-8 sm:py-16">
+        <div className="grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
+          <div className="max-w-xl">
+            <h1 className="max-w-[14ch] text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+              {t("title")}
+            </h1>
 
-          <p className="mt-4 max-w-xl text-base text-balance">
-            {t("tagline")}
-          </p>
+            <p className="mt-5 max-w-prose text-base leading-7 text-muted sm:text-lg">
+              {t("tagline")}
+            </p>
+
+            <ul
+              aria-label={t("trust.label")}
+              className="mt-8 flex flex-wrap gap-x-5 gap-y-2 border-t border-border pt-5 text-sm text-muted"
+            >
+              <li>{t("trust.noAccount")}</li>
+              <li>{t("trust.noDownload")}</li>
+              <li>
+                {t.rich("trust.worksWithoutAi", {
+                  term: (chunks) => <bdi>{chunks}</bdi>,
+                })}
+              </li>
+            </ul>
+          </div>
 
           <RoomLauncher />
-
-          <ul
-            aria-label={t("trust.label")}
-            className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted"
-          >
-            <li>{t("trust.noAccount")}</li>
-            <li>{t("trust.noDownload")}</li>
-            <li>
-              {t.rich("trust.worksWithoutAi", {
-                term: (chunks) => <bdi>{chunks}</bdi>,
-              })}
-            </li>
-          </ul>
         </div>
       </main>
     </div>

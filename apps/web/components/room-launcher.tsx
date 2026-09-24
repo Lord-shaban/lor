@@ -73,15 +73,15 @@ export function RoomLauncher() {
     <section
       aria-labelledby="room-launcher-title"
       data-testid="room-launcher"
-      className="mt-8 grid gap-6 rounded-lg border border-border bg-surface p-5 sm:p-6 lg:grid-cols-2 lg:gap-8 lg:p-8"
+      className="grid gap-6 rounded-lg border border-border bg-surface p-5 sm:p-8"
     >
       <h2 id="room-launcher-title" className="sr-only">
         {t("title")}
       </h2>
 
-      <div className="flex flex-col">
-        <div className="flex flex-col gap-4">
-          <div>
+      <div>
+        <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <div className="min-w-0">
             <h3 className="text-lg font-medium">{t("newMeeting")}</h3>
             <p className="mt-1 text-sm text-muted">{t("newMeetingHint")}</p>
           </div>
@@ -89,7 +89,7 @@ export function RoomLauncher() {
             size="lg"
             onClick={createRoom}
             disabled={creating}
-            className="mt-auto w-full lg:mt-10"
+            className="w-full sm:w-auto"
           >
             {creating ? t("starting") : t("start")}
           </Button>
@@ -104,7 +104,7 @@ export function RoomLauncher() {
         )}
       </div>
 
-      <div className="flex items-center gap-3 text-xs text-muted lg:hidden">
+      <div className="flex items-center gap-3 text-xs text-muted">
         <span className="h-px flex-1 bg-border" aria-hidden="true" />
         <span>{t("or")}</span>
         <span className="h-px flex-1 bg-border" aria-hidden="true" />
@@ -113,7 +113,7 @@ export function RoomLauncher() {
       <form
         onSubmit={join}
         aria-labelledby="room-launcher-join-title"
-        className="grid min-w-0 gap-4 lg:border-s lg:border-border lg:ps-8"
+        className="grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"
       >
         <div className="min-w-0">
           <h3 id="room-launcher-join-title" className="text-lg font-medium">
@@ -150,23 +150,17 @@ export function RoomLauncher() {
           variant="secondary"
           size="lg"
           disabled={!joinInput.trim()}
-          className="w-full"
+          className="w-full sm:w-auto"
         >
           {t("join")}
         </Button>
-      </form>
 
-      {/* Announced when it appears, and sitting next to the field it refers to
-          rather than in a banner somewhere above. */}
-      {joinError && (
-        <p
-          id="launcher-join-error"
-          role="alert"
-          className="mt-3 text-sm text-danger"
-        >
-          {joinError}
-        </p>
-      )}
+        {joinError && (
+          <p id="launcher-join-error" role="alert" className="text-sm text-danger sm:col-span-2">
+            {joinError}
+          </p>
+        )}
+      </form>
     </section>
   );
 }

@@ -367,6 +367,8 @@
     }
   },
   "room": {
+    "inviteTitle": "Invite others",
+    "showQr": "Show QR code",
     "shareToInvite": "Send this link to anyone you want in the room.",
     "copy": "Copy link",
     "copied": "Copied",
@@ -496,6 +498,11 @@
     "someoneElseSharing": "Someone else is already sharing",
     "controls": {
       "workspaces": "Workspaces",
+      "microphoneShort": "Mic",
+      "cameraShort": "Camera",
+      "chatShort": "Chat",
+      "workspacesShort": "Tools",
+      "leaveShort": "Leave",
       "openWorkspaces": "Open workspaces",
       "closeWorkspaces": "Close workspaces",
       "workspacesWithUnread": "Open workspaces, {count} unread chat messages",

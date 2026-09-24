@@ -43,7 +43,7 @@ export function CopyLink({ url }: { url: string }) {
         {url}
       </code>
 
-      <Button variant="secondary" onClick={copy}>
+      <Button type="button" variant="secondary" onClick={copy}>
         {copied ? t("copied") : t("copy")}
       </Button>
 

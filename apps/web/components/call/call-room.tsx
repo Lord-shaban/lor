@@ -316,7 +316,7 @@ function CallStageContent({
       {/* relative, because the chat covers this area on a phone rather than
           squeezing the grid into a column too narrow to see a face in. */}
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
-        <main className="min-h-0 flex-1 overflow-hidden p-3">
+        <main className="min-h-0 min-w-0 flex-1 overflow-hidden p-2 sm:p-3 lg:p-4">
           <VideoGrid canModerate={isHost} onModerate={moderate} />
         </main>
 

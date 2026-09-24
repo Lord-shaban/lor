@@ -26,17 +26,18 @@ export default async function KeysPage({ params }: PageProps<"/[locale]/keys">) 
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8 sm:px-8 sm:py-12">
-      <div className="grid items-start gap-10 lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-16">
-        <header className="lg:sticky lg:top-10">
+      <div className="space-y-8 sm:space-y-10">
+        <header className="max-w-3xl">
           <Link href="/" className="inline-flex min-h-11 items-center text-sm text-muted underline decoration-border underline-offset-4 hover:text-foreground hover:decoration-foreground">
             {t("backHome")}
           </Link>
-          <h1 className="mt-4 text-2xl font-semibold tracking-tight">{t("title")}</h1>
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl">{t("title")}</h1>
           <p className="mt-4 max-w-prose text-base leading-7 text-muted">{t("intro")}</p>
-          <p className="mt-8 border-t border-border pt-6 text-sm leading-6 text-muted">{t("howToAdd")}</p>
         </header>
 
-        <div className="flex min-w-0 flex-col gap-5">
+        <p className="max-w-3xl rounded-lg border border-border bg-surface px-5 py-4 text-sm leading-7">{t("howToAdd")}</p>
+
+        <div className="grid min-w-0 items-start gap-5 lg:grid-cols-2">
         {GUIDE.map((entry) => {
           const provider = PROVIDERS[entry.id];
           if (!provider) return null;
@@ -44,7 +45,7 @@ export default async function KeysPage({ params }: PageProps<"/[locale]/keys">) 
           return (
             <section
               key={entry.id}
-              className="rounded-lg border border-border bg-surface p-5 sm:p-6"
+              className="flex h-full flex-col rounded-lg border border-border bg-surface p-5 sm:p-6"
             >
               <header className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-lg font-medium">
@@ -109,7 +110,7 @@ export default async function KeysPage({ params }: PageProps<"/[locale]/keys">) 
                 </div>
               </dl>
 
-              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border pt-5 text-sm">
+              <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border pt-5 text-sm">
                 {/* Straight into their console. Never an affiliate or referral
                     link — the moment a recommendation pays us it stops being
                     one, and this page is only worth anything if it is trusted. */}
@@ -133,8 +134,8 @@ export default async function KeysPage({ params }: PageProps<"/[locale]/keys">) 
             </section>
           );
         })}
-          <p className="max-w-prose text-xs leading-5 text-muted">{t("noAffiliates")}</p>
         </div>
+        <p className="max-w-prose text-xs leading-5 text-muted">{t("noAffiliates")}</p>
       </div>
     </main>
   );

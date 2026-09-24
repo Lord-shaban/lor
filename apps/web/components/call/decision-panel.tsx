@@ -214,7 +214,7 @@ export function DecisionPanel({
 
   return (
     <aside
-      className="absolute end-0 inset-y-0 z-30 flex w-full max-w-md flex-col border-s border-[#27272a] bg-[#111113]"
+      className="absolute end-0 inset-y-0 z-30 flex w-full max-w-md flex-col border-s border-[#27272a] bg-[#111113] md:static md:z-auto md:w-[min(28rem,38vw)] md:shrink-0"
       aria-label={t("title")}
       data-testid="decision-panel"
     >
