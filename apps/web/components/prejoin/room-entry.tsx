@@ -231,12 +231,12 @@ export function RoomEntry({
 
   // The prejoin brings its own page chrome; the call deliberately has none.
   return (
-    <main className="flex flex-1 justify-center px-6 py-12">
-      <div className="w-full max-w-4xl">
+    <main className="flex flex-1 justify-center px-4 py-6 sm:px-8 sm:py-10">
+      <div className="w-full max-w-5xl">
         <h1 className="text-xl font-semibold tracking-tight">{t("getReady")}</h1>
         <p className="mt-2 text-base text-muted">{t("checkBeforeJoining")}</p>
 
-        <div className="mt-8">
+        <div className="mt-6 sm:mt-8">
           {waiting ? (
             <WaitingRoom
               state={state}
@@ -248,10 +248,10 @@ export function RoomEntry({
           )}
         </div>
 
-        <div className="mt-10 border-t border-border pt-6">
+        <div className="mt-8 border-t border-border pt-6">
           <p className="mb-3 text-sm text-muted">{t("shareToInvite")}</p>
           <CopyLink url={inviteUrl} />
-          {qr && <div className="mt-6">{qr}</div>}
+          {qr && <div className="mt-5">{qr}</div>}
         </div>
       </div>
     </main>

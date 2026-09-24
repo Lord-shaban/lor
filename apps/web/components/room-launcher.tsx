@@ -73,14 +73,14 @@ export function RoomLauncher() {
     <section
       aria-labelledby="room-launcher-title"
       data-testid="room-launcher"
-      className="mt-8 rounded-lg border border-border bg-surface p-5 sm:p-6"
+      className="mt-8 grid gap-6 rounded-lg border border-border bg-surface p-5 sm:p-6 lg:grid-cols-2 lg:gap-8 lg:p-8"
     >
       <h2 id="room-launcher-title" className="sr-only">
         {t("title")}
       </h2>
 
-      <div>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col">
+        <div className="flex flex-col gap-4">
           <div>
             <h3 className="text-lg font-medium">{t("newMeeting")}</h3>
             <p className="mt-1 text-sm text-muted">{t("newMeetingHint")}</p>
@@ -89,7 +89,7 @@ export function RoomLauncher() {
             size="lg"
             onClick={createRoom}
             disabled={creating}
-            className="w-full sm:w-auto"
+            className="mt-auto w-full lg:mt-10"
           >
             {creating ? t("starting") : t("start")}
           </Button>
@@ -104,7 +104,7 @@ export function RoomLauncher() {
         )}
       </div>
 
-      <div className="my-5 flex items-center gap-3 text-xs text-muted">
+      <div className="flex items-center gap-3 text-xs text-muted lg:hidden">
         <span className="h-px flex-1 bg-border" aria-hidden="true" />
         <span>{t("or")}</span>
         <span className="h-px flex-1 bg-border" aria-hidden="true" />
@@ -113,7 +113,7 @@ export function RoomLauncher() {
       <form
         onSubmit={join}
         aria-labelledby="room-launcher-join-title"
-        className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"
+        className="grid min-w-0 gap-4 lg:border-s lg:border-border lg:ps-8"
       >
         <div className="min-w-0">
           <h3 id="room-launcher-join-title" className="text-lg font-medium">
@@ -150,7 +150,7 @@ export function RoomLauncher() {
           variant="secondary"
           size="lg"
           disabled={!joinInput.trim()}
-          className="w-full sm:w-auto"
+          className="w-full"
         >
           {t("join")}
         </Button>

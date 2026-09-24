@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { GUIDE, hours } from "@/lib/keys/guide";
 import { PROVIDERS } from "@/lib/stt/providers";
 
@@ -24,11 +25,18 @@ export default async function KeysPage({ params }: PageProps<"/[locale]/keys">) 
   const formatter = new Intl.NumberFormat(locale);
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
-      <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-      <p className="mt-3 max-w-prose text-base text-muted">{t("intro")}</p>
+    <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8 sm:px-8 sm:py-12">
+      <div className="grid items-start gap-10 lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-16">
+        <header className="lg:sticky lg:top-10">
+          <Link href="/" className="inline-flex min-h-11 items-center text-sm text-muted underline decoration-border underline-offset-4 hover:text-foreground hover:decoration-foreground">
+            {t("backHome")}
+          </Link>
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight">{t("title")}</h1>
+          <p className="mt-4 max-w-prose text-base leading-7 text-muted">{t("intro")}</p>
+          <p className="mt-8 border-t border-border pt-6 text-sm leading-6 text-muted">{t("howToAdd")}</p>
+        </header>
 
-      <div className="mt-8 flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-5">
         {GUIDE.map((entry) => {
           const provider = PROVIDERS[entry.id];
           if (!provider) return null;
@@ -36,7 +44,7 @@ export default async function KeysPage({ params }: PageProps<"/[locale]/keys">) 
           return (
             <section
               key={entry.id}
-              className="rounded-xl border border-[color:var(--border)] p-5"
+              className="rounded-lg border border-border bg-surface p-5 sm:p-6"
             >
               <header className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="text-lg font-medium">
@@ -58,7 +66,7 @@ export default async function KeysPage({ params }: PageProps<"/[locale]/keys">) 
                 </span>
               </header>
 
-              <dl className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">
+              <dl className="mt-5 grid gap-x-8 gap-y-5 border-t border-border pt-5 sm:grid-cols-2">
                 <div>
                   <dt className="text-xs font-medium text-muted">{t("freeTier")}</dt>
                   <dd className="mt-0.5 text-sm">
@@ -101,7 +109,7 @@ export default async function KeysPage({ params }: PageProps<"/[locale]/keys">) 
                 </div>
               </dl>
 
-              <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border pt-5 text-sm">
                 {/* Straight into their console. Never an affiliate or referral
                     link — the moment a recommendation pays us it stops being
                     one, and this page is only worth anything if it is trusted. */}
@@ -125,10 +133,9 @@ export default async function KeysPage({ params }: PageProps<"/[locale]/keys">) 
             </section>
           );
         })}
+          <p className="max-w-prose text-xs leading-5 text-muted">{t("noAffiliates")}</p>
+        </div>
       </div>
-
-      <p className="mt-8 max-w-prose text-sm text-muted">{t("howToAdd")}</p>
-      <p className="mt-3 max-w-prose text-xs text-muted">{t("noAffiliates")}</p>
     </main>
   );
 }
