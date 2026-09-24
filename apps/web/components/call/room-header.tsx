@@ -11,9 +11,11 @@ import { Button } from "@/components/ui/button";
 export function RoomHeader({
   code,
   inviteUrl,
+  inMenu = false,
 }: {
   code: string;
   inviteUrl: string;
+  inMenu?: boolean;
 }) {
   const t = useTranslations("call.roomHeader");
   const participants = useParticipants();
@@ -45,19 +47,19 @@ export function RoomHeader({
 
   return (
     <div
-      data-testid="room-header"
+      data-testid={inMenu ? "room-header-menu" : "room-header"}
       role="group"
       aria-label={t("ariaLabel")}
-      aria-describedby="room-header-code"
+      aria-describedby={inMenu ? "room-header-menu-code" : "room-header-code"}
       className="flex h-11 min-w-0 items-center gap-1.5 lg:max-w-64"
     >
       <div className="flex min-w-0 flex-1 flex-col justify-center">
           <span className="truncate text-xs text-[#a1a1aa]">{t("label")}</span>
           <code
-            id="room-header-code"
+            id={inMenu ? "room-header-menu-code" : "room-header-code"}
             dir="ltr"
             title={code}
-            className="hidden min-w-0 truncate font-mono text-xs font-medium tracking-[0.06em] text-[#f4f4f5] lg:block"
+            className={inMenu ? "block min-w-0 truncate font-mono text-xs font-medium tracking-[0.06em] text-[#f4f4f5]" : "hidden min-w-0 truncate font-mono text-xs font-medium tracking-[0.06em] text-[#f4f4f5] lg:block"}
           >
             <bdi>{code}</bdi>
           </code>
