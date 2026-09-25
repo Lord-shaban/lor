@@ -3,6 +3,9 @@
 Status: approved content and media contract for issue [#213](https://github.com/Lord-shaban/lor/issues/213), extended for the showcase pass in [#234](https://github.com/Lord-shaban/lor/issues/234), and refined with the public docs hub in [#236](https://github.com/Lord-shaban/lor/issues/236).
 This brief is the source for the public project page; it does not change the product
 launcher at `/[locale]`.
+The live copy and section layout were subsequently revised in [#264](https://github.com/Lord-shaban/lor/issues/264);
+the current page and locale messages govern those details. The media privacy and
+accessibility rules below remain the contribution contract.
 
 ## What the page must do
 
@@ -37,9 +40,9 @@ unverified AI promise.
 
 The polished project showcase keeps the approved first-viewport contract and expands the
 story in this order: **hero → why LOR. → one simple path → shipped capabilities →
-capability comparison → privacy and control → open source and quick start → FAQ →
-final actions**. The comparison uses a generic “conventional room” baseline rather than
-naming competitors; every LOR. cell maps to a shipped README or release capability.
+capability comparison → privacy and control → open source → FAQ → final actions**.
+The current comparison names Zoom and Google Meet, qualifies plan-dependent features,
+and links to official product documentation.
 
 Issue #236 makes the identity explicit with the official LOR. geometry, a short
 “Live Open Rooms” lockup, and a local docs CTA. GitHub remains a deliberately quieter
@@ -50,13 +53,14 @@ workflow, shipped-versus-planned boundaries, architecture, contribution steps, a
 The quick-start panel mirrors the repository's current `#quick-start` commands and has a
 copy button plus the visible code block as its fallback. FAQ answers are native
 `details` disclosures so they remain keyboard and screen-reader accessible without
-client-side navigation. The hero/gallery now use privacy-reviewed captures of the shipped
-local launcher (`product-home-crop.png`, `product-home-menu-crop.png`, and
-`product-home-ar-crop.png`) with placeholder room data; the workspace illustration remains
-synthetic until a privacy-safe contribution satisfies
-[#220](https://github.com/Lord-shaban/lor/issues/220).
+client-side navigation. The hero now uses a localized HTML/CSS illustration of a
+meeting and its evidence workspace. The approved launcher capture below is a separate
+media contribution under [#220](https://github.com/Lord-shaban/lor/issues/220).
 
-## Approved copy vocabulary
+## Historical copy vocabulary (#213)
+
+This table records the original brief. Current Arabic and English public copy is in
+the locale messages after #264.
 
 | Concept | English | Arabic-first |
 |---|---|---|
@@ -72,17 +76,19 @@ features are required, always available, or free from provider limits.
 
 ## Media inventory
 
-The showcase ships responsive product captures and their text alternatives. A video is
-an optional enhancement, not a dependency for understanding the page.
+The showcase currently uses a responsive illustration. This inventory records the
+new optional capture and future media contributions. A video is an enhancement,
+not a dependency for understanding the page.
 
 | Asset | Owner | Purpose | Target format / dimensions | Text alternative | Privacy and licence | Status |
 |---|---|---|---|---|---|---|
-| `landing/product-preview.svg` | LOR. maintainers | Show the shipped launcher and evidence workspace language in the hero proof surface. | SVG, viewBox 1440×900; rendered responsively with `next/image` or inline fallback. | EN: “A synthetic LOR. meeting view shows the call stage beside a retained transcript and a host-reviewed decision.” AR: equivalent sentence, with all Latin runs isolated. | Project-authored vector; synthetic labels only; no room code, name, transcript, device label, key, or self-view. AGPL-3.0 repository asset. | Approved for #213; static fallback. |
-| `landing/product-home-crop.png` | LOR. maintainers | Show the real launcher in the English hero/gallery. | PNG, 672×704; fixed intrinsic dimensions and responsive rendering. | “A privacy-safe capture of the LOR. launcher shows the join form, recent rooms, and local-first controls.” | Captured from the local product with synthetic room code `mza-krfq-tqn`; no account, person, transcript, key, or self-view. AGPL-3.0 repository asset. | Shipped in #236. |
-| `landing/product-home-menu-crop.png` | LOR. maintainers | Show the same launcher with its navigation menu open, making the information architecture tangible. | PNG, 672×704; fixed intrinsic dimensions and responsive rendering. | “The LOR. launcher menu keeps meetings, saved evidence, and settings in one compact navigation.” | Same synthetic local capture and review rules as the hero image. | Shipped in #236. |
-| `landing/product-home-ar-crop.png` | LOR. maintainers | Provide an Arabic-first RTL capture for the Arabic landing page. | PNG, 672×704; fixed intrinsic dimensions and responsive rendering. | Equivalent Arabic description with isolated Latin product terms. | Same synthetic local capture and review rules as the hero image. | Shipped in #236. |
+| `landing/product-launcher-ar.webp` | LOR. maintainers | Show the current Arabic launcher and its two entry paths without meeting data. | WebP, 732×918 at 2×; reserve this aspect ratio and display at up to 366 CSS px wide. | “واجهة بدء اجتماع LOR.‎ تعرض إنشاء اجتماع جديد وحقل إدخال رابط الدعوة وزر الانضمام.” EN: “The Arabic LOR. meeting launcher shows a new-meeting action, an empty invitation field, and a join action.” | [Capture and privacy review](landing-media.md); project-owned screenshot, AGPL-3.0-only. | Delivered for #220; available as an optional static product capture. |
 | `landing/product-screenshot.webp` | LOR. maintainers | Optional future replacement for the vector when a wider real shipped screen is captured. | WebP, 1600×1000 source, responsive derivatives. | Same semantic description as the captured state. | Capture from a local synthetic room only; review before publishing; no private data. | Follow-up capture, not required for #236. |
-| `landing/walkthrough.webm` + `landing/walkthrough.vtt` | Community contributor via [#220](https://github.com/Lord-shaban/lor/issues/220) | Demonstrate one short path from link → call → retained evidence. | WebM, ≤45s, 1280×720; VTT captions and a poster. | Full transcript supplied beside the player; captions are not the only source. | Silent or captioned synthetic demo; no autoplay; pause when hidden; contributor credits and licence recorded with the asset. | Optional; do not invent a placeholder video. |
+| `landing/walkthrough.webm` + `landing/walkthrough.vtt` | Future contributor | Demonstrate one short path from link → call → retained evidence. | WebM, ≤45s, 1280×720; VTT captions and a poster. | Full transcript supplied beside the player; captions are not the only source. | Silent or captioned synthetic demo; no autoplay; pause when hidden; contributor credits and licence recorded with the asset. | Optional future contribution; do not invent a placeholder video. |
+
+The hero now uses a localized HTML/CSS illustration rather than the retired SVG and
+PNG captures from #213 and #236. The screenshot above is one new, independent media
+entry; adding it to this inventory does not replace that illustration on the page.
 
 The implementation must use `next/image` for raster images, reserve media dimensions to
 avoid layout shift, lazy-load noncritical media, and provide a readable static fallback.
