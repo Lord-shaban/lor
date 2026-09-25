@@ -7,24 +7,18 @@ import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { LandingCopyCommand } from "@/components/landing-copy-command";
 import { LandingMeetingShowcase } from "@/components/landing-meeting-showcase";
 import {
   BoardIcon,
-  CheckIcon,
   RecordIcon,
   SearchIcon,
   ShieldIcon,
 } from "@/components/landing-icons";
 
-const REPO = "https://github.com/Lord-shaban/lor";
 const LIVE_APP = "https://lor-bay.vercel.app";
 const CONTAINER = "mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-12";
 const TEXT_LINK =
   "underline decoration-border underline-offset-4 transition-colors duration-150 hover:decoration-foreground";
-const QUICK_START = `git clone https://github.com/Lord-shaban/lor && cd lor
-cp .env.example .env.local
-npm install && npm run dev`;
 
 export async function generateMetadata({
   params,
@@ -61,7 +55,7 @@ export default function PublicLanding({
         {t("skip")}
       </a>
 
-      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm">
+      <header className="z-30 border-b border-border bg-background/95 lg:sticky lg:top-0 lg:backdrop-blur-sm">
         <div className={`${CONTAINER} py-4`}>
           <div className="grid items-center gap-4 sm:grid-cols-[auto_1fr_auto]">
             <Link href="/" aria-label="LOR." className="justify-self-start">
@@ -72,7 +66,7 @@ export default function PublicLanding({
               aria-label={t("nav.label")}
               className="order-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted sm:order-none sm:justify-start"
             >
-              <a className={TEXT_LINK} href="#product">
+              <a className={TEXT_LINK} href="#story">
                 {t("nav.product")}
               </a>
               <a className={TEXT_LINK} href="#features">
@@ -106,17 +100,7 @@ export default function PublicLanding({
             className={`${CONTAINER} grid gap-12 py-14 sm:py-20 lg:grid-cols-[0.86fr_1.14fr] lg:items-center lg:gap-16 lg:py-20`}
           >
             <div className="max-w-2xl">
-              <div className="flex items-center gap-4">
-                <span className="grid h-12 w-12 place-items-center rounded-md border border-border bg-surface text-foreground">
-                  <LorMark />
-                </span>
-                <div>
-                  <p className="text-sm font-medium tracking-tight">{t("brand.name")}</p>
-                  <p className="mt-1 text-sm text-muted">{t("brand.tagline")}</p>
-                </div>
-              </div>
-
-              <p className="mt-10 text-sm text-muted">
+              <p className="text-sm text-muted">
                 {t("hero.kicker")}
               </p>
 
@@ -156,52 +140,14 @@ export default function PublicLanding({
 
               <p className="mt-5 text-sm text-muted">
                 {t("hero.sourceLead")} {" "}
-                <a className={TEXT_LINK} href={REPO}>
+                <Link className={TEXT_LINK} href="/resources/source">
                   {t("hero.sourceCta")}
-                </a>
+                </Link>
               </p>
 
-              <ul
-                aria-label={t("hero.trustLabel")}
-                className="mt-9 grid gap-3 border-y border-border py-4 text-sm text-muted sm:grid-cols-3 sm:gap-5"
-              >
-                <li className="flex items-start gap-2">
-                  <CheckIcon />
-                  <span>{t("hero.trust.noAccount")}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckIcon />
-                  <span>{t("hero.trust.local")}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckIcon />
-                  <span>
-                    {t.rich("hero.trust.ai", {
-                      term: (chunks) => <bdi>{chunks}</bdi>,
-                    })}
-                  </span>
-                </li>
-              </ul>
             </div>
 
             <LandingMeetingShowcase />
-          </div>
-        </section>
-
-        <section id="product" aria-labelledby="product-title" className="scroll-mt-24 bg-surface">
-          <div className={`${CONTAINER} grid gap-8 py-16 sm:py-20 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] lg:items-start lg:gap-20 lg:py-24`}>
-            <div>
-              <p className="text-sm text-muted">{t("gallery.eyebrow")}</p>
-              <h2 id="product-title" className="mt-4 max-w-xl text-3xl font-semibold tracking-tight sm:text-4xl">{t("gallery.title")}</h2>
-            </div>
-            <div>
-              <p className="max-w-2xl text-lg leading-8 text-muted">{t("gallery.intro")}</p>
-              <div className="mt-8 grid gap-4 border-t border-border pt-6 sm:grid-cols-3">
-                <p className="text-sm leading-6">{t("gallery.home.body")}</p>
-                <p className="text-sm leading-6">{t("gallery.menu.body")}</p>
-                <p className="text-sm leading-6">{t("gallery.workspace.body")}</p>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -285,7 +231,7 @@ export default function PublicLanding({
                 <article key={row} className="rounded-[var(--radius-lg)] border border-border bg-background p-5">
                   <h3 className="font-semibold">{t(`compare.rows.${row}.label`)}</h3>
                   <dl className="mt-4 grid gap-3 text-sm leading-6">
-                    <div><dt className="font-medium">{t("compare.lor")}</dt><dd className="mt-1 text-muted">{t(`compare.rows.${row}.lor`)}</dd></div>
+                    <div className="rounded-[var(--radius-md)] bg-surface p-3"><dt className="font-semibold">{t("compare.lor")}</dt><dd className="mt-1 text-muted">{t(`compare.rows.${row}.lor`)}</dd></div>
                     <div><dt className="font-medium">Zoom</dt><dd className="mt-1 text-muted">{t(`compare.rows.${row}.zoom`)}</dd></div>
                     <div><dt className="font-medium">Google Meet</dt><dd className="mt-1 text-muted">{t(`compare.rows.${row}.meet`)}</dd></div>
                   </dl>
@@ -302,31 +248,6 @@ export default function PublicLanding({
               <a className={TEXT_LINK} href="https://support.google.com/meet/answer/14754931?hl=en">{t("compare.sources.meetNotes")}</a>
               <a className={TEXT_LINK} href="https://support.google.com/meet/answer/9308681?hl=en">{t("compare.sources.meetRecord")}</a>
               <a className={TEXT_LINK} href="https://support.google.com/meet/answer/15077804?hl=en">{t("compare.sources.meetCaptions")}</a>
-            </div>
-          </div>
-        </section>
-
-        <section aria-labelledby="docs-cta-title" className="border-b border-border bg-foreground text-on-foreground">
-          <div className={`${CONTAINER} grid gap-10 py-16 sm:py-20 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:gap-20 lg:py-24`}>
-            <div className="max-w-xl">
-              <p className="text-sm opacity-65">{t("docsCta.eyebrow")}</p>
-              <h2 id="docs-cta-title" className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">{t("docsCta.title")}</h2>
-              <p className="mt-5 text-base leading-7 opacity-75 sm:text-lg">{t("docsCta.body")}</p>
-              <Button asChild size="lg" variant="secondary" className="mt-8">
-                <Link href="/docs">{t("docsCta.cta")}<ArrowUpRightIcon /></Link>
-              </Button>
-            </div>
-
-            <div className="overflow-hidden rounded-[var(--radius-lg)] border border-on-foreground/20 bg-background text-foreground">
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
-                <div>
-                  <p className="text-sm font-medium">{t("quickStart.label")}</p>
-                  <p className="mt-1 text-sm text-muted">{t("quickStart.hint")}</p>
-                </div>
-                <LandingCopyCommand value={QUICK_START} copyLabel={t("quickStart.copy")} copiedLabel={t("quickStart.copied")} />
-              </div>
-              <pre className="overflow-x-auto p-5 text-sm leading-7 sm:p-6"><code>{QUICK_START}</code></pre>
-              <div className="border-t border-border px-5 py-4 text-sm text-muted sm:px-6">{t("quickStart.note")}</div>
             </div>
           </div>
         </section>
@@ -360,7 +281,7 @@ export default function PublicLanding({
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
-                <ResourceCard href={REPO} title={t("openSource.source")} hint={t("openSource.sourceHint")} />
+                <ResourceCard href="/resources/source" title={t("openSource.source")} hint={t("openSource.sourceHint")} />
                 <ResourceCard href="/resources/contributing" title={t("openSource.contribute")} hint={t("openSource.contributeHint")} />
                 <ResourceCard href="/resources/roadmap" title={t("openSource.roadmap")} hint={t("openSource.roadmapHint")} />
               </div>
@@ -411,7 +332,7 @@ export default function PublicLanding({
             <Link className={TEXT_LINK} href="/docs">{t("footer.docs")}</Link>
             <Link className={TEXT_LINK} href="/">{t("footer.product")}</Link>
             <Link className={TEXT_LINK} href="/resources/security">{t("footer.security")}</Link>
-            <a className={TEXT_LINK} href={REPO}>{t("footer.source")}</a>
+            <Link className={TEXT_LINK} href="/resources/source">{t("footer.source")}</Link>
           </nav>
         </div>
       </footer>
@@ -434,7 +355,7 @@ function GuardrailCard({ icon, title, children }: { icon: ReactNode; title: stri
 function ResourceCard({ href, title, hint }: { href: string; title: string; hint: string }) {
   const className = "group flex min-h-16 items-center justify-between gap-4 rounded-[var(--radius-md)] border border-border bg-surface px-5 py-3 transition-colors duration-150 hover:bg-surface-strong";
   const content = <><span className="min-w-0"><span className="block font-medium">{title}</span><span className="mt-1 block text-sm leading-5 text-muted">{hint}</span></span><ArrowUpRightIcon className="shrink-0 transition-transform duration-150 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" /></>;
-  return href.startsWith("/") ? <Link href={href} className={className}>{content}</Link> : <a href={href} className={className}>{content}</a>;
+  return <Link href={href} className={className}>{content}</Link>;
 }
 
 function ComparisonRow({ label, lor, zoom, meet }: { label: string; lor: string; zoom: string; meet: string }) {

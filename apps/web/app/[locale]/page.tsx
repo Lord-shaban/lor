@@ -7,7 +7,6 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RoomLauncher } from "@/components/room-launcher";
 
-const REPO = "https://github.com/Lord-shaban/lor";
 const MENU_LINK_CLASS =
   "flex min-h-11 items-center rounded-sm px-3 py-2 text-sm text-foreground transition-colors duration-150 hover:bg-surface-strong focus-visible:bg-surface-strong";
 
@@ -59,9 +58,9 @@ export default function Home({ params }: PageProps<"/[locale]">) {
                 <Link className={MENU_LINK_CLASS} href="/docs">
                   {t("links.docs")}
                 </Link>
-                <a className={MENU_LINK_CLASS} href={REPO}>
+                <Link className={MENU_LINK_CLASS} href="/resources/source">
                   {t("links.source")}
-                </a>
+                </Link>
                 <Link className={MENU_LINK_CLASS} href="/resources/security">
                   {t("links.privacy")}
                 </Link>

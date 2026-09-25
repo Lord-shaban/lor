@@ -6,7 +6,7 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const repository = "https://github.com/Lord-shaban/lor";
-const topics = ["security", "contributing", "roadmap", "license", "help"] as const;
+const topics = ["security", "contributing", "roadmap", "license", "help", "source"] as const;
 type Topic = (typeof topics)[number];
 type Copy = { title: string; intro: string; sections: { title: string; body: string }[]; action: string; url: string };
 
@@ -70,6 +70,17 @@ const content: Record<"ar" | "en", Record<Topic, Copy>> = {
       action: "افتح مشكلات المشروع",
       url: `${repository}/issues`,
     },
+    source: {
+      title: "الشيفرة المصدرية",
+      intro: "يمكنك قراءة شيفرة LOR.‎ ومتابعة تطويره والمساهمة فيه. ابدأ من هذه الخريطة قبل الانتقال إلى المستودع.",
+      sections: [
+        { title: "تطبيق الويب", body: "توجد صفحات Next.js وواجهة الاجتماع وطرق معالجة الطلبات القصيرة في apps/web. تُراجع الواجهة بالعربية والإنجليزية وعلى الهاتف وسطح المكتب." },
+        { title: "البيانات والتقييم", body: "يحتوي packages/db على مخطط البيانات، ويضم eval/captions أدوات قياس دقة التفريغ والحفاظ على الكلمات الإنجليزية داخل النص العربي." },
+        { title: "كيف تبدأ؟", body: "اقرأ دليل المساهمة لاختيار مشكلة ومعايير قبولها، ثم شغّل المشروع محلياً وأرفق نتائج الفحوصات في طلب الدمج." },
+      ],
+      action: "افتح المستودع على GitHub",
+      url: repository,
+    },
   },
   en: {
     security: {
@@ -129,6 +140,17 @@ const content: Record<"ar" | "en", Record<Topic, Copy>> = {
       ],
       action: "Open project issues",
       url: `${repository}/issues`,
+    },
+    source: {
+      title: "Source code",
+      intro: "Read LOR.'s code, follow its development, and contribute. Start with this map before opening the repository.",
+      sections: [
+        { title: "Web application", body: "apps/web contains the Next.js pages, meeting interface, and short-lived request handlers. UI changes are reviewed in Arabic and English on mobile and desktop." },
+        { title: "Data and evaluation", body: "packages/db holds the data schema, while eval/captions measures transcription accuracy and preservation of English words in Arabic speech." },
+        { title: "Getting started", body: "Read the contribution guide, choose an issue with acceptance criteria, run the project locally, and include verification results in your PR." },
+      ],
+      action: "Open the repository on GitHub",
+      url: repository,
     },
   },
 };
