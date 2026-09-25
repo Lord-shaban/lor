@@ -11,23 +11,23 @@ const copy = {
   ar: {
     path: "/ar/docs",
     direction: "rtl",
-    title: "الروم سهلة. والحدود مكتوبة.",
-    start: "شغّل نفس الروم اللي شفتها.",
-    workflow: "الاجتماع بيبقى سجل إزاي؟",
-    boundaries: "LOR.‎ بتوعد بإيه دلوقتي؟",
-    architecture: "طلبات قصيرة. وروم مباشرة واحدة.",
-    contribute: "اعمل تغيير صغير قابل للتكرار.",
+    title: "كل ما تحتاج إليه لاستخدام LOR.‎ وفهمه.",
+    start: "شغّل المشروع محلياً.",
+    workflow: "ماذا يحدث من الدعوة إلى المراجعة؟",
+    boundaries: "ما المتاح وما المخطط له؟",
+    architecture: "ثلاثة أجزاء، وحدود واضحة.",
+    contribute: "ابدأ بمهمة محددة وقابلة للاختبار.",
     copy: "انسخ الأوامر",
   },
   en: {
     path: "/en/docs",
     direction: "ltr",
-    title: "The room is easy. The edges are documented.",
-    start: "Run the same room you just saw.",
-    workflow: "How a meeting becomes a record.",
-    boundaries: "What LOR. promises today.",
-    architecture: "Short requests. One real-time room.",
-    contribute: "Make one small change reproducible.",
+    title: "Everything you need to use and understand LOR.",
+    start: "Run the project locally.",
+    workflow: "From invitation to review.",
+    boundaries: "Available now and planned later.",
+    architecture: "Three parts, clear boundaries.",
+    contribute: "Start with a focused, testable issue.",
     copy: "Copy commands",
   },
 } as const;
@@ -46,9 +46,9 @@ test.describe("public documentation hub", () => {
         await expect(page.getByRole("heading", { level: 1, name: text.title })).toBeVisible();
         await expect(
           page.getByRole("link", {
-            name: locale === "en" ? "Try the app" : "جرّب الموقع",
+            name: locale === "en" ? "Try the app" : "ابدأ اجتماعاً",
             exact: true,
-          }),
+          }).first(),
         ).toBeVisible();
         await expect(page.getByRole("button", { name: text.copy, exact: true })).toBeVisible();
         await expect(page.getByRole("heading", { level: 2, name: text.start })).toBeVisible();

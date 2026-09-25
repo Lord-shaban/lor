@@ -946,14 +946,23 @@
       "home": "LOR.",
       "docs": "Docs"
     },
-    "title": "The room is easy. The edges are documented.",
-    "intro": "A short, honest guide to what LOR. ships today, how the pieces fit together, and where a contributor can make the next useful change.",
+    "title": "Everything you need to use and understand LOR.",
+    "intro": "Start a meeting, learn what happens to its results, and find the architecture and local setup when you want to contribute.",
     "status": "v0.6 shipped · Arabic-first · AGPL-3.0",
     "paths": {
       "label": "Choose what to learn",
-      "join": { "title": "Start a meeting", "body": "Joining, devices, and collaboration" },
-      "record": { "title": "Understand the record", "body": "Retention and privacy boundaries" },
-      "build": { "title": "Run the project", "body": "Architecture and local setup" }
+      "join": {
+        "title": "Start a meeting",
+        "body": "Joining, devices, and collaboration"
+      },
+      "record": {
+        "title": "Understand the record",
+        "body": "Retention and privacy boundaries"
+      },
+      "build": {
+        "title": "Run the project",
+        "body": "Architecture and local setup"
+      }
     },
     "toc": {
       "label": "On this page",
@@ -967,44 +976,24 @@
     },
     "quickStart": {
       "eyebrow": "Start locally",
-      "title": "Run the same room you just saw.",
-      "intro": "The hosted app is the fastest way to try LOR. The local path is for reading the code, changing a focused issue, or testing a boundary on your own machine.",
+      "title": "Run the project locally.",
+      "intro": "Use the hosted app to try a meeting now. For code review or development, start with these commands and then add your local service settings.",
       "label": "Quick start",
       "hint": "Three commands, then add your local values",
       "copy": "Copy commands",
       "copied": "Copied",
-      "note": "Put LiveKit and Supabase values in .env.local. The call itself does not depend on an AI key.",
-      "details": "The full configuration list lives in .env.example and the repository README."
-    },
-    "overview": {
-      "eyebrow": "A useful mental model",
-      "title": "Live first. Retained second. Optional AI around the edges.",
-      "intro": "LOR. keeps the call dependable, then lets the host turn retained evidence into a record people can actually use.",
-      "cards": {
-        "call": {
-          "title": "The call",
-          "body": "Video, audio, chat, captions, screen share, board, notes, and local recording stay available without an AI key."
-        },
-        "record": {
-          "title": "The record",
-          "body": "Retained captions anchor confirmed decisions, action items, Timeline, Memory, and room-scoped search."
-        },
-        "boundary": {
-          "title": "The boundary",
-          "body": "Evidence is room-scoped and deletable. Local recordings stay in the browser tab; keys never enter storage."
-        }
-      }
+      "note": "Put LiveKit and Supabase values in .env.local. The call itself does not depend on an AI key."
     },
     "what": {
       "eyebrow": "The product",
-      "title": "A video room for conversations that should leave something useful behind.",
+      "title": "A video room that keeps work in context.",
       "body": "Open a link, type a display name, and join. During the call, people can work together in the same room. Afterward, the useful record stays tied to its source instead of becoming a loose summary.",
       "mixed": "Arabic and English can share a sentence without asking the transcript to choose a different language.",
       "linkLabel": "See the public story"
     },
     "workflow": {
       "eyebrow": "One room, one thread",
-      "title": "How a meeting becomes a record.",
+      "title": "From invitation to review.",
       "intro": "The flow is intentionally small. Each step has a clear owner and a clear edge.",
       "steps": {
         "join": {
@@ -1023,7 +1012,7 @@
     },
     "boundaries": {
       "eyebrow": "Read this before you build",
-      "title": "What LOR. promises today.",
+      "title": "Available now and planned later.",
       "intro": "The product is deliberately explicit about what is shipped and what remains a contribution boundary.",
       "caption": "Current and planned LOR. capabilities",
       "capability": "Capability",
@@ -1054,19 +1043,27 @@
     },
     "architecture": {
       "flow": {
-        "browser": { "title": "Browser", "body": "Displays the call and collaboration tools and holds encrypted user keys." },
-        "room": { "title": "Live room", "body": "LiveKit carries media and shared state between participants." },
-        "record": { "title": "Retained record", "body": "Postgres stores room-scoped transcripts and decisions under retention rules." }
+        "browser": {
+          "title": "Browser",
+          "body": "Displays the call and collaboration tools and holds encrypted user keys."
+        },
+        "room": {
+          "title": "Live room",
+          "body": "LiveKit carries media and shared state between participants."
+        },
+        "record": {
+          "title": "Retained record",
+          "body": "Postgres stores room-scoped transcripts and decisions under retention rules."
+        }
       },
       "eyebrow": "Under the surface",
-      "title": "Short requests. One real-time room.",
+      "title": "Three parts, clear boundaries.",
       "intro": "Media and shared meeting state travel over LiveKit. Next.js handles short request/response work; Postgres holds the retained projection.",
-      "code": "Browser (Next.js)\n  │ WebRTC media + LiveKit data channel\n  │ chat · captions · board · notes · reactions\n  ▼\nLiveKit (cloud today)\n  │ short REST requests\n  ▼\nNext.js route handlers\n  │ tokens · rooms · admission · AI proxy\n  ▼\nPostgres + pgvector\n  retained captions · decisions · tasks · usage",
       "note": "The application does not run its own long-lived WebSocket server. That boundary keeps the same code usable on a hosted or future self-hosted box."
     },
     "contribute": {
       "eyebrow": "Pick up a thread",
-      "title": "Make one small change reproducible.",
+      "title": "Start with a focused, testable issue.",
       "body": "Every contribution starts with a scoped issue, a branch, the required checks, and a pull request that explains what changed. Arabic RTL is the first layout pass; English LTR follows.",
       "steps": {
         "read": "Read the contribution contract",
@@ -1078,7 +1075,7 @@
     },
     "help": {
       "eyebrow": "Before you open an issue",
-      "title": "Questions that save a round trip.",
+      "title": "Questions about use and data.",
       "intro": "If an answer is not here, the repository issue templates keep the next question concrete.",
       "items": {
         "keys": {
