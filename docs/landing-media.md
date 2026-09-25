@@ -20,7 +20,7 @@ until an invitation is entered.
   current landing page continues to use its responsive HTML/CSS illustration.
 - Ownership and licence: captured from LOR. project UI by its maintainers;
   distributed under the repository's AGPL-3.0-only licence. No third-party
-  imagery, type, or participant content was added to the capture.
+  imagery or participant content was added to the capture.
 
 ## Privacy and readability review
 
