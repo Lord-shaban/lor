@@ -66,6 +66,7 @@ Before pushing, run what CI runs:
 
 ```bash
 npm run typecheck && npm run lint && npm test && npm run build
+npm run check:docs      # local Markdown files and section links; no network
 npm run test:e2e          # needs the build above
 ```
 
@@ -103,7 +104,7 @@ stayed in Latin script) before and after your change. A PR that lowers WER but d
 code-switch preservation is not an improvement.
 
 Real failing examples are valuable on their own — open a
-[caption accuracy issue](../../issues/new?template=captions_accuracy.yml) even if you
+[caption accuracy issue](https://github.com/Lord-shaban/lor/issues/new?template=captions_accuracy.yml) even if you
 are not going to fix it. Good examples become eval cases.
 
 ### Both directions, always
