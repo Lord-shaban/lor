@@ -36,10 +36,6 @@
       "description": "Meet, collaborate, and keep the useful record. LOR. is an Arabic-first open-source video meeting product."
     },
     "skip": "Skip to the project",
-    "brand": {
-      "name": "Live Open Rooms",
-      "tagline": "The room stays open. The thread stays useful."
-    },
     "nav": {
       "label": "Landing navigation",
       "product": "Product",
@@ -56,13 +52,7 @@
       "liveCta": "Start a meeting",
       "docsCta": "Explore the guide",
       "sourceLead": "Want to inspect the build?",
-      "sourceCta": "Open the source",
-      "trustLabel": "Good to know",
-      "trust": {
-        "noAccount": "No account",
-        "local": "Local recording stays in your tab",
-        "ai": "The call works without <term>AI</term>"
-      }
+      "sourceCta": "Open the source"
     },
     "showcase": {
       "live": "Live meeting",
@@ -78,20 +68,6 @@
       "source": "“We will start the pilot plan this week.”",
       "review": "Linked to room evidence",
       "disclosure": "Illustrative view based on the meeting and decision interfaces. It contains no real meeting or user data."
-    },
-    "gallery": {
-      "eyebrow": "How LOR. helps",
-      "title": "What you need, in the meeting context.",
-      "intro": "Start with a simple join flow, work together in one space, then return to decisions linked to the words behind them.",
-      "home": {
-        "body": "Create a room or open an invitation link, then check your devices before joining."
-      },
-      "menu": {
-        "body": "Keep the conversation, board, notes, and screen sharing in one workspace."
-      },
-      "workspace": {
-        "body": "Review decisions and action items with the source quote and timestamp in the same room."
-      }
     },
     "story": {
       "eyebrow": "One simple path",
@@ -224,19 +200,6 @@
       "contributeHint": "Workflow and checks before your first PR",
       "roadmap": "Follow the roadmap",
       "roadmapHint": "Shipped releases and planned boundaries"
-    },
-    "quickStart": {
-      "label": "Start from source",
-      "hint": "The same setup used for local development",
-      "copy": "Copy commands",
-      "copied": "Copied",
-      "note": "Add your LiveKit and Supabase values to .env.local, then open http://localhost:3000."
-    },
-    "docsCta": {
-      "eyebrow": "A better next click",
-      "title": "Find the guide for your next step.",
-      "body": "Learn how to use the room, understand retention, and run the project locally in one guide.",
-      "cta": "Open the docs hub"
     },
     "faq": {
       "eyebrow": "Before you join",

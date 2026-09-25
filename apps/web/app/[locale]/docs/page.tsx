@@ -9,7 +9,6 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { LandingCopyCommand } from "@/components/landing-copy-command";
 
-const REPO = "https://github.com/Lord-shaban/lor";
 const CONTAINER = "mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-12";
 const TEXT_LINK =
   "underline decoration-border underline-offset-4 transition-colors duration-150 hover:decoration-foreground";
@@ -51,7 +50,7 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
         {t("skip")}
       </a>
 
-      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm">
+      <header className="z-30 border-b border-border bg-background/95 lg:sticky lg:top-0 lg:backdrop-blur-sm">
         <div className={`${CONTAINER} py-4`}>
           <div className="grid items-center gap-4 sm:grid-cols-[auto_1fr_auto]">
             <Link href="/" aria-label="LOR." className="justify-self-start">
@@ -240,7 +239,7 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
               <aside className="mt-20 rounded-[var(--radius-lg)] border border-border bg-surface p-6 sm:mt-24 sm:p-8">
                 <h2 className="text-2xl font-semibold tracking-tight">{t("next.title")}</h2>
                 <p className="mt-3 max-w-2xl text-base leading-7 text-muted">{t("next.body")}</p>
-                <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-sm"><Link className={TEXT_LINK} href="/about">{t("next.project")}</Link><Link className={TEXT_LINK} href="/">{t("next.try")}</Link><a className={TEXT_LINK} href={REPO}>{t("next.source")}</a></div>
+                <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-sm"><Link className={TEXT_LINK} href="/about">{t("next.project")}</Link><Link className={TEXT_LINK} href="/">{t("next.try")}</Link><Link className={TEXT_LINK} href="/resources/source">{t("next.source")}</Link></div>
               </aside>
             </article>
           </div>
@@ -250,7 +249,7 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
       <footer className="border-t border-border">
         <div className={`${CONTAINER} flex flex-col gap-6 py-9 text-sm text-muted sm:flex-row sm:items-start sm:justify-between`}>
           <div><div className="flex items-center gap-3"><LorWordmark className="h-7 w-auto" /><span>{t("footer.license")}</span></div><p className="mt-3 max-w-sm leading-6">{t("footer.tagline")}</p></div>
-          <nav aria-label={t("footer.label")} className="grid grid-cols-2 gap-x-8 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-6"><Link className={TEXT_LINK} href="/about">{t("footer.landing")}</Link><Link className={TEXT_LINK} href="/">{t("footer.product")}</Link><Link className={TEXT_LINK} href="/resources/security">{t("footer.security")}</Link><a className={TEXT_LINK} href={REPO}>{t("footer.source")}</a></nav>
+          <nav aria-label={t("footer.label")} className="grid grid-cols-2 gap-x-8 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-6"><Link className={TEXT_LINK} href="/about">{t("footer.landing")}</Link><Link className={TEXT_LINK} href="/">{t("footer.product")}</Link><Link className={TEXT_LINK} href="/resources/security">{t("footer.security")}</Link><Link className={TEXT_LINK} href="/resources/source">{t("footer.source")}</Link></nav>
         </div>
       </footer>
     </div>

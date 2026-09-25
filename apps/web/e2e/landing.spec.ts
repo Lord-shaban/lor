@@ -16,10 +16,9 @@ const copy = {
     docs: "استكشف الدليل",
     source: "استعرض الشيفرة",
     visual: "تصوّر توضيحي مبني على واجهة الاجتماع والقرارات؛ لا يعرض اجتماعاً حقيقياً أو بيانات مستخدمين.",
-    product: "كل ما تحتاج إليه، في سياق الاجتماع.",
+    product: "ادخل، تعاون، ثم ارجع إلى النتيجة.",
     compare: "أي مساحة تناسب اجتماعك؟",
     faq: "أسئلة قبل بدء الاجتماع.",
-    copy: "انسخ الأوامر",
   },
   en: {
     path: "/en/about",
@@ -29,10 +28,9 @@ const copy = {
     docs: "Explore the guide",
     source: "Open the source",
     visual: "Illustrative view based on the meeting and decision interfaces. It contains no real meeting or user data.",
-    product: "What you need, in the meeting context.",
+    product: "Join, collaborate, and return to the outcome.",
     compare: "Which space fits your meeting?",
     faq: "Questions before you join.",
-    copy: "Copy commands",
   },
 } as const;
 
@@ -54,7 +52,7 @@ test.describe("public project landing", () => {
         );
         await expect(page.getByRole("link", { name: text.source, exact: true })).toHaveAttribute(
           "href",
-          "https://github.com/Lord-shaban/lor",
+          /resources\/source/,
         );
         await expect(page.getByRole("link", { name: text.docs, exact: true }).first()).toHaveAttribute(
           "href",
@@ -66,7 +64,7 @@ test.describe("public project landing", () => {
         await expect(page.getByRole("heading", { level: 2, name: text.product })).toBeVisible();
         await expect(page.getByRole("heading", { level: 2, name: text.compare })).toBeVisible();
         await expect(page.getByRole("heading", { level: 2, name: text.faq })).toBeVisible();
-        for (const id of ["product", "story", "features", "compare", "open-source", "faq"]) {
+        for (const id of ["story", "features", "compare", "open-source", "faq"]) {
           await expect(page.locator(`#${id}`)).toBeVisible();
         }
         await expect(page.locator("#compare table")).toHaveCount(1);
@@ -75,9 +73,8 @@ test.describe("public project landing", () => {
         const comparison = width < 1024 ? page.locator("#compare article").first() : page.locator("#compare table");
         await expect(comparison.getByText("Zoom", { exact: true }).first()).toBeVisible();
         await expect(comparison.getByText("Google Meet", { exact: true }).first()).toBeVisible();
-        await expect(page.getByRole("button", { name: text.copy, exact: true })).toBeVisible();
         await expect(page.locator("#faq details")).toHaveCount(5);
-        await expect(page.locator('a[href="#product"]')).toHaveCount(1);
+        await expect(page.locator('a[href="#story"]')).toHaveCount(1);
         await expect(page.locator('a[href="#features"]')).toHaveCount(1);
         await expect(page.locator('a[href="#compare"]')).toHaveCount(1);
         expect(
