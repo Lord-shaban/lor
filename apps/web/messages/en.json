@@ -911,7 +911,7 @@
     },
     "title": "Everything you need to use and understand LOR.",
     "intro": "Start a meeting, learn what happens to its results, and find the architecture and local setup when you want to contribute.",
-    "status": "v0.6 shipped · Arabic-first · AGPL-3.0",
+    "status": "v0.7 shipped · Arabic-first · AGPL-3.0",
     "paths": {
       "label": "Choose what to learn",
       "join": {

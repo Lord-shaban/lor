@@ -6,6 +6,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] — Open-source launch and product experience
+
+LOR. now has a clearer path from discovering the project to joining a meeting,
+collaborating, and finding what the meeting produced. The call and retained evidence
+keep their existing privacy and consent boundaries.
+
+### Added
+
+- A public product page and a task-oriented documentation hub in Arabic and English,
+  with dedicated in-site pages for security, contributing, roadmap, licence, help,
+  and source. The product comparison names Zoom and Google Meet with qualified,
+  linked sources; it does not claim future integrations are available.
+- A privacy-reviewed Arabic launcher capture with English and Arabic text
+  alternatives, plus a local documentation-link check that runs in CI.
+
+### Changed
+
+- The product home now leads with Create and Join. The prejoin screen, invite path,
+  meeting header, video stage, and controls have clearer grouping and more usable
+  phone layouts. Public and in-app copy has been rewritten in formal Arabic.
+- The landing page uses a responsive, localized illustration of the call and its
+  evidence instead of the retired static captures. The documentation separates
+  shipped features from planned work.
+
+### Fixed
+
+- A broken contributor issue-template link is corrected. The new link check
+  reports broken local files and section anchors with their source line.
+
+### Verification note
+
+- The real two-browser media suite remains in the repository, but its hosted
+  CI job is currently skipped. Typecheck, lint, unit tests, documentation links,
+  and the production build continue to run on pull requests.
+
 ## [0.6.0] — Semantic search
 
 Past meetings can now be searched without turning LOR. into a global meeting

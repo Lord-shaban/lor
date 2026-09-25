@@ -26,7 +26,7 @@ shortest path for starting or joining a meeting.
 | Order | Section | English intent | Arabic-first intent | Evidence boundary |
 |---|---|---|---|---|
 | 1 | Hero | “Meetings that remember what matters.” Explain open-source, Arabic-first video meetings in one sentence. | `اجتماعات بتفتكر اللي يهم.` Explain the same promise in plain Egyptian Arabic, with `LOR.‎` isolated in UI text. | README “What LOR. is”; no invented outcome or metric. |
-| 2 | Proof surface | Show a static, privacy-safe product view before asking for trust. | Same visual and equivalent text alternative; the image never carries meaning alone. | Shipped v0.6 UI only; synthetic labels and no room data. |
+| 2 | Proof surface | Show a static, privacy-safe product view before asking for trust. | Same visual and equivalent text alternative; the image never carries meaning alone. | Shipped capabilities only; synthetic labels and no room data. |
 | 3 | Three proof chapters | Join simply; collaborate live; keep evidence responsibly. Each chapter names one user task and one shipped capability. | `ادخل بسهولة؛ اشتغلوا سوا؛ احتفظ بالدليل.` Keep technical terms in their familiar Latin form where used in the product. | v0.1, v0.1.8, and v0.2–v0.6 README sections. |
 | 4 | Open source | Explain AGPL-3.0, the contributor path, and where the roadmap lives. | Explain the same contribution path without promising that planned milestones are shipped. | LICENSE, CONTRIBUTING.md, and GitHub milestones. |
 | 5 | Final actions | Repeat “Try the live app” and “View the source”; add “Read the setup guide” as a quieter path. | Repeat equivalent Arabic actions with the same order and hierarchy. | Canonical links below. |

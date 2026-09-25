@@ -1,6 +1,8 @@
 # Product experience audit
 
-This audit fixes the order of work for `v0.7`: make the product comfortable to use
+Status: completed during `v0.7`; retained as the evidence behind the shipped UX.
+
+This audit fixed the order of work for `v0.7`: make the product comfortable to use
 before the public landing page borrows its visual language. It covers the product home,
 prejoin, and the live meeting workspace. The landing page is deliberately out of scope.
 
