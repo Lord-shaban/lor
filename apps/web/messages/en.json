@@ -949,6 +949,12 @@
     "title": "The room is easy. The edges are documented.",
     "intro": "A short, honest guide to what LOR. ships today, how the pieces fit together, and where a contributor can make the next useful change.",
     "status": "v0.6 shipped · Arabic-first · AGPL-3.0",
+    "paths": {
+      "label": "Choose what to learn",
+      "join": { "title": "Start a meeting", "body": "Joining, devices, and collaboration" },
+      "record": { "title": "Understand the record", "body": "Retention and privacy boundaries" },
+      "build": { "title": "Run the project", "body": "Architecture and local setup" }
+    },
     "toc": {
       "label": "On this page",
       "start": "Start here",
@@ -1047,6 +1053,11 @@
       }
     },
     "architecture": {
+      "flow": {
+        "browser": { "title": "Browser", "body": "Displays the call and collaboration tools and holds encrypted user keys." },
+        "room": { "title": "Live room", "body": "LiveKit carries media and shared state between participants." },
+        "record": { "title": "Retained record", "body": "Postgres stores room-scoped transcripts and decisions under retention rules." }
+      },
       "eyebrow": "Under the surface",
       "title": "Short requests. One real-time room.",
       "intro": "Media and shared meeting state travel over LiveKit. Next.js handles short request/response work; Postgres holds the retained projection.",

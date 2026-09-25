@@ -63,6 +63,12 @@ test.describe("public documentation hub", () => {
         await expect(page.locator("#boundaries table")).toHaveCount(1);
         await expect(page.locator("#boundaries thead th")).toHaveCount(3);
         await expect(page.locator("#boundaries tbody tr")).toHaveCount(4);
+        if (width < 1024) {
+          await expect(page.locator("#boundaries article")).toHaveCount(4);
+          await expect(page.locator("#boundaries article").first()).toBeVisible();
+        } else {
+          await expect(page.locator("#boundaries table")).toBeVisible();
+        }
         await expect(page.locator("#help details")).toHaveCount(4);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
