@@ -18,7 +18,7 @@ const copy = {
     visual: "تصوّر توضيحي مبني على واجهة الاجتماع والقرارات؛ لا يعرض اجتماعاً حقيقياً أو بيانات مستخدمين.",
     product: "كل ما تحتاج إليه، في سياق الاجتماع.",
     compare: "أي مساحة تناسب اجتماعك؟",
-    faq: "أسئلة تستاهل إجابة.",
+    faq: "أسئلة قبل بدء الاجتماع.",
     copy: "انسخ الأوامر",
   },
   en: {
@@ -31,7 +31,7 @@ const copy = {
     visual: "Illustrative view based on the meeting and decision interfaces. It contains no real meeting or user data.",
     product: "What you need, in the meeting context.",
     compare: "Which space fits your meeting?",
-    faq: "Questions worth answering.",
+    faq: "Questions before you join.",
     copy: "Copy commands",
   },
 } as const;
@@ -95,7 +95,7 @@ test.describe("public project landing", () => {
   test("keeps the primary actions reachable in keyboard order", async ({ page }) => {
     await page.goto("/en/about");
 
-    const heroLive = page.getByRole("link", { name: "Start a meeting", exact: true });
+    const heroLive = page.locator("main").getByRole("link", { name: "Start a meeting", exact: true }).first();
     const heroSource = page.locator("main").getByRole("link", { name: "Explore the guide", exact: true }).first();
     await heroLive.focus();
     await expect(heroLive).toBeFocused();
