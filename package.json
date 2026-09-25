@@ -33,6 +33,7 @@
     "db:studio": "npm run db:studio --workspace @lor/db",
     "test": "npm run test --workspaces --if-present",
     "test:e2e": "npm run test:e2e --workspace web",
+    "check:docs": "node --test scripts/check-doc-links.test.mjs && node scripts/check-doc-links.mjs",
     "eval:captions": "npm run eval --workspace @lor/captions-eval"
   },
   "devDependencies": {
