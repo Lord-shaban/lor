@@ -177,17 +177,20 @@ rather than handing back instructions, but still confirm before anything destruc
 
 ```bash
 npm run typecheck && npm run lint && npm test && npm run build
+npm run check:docs
 ```
 
-All four are required checks. Beyond them, **most of this project cannot be verified by
+These checks are required. Beyond them, **most of this project cannot be verified by
 reading it** — see `scripts/README.md`. A grid that measures itself, a permission prompt,
 a bidi label, two people seeing each other: each looked correct in the source and was
 wrong on screen.
 
-`npm run test:e2e` is the fifth, and the one that matters most: two browser
-contexts in one room, asserting decoded frames rather than tiles. It runs on
-every pull request against a LiveKit and a Postgres started on the runner, and
-it is a required check. A build is needed first.
+`npm run test:e2e` puts two browser contexts in one room and asserts decoded
+frames rather than tiles. The hosted CI job is currently skipped by project
+choice; do not describe it as a passing required check. Run the real suite for
+media changes when disposable LiveKit and Postgres are available. A build is
+needed first; [#221](https://github.com/Lord-shaban/lor/issues/221) tracks a
+reproducible local setup.
 
 ```bash
 # one page, waiting for a real condition
@@ -326,17 +329,16 @@ GitHub is authoritative — issues, milestones, and the
 [board](https://github.com/users/Lord-shaban/projects/8). Update this when a release
 closes.
 
-**Live:** <https://lor-bay.vercel.app>. Everything through `v0.6`, including the
-Semantic search release, is deployed there on every push to `main`.
+**Live:** <https://lor-bay.vercel.app>. The project deploys on every push to
+`main`; `v0.7` adds the public product experience and documentation to the
+previously shipped meeting and Semantic search features.
 
-**Next, in progress.** `v0.7 — Open-source launch & product experience` has its scoped
-work in [#212–#216 and #220](https://github.com/Lord-shaban/lor/issues?q=is%3Aissue%20is%3Aopen%20milestone%3A%22v0.7%20%E2%80%94%20Open-source%20launch%20%26%20product%20experience%22).
-The product home and meeting workspace are redesigned and verified before the landing
-brief reuses their language. See `docs/product-ux-audit.md` and `docs/open-source.md`.
+**Next, planned.** `v0.8 — Integrations` begins with the safe contract in
+[#217](https://github.com/Lord-shaban/lor/issues/217). No v0.8 provider or
+public integration API has been implemented. See `docs/open-source.md`.
 
-**Done.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, `v0.3`, `v0.4`, `v0.5`, and `v0.6` in full, all
-[tagged and released](https://github.com/Lord-shaban/lor/releases). The call is
-checked end to end on every pull request. Captions split speech at utterance
+**Done.** `v0.0` through `v0.7` are complete; see the
+[releases](https://github.com/Lord-shaban/lor/releases). Captions split speech at utterance
 boundaries, preserve mixed Arabic/English terms, require explicit consent, and
 can keep accurate-only transcripts and generated summaries. Operator quotas
 stop captions rather than the meeting; BYOK remains available without charging
@@ -420,9 +422,9 @@ tagged after the fact at `bd280ec` and `a36c5b4`, found by reading the log for
 the commit where each milestone stopped — which took longer than tagging them at
 the time would have.
 
-**Required checks on `main`.** `Typecheck, lint, test, build`, `Commit messages`, and
-`Two people in a room`. The last one starts a LiveKit and a Postgres on the
-runner, so it needs no secrets and touches nothing in production.
+**Required checks on `main`.** `Typecheck, lint, test, build`, `Documentation links`,
+and `Commit messages`. `Two people in a room` remains defined with disposable
+LiveKit and Postgres but is currently skipped in hosted CI.
 
 **Infrastructure, all live and configured.** Supabase project `pvklemglnehhgwuszgyq`
 (eu-central-1), reachable through the Supabase MCP — schema applied there, migrations in

@@ -21,8 +21,8 @@ No account. No time limit. No download.
 ---
 
 > [!NOTE]
-> **Status: Semantic search is live.** `v0.0`, `v0.1`, `v0.1.5`, `v0.1.8`, `v0.2`, `v0.3`, `v0.4`, `v0.5`, and `v0.6` have
-> shipped and are deployed at [lor-bay.vercel.app](https://lor-bay.vercel.app): open a
+> **Status: v0.7.0 is shipped.** Releases through `v0.7` are available at
+> [lor-bay.vercel.app](https://lor-bay.vercel.app): open a
 > link, type a name, hold a real meeting with mixed Arabic/English captions, record
 > locally, work together on a shared board or note, confirm decisions against their
 > exact transcript evidence, and turn clear commitments into assigned work that returns
@@ -31,6 +31,8 @@ No account. No time limit. No download.
 > confirmed decisions, open work, vocabulary, and repeated caption labels from past
 > completed meetings. Past evidence can also be searched on demand, with every result
 > scoped to its room and linked back to its retained source.
+> The product launcher, meeting flow, public project page, and documentation now
+> have clearer Arabic and English paths, including phone layouts.
 > Follow the [milestones](https://github.com/Lord-shaban/lor/milestones) to track progress.
 
 ## What LOR. is
@@ -301,7 +303,7 @@ Drizzle · Postgres.
 | `v0.4` | Meeting timeline | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.5` | Meeting memory | **shipped** — [live](https://lor-bay.vercel.app) |
 | `v0.6` | Semantic search | **shipped** — [live](https://lor-bay.vercel.app) |
-| `v0.7` | Open-source launch and product experience | planned — [contribution map](docs/open-source.md) |
+| `v0.7` | Open-source launch and product experience | **shipped** — [release notes](CHANGELOG.md) |
 | `v0.8` | Integrations | planned |
 | `v0.9` | Hardening and self-hosting | planned |
 | `v1.0` | Plugin ecosystem | planned |

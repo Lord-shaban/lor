@@ -7,21 +7,20 @@ demo is [live](https://lor-bay.vercel.app); the localized project story and setu
 available in the local [/docs](/docs) hub; the code, discussions, and issues live in
 the [repository](https://github.com/Lord-shaban/lor).
 
-This page makes the next work legible without pretending that it is already shipped.
+The v0.7 product and documentation work is shipped. The later release briefs below
+remain plans, not implemented integrations or hosting features.
 Read [CONTRIBUTING.md](../CONTRIBUTING.md) for the workflow and the
 [Arabic guide](open-source.ar.md) for the same starting points in Arabic.
 
 ## Start here
 
-- **New to LOR.?** Choose a labelled
-  [`good first issue`](https://github.com/Lord-shaban/lor/labels/good%20first%20issue),
-  such as [#222](https://github.com/Lord-shaban/lor/issues/222), comment before starting,
-  and keep the resulting PR small.
-- **Want the public story?** Start with [#212](https://github.com/Lord-shaban/lor/issues/212).
-  It supplies the approved copy and media brief before a landing page is built.
-- **Want to improve the product?** [#215](https://github.com/Lord-shaban/lor/issues/215)
-  gathers evidence from the complete meeting journey before [#216](https://github.com/Lord-shaban/lor/issues/216)
-  changes it.
+- **New to LOR.?** Check the [open issues](https://github.com/Lord-shaban/lor/issues)
+  and their labels and dependencies; comment before starting and keep the PR small.
+- **Want to understand the public story?** Read the current [/about](/about) page and
+  [landing brief](landing-brief.md). The brief records the original constraints;
+  the page reflects the later v0.7 revisions.
+- **Want to improve the product?** Start from the completed
+  [journey audit](product-ux-audit.md) and open a scoped issue with current evidence.
 - **Want a later technical area?** The integration, self-hosting, and plugin boundary
   briefs are [#217](https://github.com/Lord-shaban/lor/issues/217),
   [#218](https://github.com/Lord-shaban/lor/issues/218), and
@@ -54,42 +53,45 @@ The following are release blockers, not suggestions:
 
 ## v0.7 — Open-source launch and product experience
 
-This phase prepares an open-source project people can understand, try, and help improve.
+This phase made the open-source project easier to understand, try, and improve.
 It deliberately separates the **public landing page** from the **product home screen**:
 the former explains and demonstrates LOR.; the latter gets someone into a meeting in two
-clear actions. The release is planned, not shipped.
+clear actions. v0.7 is shipped; provider integrations remain planned for v0.8.
 
 ### Work sequence
 
-1. [#215](https://github.com/Lord-shaban/lor/issues/215) audits the journey and fixes the
+1. [#215](https://github.com/Lord-shaban/lor/issues/215) audited the journey and fixed the
    shared [product experience contract](product-ux-audit.md).
-2. [#216](https://github.com/Lord-shaban/lor/issues/216) applies the validated meeting
+2. [#216](https://github.com/Lord-shaban/lor/issues/216) applied the validated meeting
    workspace fixes and its focused follow-ups; then
-   [#214](https://github.com/Lord-shaban/lor/issues/214) makes the existing home screen a
+   [#214](https://github.com/Lord-shaban/lor/issues/214) made the existing home screen a
    product entry point instead of a release list.
-3. [#212](https://github.com/Lord-shaban/lor/issues/212) establishes truthful English and
+3. [#212](https://github.com/Lord-shaban/lor/issues/212) established truthful English and
    Arabic landing copy plus a media inventory from the merged product design.
-4. [#213](https://github.com/Lord-shaban/lor/issues/213) builds the accessible, localised
+4. [#213](https://github.com/Lord-shaban/lor/issues/213) built the accessible, localised
    public landing page from that brief.
-5. [#236](https://github.com/Lord-shaban/lor/issues/236) refines the public showcase,
-   adds privacy-reviewed launcher captures, and ships the first-class localized docs
-   hub at `/docs` and `/en/docs`.
-6. [#220](https://github.com/Lord-shaban/lor/issues/220) is a small, supervised media
-   contribution after the inventory is approved.
+5. [#236](https://github.com/Lord-shaban/lor/issues/236) refined the public showcase
+   and shipped the first localized docs hub. [#264](https://github.com/Lord-shaban/lor/issues/264)
+   then rewrote and reorganized both public pages, added local resource pages, and
+   replaced the retired captures with a responsive product illustration.
+6. [#220](https://github.com/Lord-shaban/lor/issues/220) added one privacy-reviewed
+   launcher capture to the media inventory; [#222](https://github.com/Lord-shaban/lor/issues/222)
+   added the local documentation-link check.
 
 ### Landing-page brief
 
 The implementation contract is kept in the bilingual [landing brief](landing-brief.md)
 and [Arabic landing brief](landing-brief.ar.md). It records the approved section order,
 claim ledger, canonical destinations, media ownership, privacy review, and accessibility
-floor so the public page can be implemented without inventing product claims.
+floor used to build the public page without inventing product claims. Current copy
+and layout are governed by the page and locale messages after #264.
 
 The landing page should lead with the concrete promise, then let the visitor verify it:
 
 1. A concise hero and two distinct actions: **try the live app** and **read the local docs**;
    source/community links remain available but secondary.
-2. A real product screenshot or short, controlled demo with an image/poster and text
-   alternative.
+2. A localized product illustration and text alternative, with a separate optional
+   privacy-reviewed launcher capture in the media inventory.
 3. A small feature story: join simply, collaborate live, and retain evidence responsibly.
 4. A transparent open-source section: AGPL-3.0, contribution path, and current roadmap.
 5. A final, repeated path to start a meeting or contribute.

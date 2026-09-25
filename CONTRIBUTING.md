@@ -62,18 +62,19 @@ npm install
 npm run dev
 ```
 
-Before pushing, run what CI runs:
+Before pushing, run the checks that CI runs:
 
 ```bash
 npm run typecheck && npm run lint && npm test && npm run build
 npm run check:docs      # local Markdown files and section links; no network
-npm run test:e2e          # needs the build above
 ```
 
-The last one puts two browser contexts in one room against a LiveKit and a
-Postgres, and asserts that video is decoding on both sides. It is a required check, and
-it is the one that has caught the bugs the others could not see. CI starts disposable
-services for it. Locally, run migrations against a disposable database and make its
+For media changes, also run `npm run test:e2e` after the build against disposable
+services. This suite puts two browser contexts in one room against a LiveKit and a
+Postgres, and asserts that video is decoding on both sides. It has caught bugs the
+other checks could not see. The hosted CI job is currently skipped to conserve runner
+capacity; the real test remains available and should be run for media changes with
+disposable services. Locally, run migrations against a disposable database and make its
 `DATABASE_URL` available to the shell running Playwright as well as to `.env.local`;
 Playwright's direct database assertions do not load `.env.local` themselves. Never point
 the suite at production. [#221](https://github.com/Lord-shaban/lor/issues/221) tracks a

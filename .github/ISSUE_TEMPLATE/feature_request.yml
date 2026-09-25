@@ -29,18 +29,9 @@ body:
   - type: dropdown
     id: milestone
     attributes:
-      label: Which release does this belong to?
+      label: Which planned release does this belong to?
       description: See the roadmap in the README.
       options:
-        - 'v0.1 — The Call'
-        - 'v0.1.5 — Captions'
-        - 'v0.1.8 — Canvas'
-        - 'v0.2 — Decisions'
-        - 'v0.3 — Action items'
-        - 'v0.4 — Meeting timeline'
-        - 'v0.5 — Meeting memory'
-        - 'v0.6 — Semantic search'
-        - 'v0.7 — Open-source launch & product experience'
         - 'v0.8 — Integrations'
         - 'v0.9 — Hardening and self-hosting'
         - 'v1.0 — Plugin ecosystem'
