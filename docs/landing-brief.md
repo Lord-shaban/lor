@@ -4,8 +4,10 @@ Status: approved content and media contract for issue [#213](https://github.com/
 This brief is the source for the public project page; it does not change the product
 launcher at `/[locale]`.
 The live copy and section layout were subsequently revised in [#264](https://github.com/Lord-shaban/lor/issues/264);
-the current page and locale messages govern those details. The media privacy and
-accessibility rules below remain the contribution contract.
+the current page and locale messages govern those details. The September 2026 refresh
+uses a shared official wordmark, real product captures with synthetic content, a focused
+competitor analysis, and one documentation shell for the guide and resource pages.
+The media privacy and accessibility rules below remain the contribution contract.
 
 ## What the page must do
 
@@ -25,9 +27,9 @@ shortest path for starting or joining a meeting.
 
 | Order | Section | English intent | Arabic-first intent | Evidence boundary |
 |---|---|---|---|---|
-| 1 | Hero | “Meetings that remember what matters.” Explain open-source, Arabic-first video meetings in one sentence. | `اجتماعات بتفتكر اللي يهم.` Explain the same promise in plain Egyptian Arabic, with `LOR.‎` isolated in UI text. | README “What LOR. is”; no invented outcome or metric. |
+| 1 | Hero | Explain the open-source meeting workspace and the reviewed results it retains in one clear sentence. | Explain the same promise in formal Arabic, with `LOR.‎` isolated in UI text. | README “What LOR. is”; no invented outcome or metric. |
 | 2 | Proof surface | Show a static, privacy-safe product view before asking for trust. | Same visual and equivalent text alternative; the image never carries meaning alone. | Shipped capabilities only; synthetic labels and no room data. |
-| 3 | Three proof chapters | Join simply; collaborate live; keep evidence responsibly. Each chapter names one user task and one shipped capability. | `ادخل بسهولة؛ اشتغلوا سوا؛ احتفظ بالدليل.` Keep technical terms in their familiar Latin form where used in the product. | v0.1, v0.1.8, and v0.2–v0.6 README sections. |
+| 3 | Three proof chapters | Join simply; collaborate live; keep evidence responsibly. Each chapter names one user task and one shipped capability. | Describe joining, live collaboration, and reviewing retained evidence in formal Arabic. Keep technical terms in their familiar Latin form where used in the product. | v0.1, v0.1.8, and v0.2–v0.6 README sections. |
 | 4 | Open source | Explain AGPL-3.0, the contributor path, and where the roadmap lives. | Explain the same contribution path without promising that planned milestones are shipped. | LICENSE, CONTRIBUTING.md, and GitHub milestones. |
 | 5 | Final actions | Repeat “Try the live app” and “View the source”; add “Read the setup guide” as a quieter path. | Repeat equivalent Arabic actions with the same order and hierarchy. | Canonical links below. |
 
@@ -44,17 +46,21 @@ capability comparison → privacy and control → open source → FAQ → final 
 The current comparison names Zoom and Google Meet, qualifies plan-dependent features,
 and links to official product documentation.
 
-Issue #236 makes the identity explicit with the official LOR. geometry, a short
-“Live Open Rooms” lockup, and a local docs CTA. GitHub remains a deliberately quieter
+The current identity uses the official LOR. geometry and a local documentation CTA.
+Product screenshots demonstrate actual shipped screens; any illustrative meeting scene
+is labelled as an example and must not be presented as a real customer meeting. GitHub remains a deliberately quieter
 source/community path instead of being repeated as the page's primary action. The page
-also includes a first-class localized docs hub at `/docs` and `/en/docs`: quick start,
-workflow, shipped-versus-planned boundaries, architecture, contribution steps, and FAQ.
+also includes a localized documentation shell at `/docs` and `/en/docs`: grouped project
+navigation, page anchors, workflow, capabilities and limits, architecture, local setup,
+contribution steps, and FAQ. Security, contribution, roadmap, license, support, and source
+guides are first-class local pages under `/resources/[topic]`. Mobile navigation uses
+native disclosures and desktop navigation remains visible beside the article.
 
 The quick-start panel mirrors the repository's current `#quick-start` commands and has a
 copy button plus the visible code block as its fallback. FAQ answers are native
 `details` disclosures so they remain keyboard and screen-reader accessible without
-client-side navigation. The hero now uses a localized HTML/CSS illustration of a
-meeting and its evidence workspace. The approved launcher capture below is a separate
+client-side navigation. Product captures are placed in restrained responsive frames
+with descriptive captions. The approved launcher capture below remains a separate
 media contribution under [#220](https://github.com/Lord-shaban/lor/issues/220).
 
 ## Historical copy vocabulary (#213)
@@ -76,24 +82,21 @@ features are required, always available, or free from provider limits.
 
 ## Media inventory
 
-The showcase currently uses a responsive illustration. This inventory records the
-new optional capture and future media contributions. A video is an enhancement,
-not a dependency for understanding the page.
+The hero uses a real localized meeting-interface capture with clearly disclosed
+synthetic data. The story uses the real localized home screen. Both appear in
+original responsive frames with reserved image dimensions, descriptive captions,
+and full-size inspection links. Neither is a customer meeting or live-service proof.
 
-| Asset | Owner | Purpose | Target format / dimensions | Text alternative | Privacy and licence | Status |
-|---|---|---|---|---|---|---|
-| `landing/product-launcher-ar.webp` | LOR. maintainers | Show the current Arabic launcher and its two entry paths without meeting data. | WebP, 732×918 at 2×; reserve this aspect ratio and display at up to 366 CSS px wide. | “واجهة بدء اجتماع LOR.‎ تعرض إنشاء اجتماع جديد وحقل إدخال رابط الدعوة وزر الانضمام.” EN: “The Arabic LOR. meeting launcher shows a new-meeting action, an empty invitation field, and a join action.” | [Capture and privacy review](landing-media.md); project-owned screenshot, AGPL-3.0-only. | Delivered for #220; available as an optional static product capture. |
-| `landing/product-screenshot.webp` | LOR. maintainers | Optional future replacement for the vector when a wider real shipped screen is captured. | WebP, 1600×1000 source, responsive derivatives. | Same semantic description as the captured state. | Capture from a local synthetic room only; review before publishing; no private data. | Follow-up capture, not required for #236. |
-| `landing/walkthrough.webm` + `landing/walkthrough.vtt` | Future contributor | Demonstrate one short path from link → call → retained evidence. | WebM, ≤45s, 1280×720; VTT captions and a poster. | Full transcript supplied beside the player; captions are not the only source. | Silent or captioned synthetic demo; no autoplay; pause when hidden; contributor credits and licence recorded with the asset. | Optional future contribution; do not invent a placeholder video. |
+| Asset | Purpose | Format / dimensions | Text alternative and provenance |
+|---|---|---|---|
+| `landing/product-call-ar.webp` and `product-call-en.webp` | Show actual meeting controls and confirmed decisions with their source evidence. | WebP, 1440×900; preserve aspect ratio. | Localized description and explicit demo caption; [capture review](landing-media.md). |
+| `landing/product-home-ar.webp` and `product-home-en.webp` | Show the official identity and two real meeting-entry paths. | WebP, 1440×900; preserve aspect ratio. | Localized home-screen description; [capture review](landing-media.md). |
+| `landing/product-launcher-ar.webp` | Historical launcher capture from #220, no longer displayed. | WebP, 732×918. | [Earlier capture and current inventory](landing-media.md). |
 
-The hero now uses a localized HTML/CSS illustration rather than the retired SVG and
-PNG captures from #213 and #236. The screenshot above is one new, independent media
-entry; adding it to this inventory does not replace that illustration on the page.
-
-The implementation must use `next/image` for raster images, reserve media dimensions to
-avoid layout shift, lazy-load noncritical media, and provide a readable static fallback.
-If a video is added later, it must have visible native controls, a poster, captions,
-transcript, keyboard operation, and a reduced-motion poster state.
+Assets are project-owned and licensed AGPL-3.0-only. No imagery was copied from
+reference projects. The temporary offline capture fixture is not shipped.
+Use `next/image`: preload the hero, lazy load secondary media, and retain the
+text description. No autoplay video or decorative motion is required.
 
 ## Canonical destinations
 
@@ -101,11 +104,13 @@ transcript, keyboard operation, and a reduced-motion poster state.
 |---|---|---|
 | Try the live app | `https://lor-bay.vercel.app` | Primary CTA; opens the product launcher. |
 | Product docs | `/docs` and `/en/docs` | Localized setup, workflow, boundaries, architecture, and contribution guide. |
-| View the source | `https://github.com/Lord-shaban/lor` | Secondary source/community path; repository, issues, and discussions. |
-| Setup guide | `https://github.com/Lord-shaban/lor#quick-start` | Contributor/developer onboarding. |
-| Contributing | `https://github.com/Lord-shaban/lor/blob/main/CONTRIBUTING.md` | Workflow, checks, and PR contract. |
-| Security | `https://github.com/Lord-shaban/lor/blob/main/SECURITY.md` | Privacy and disclosure boundary. |
-| Roadmap | `https://github.com/Lord-shaban/lor/milestones` | Current shipped and planned milestones. |
+| Source guide | `/resources/source` | Local code map, with an explicit onward action to the repository. |
+| Setup guide | `/docs#quick-start` | Local development commands and configuration boundaries. |
+| Contributing | `/resources/contributing` | Workflow, checks, and the onward issue/PR path. |
+| Security | `/resources/security` | Privacy boundaries and explicit private-reporting action. |
+| Roadmap | `/resources/roadmap` | Current release and planned milestones, with an onward tracking link. |
+| License | `/resources/license` | License summary and link to the governing legal text. |
+| Help | `/resources/help` | Troubleshooting and guidance for a useful issue report. |
 
 External links are explicit, keyboard reachable, and never hidden behind a hover-only
 interaction. The live app and source actions are visually distinct but use the existing
@@ -131,4 +136,9 @@ Every product statement on the page must map to the shipped README sections: v0.
 meeting, v0.1.5 captions, v0.1.8 local recording/board/notes, v0.2 decisions, v0.3
 action items, v0.4 Timeline, v0.5 Memory, or v0.6 semantic search. Integrations,
 self-hosting, plugin APIs, end-to-end encryption, user accounts, and future milestones
-are planned and stay out of the page's “available now” language.
+are not shipped guarantees and stay out of the page's “available now” language.
+The product experience and public docs shipped in v0.7; official Docker self-hosting
+is v0.9 work. Cross-room search and indexing the live occurrence are deliberate limits,
+not promised future capabilities. Comparison claims name their plans or conditions and
+link to primary product documentation; no blanket claim that competitors lack AI,
+action items, recording, or browser participation is acceptable.
