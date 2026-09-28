@@ -4,14 +4,11 @@ import type { ReactNode } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { LocaleSwitcher } from "@/components/locale-switcher";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
+import { DocumentationShell } from "@/components/documentation-shell";
 import { LandingCopyCommand } from "@/components/landing-copy-command";
 
-const CONTAINER = "mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-12";
 const TEXT_LINK =
-  "underline decoration-border underline-offset-4 transition-colors duration-150 hover:decoration-foreground";
+  "inline-flex min-h-11 min-w-11 items-center underline decoration-border underline-offset-4 transition-colors duration-150 hover:decoration-foreground";
 const QUICK_START = `git clone https://github.com/Lord-shaban/lor && cd lor
 cp .env.example .env.local
 npm install && npm run dev`;
@@ -41,78 +38,20 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
 
   const t = useTranslations("docs");
 
+  const toc = ["start", "what", "workflow", "boundaries", "architecture", "quick-start", "contribute", "help"].map((id) => ({ id, label: id === "quick-start" ? t("quickStart.title") : t(`toc.${id}`) }));
+
   return (
-    <div className="min-h-full bg-background text-foreground">
-      <a
-        href="#docs-content"
-        className="sr-only absolute start-4 top-4 z-50 rounded-sm bg-foreground px-4 py-3 text-on-foreground focus:not-sr-only"
-      >
-        {t("skip")}
-      </a>
-
-      <header className="z-30 border-b border-border bg-background/95 lg:sticky lg:top-0 lg:backdrop-blur-sm">
-        <div className={`${CONTAINER} py-4`}>
-          <div className="grid items-center gap-4 sm:grid-cols-[auto_1fr_auto]">
-            <Link href="/" aria-label="LOR." className="justify-self-start">
-              <LorWordmark className="h-9 w-auto" />
-            </Link>
-            <nav
-              aria-label={t("nav.label")}
-              className="order-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted sm:order-none sm:justify-start"
-            >
-              <Link className={TEXT_LINK} href="/about">{t("nav.product")}</Link>
-              <span className="font-medium text-foreground">{t("nav.docs")}</span>
-              <Link className={TEXT_LINK} href="/resources/help">{t("nav.community")}</Link>
-            </nav>
-            <div className="flex items-center justify-self-end gap-2 sm:gap-3">
-              <Button asChild size="md"><Link href="/">{t("nav.try")}</Link></Button>
-              <ThemeToggle />
-              <LocaleSwitcher />
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main id="docs-content" tabIndex={-1}>
-        <div className={`${CONTAINER} py-10 sm:py-14 lg:py-20`}>
-          <nav aria-label={t("breadcrumb.docs")} className="flex items-center gap-2 text-sm text-muted">
-            <Link className={TEXT_LINK} href="/">{t("breadcrumb.home")}</Link>
-            <span aria-hidden="true">/</span>
-            <span className="text-foreground">{t("breadcrumb.docs")}</span>
-          </nav>
-
-          <div className="mt-8 grid gap-12 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-20">
-            <aside className="lg:sticky lg:top-28 lg:self-start">
-              <details className="group rounded-md border border-border bg-surface lg:hidden">
-                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-4 text-sm font-medium [&::-webkit-details-marker]:hidden">
-                  {t("toc.label")}
-                  <ChevronDownIcon className="h-4 w-4 text-muted transition-transform group-open:rotate-180" />
-                </summary>
-                <nav aria-label={t("toc.label")} className="grid gap-1 border-t border-border p-2">
-                  <DocsNavLink href="#start">{t("toc.start")}</DocsNavLink>
-                  <DocsNavLink href="#what">{t("toc.what")}</DocsNavLink>
-                  <DocsNavLink href="#workflow">{t("toc.workflow")}</DocsNavLink>
-                  <DocsNavLink href="#boundaries">{t("toc.boundaries")}</DocsNavLink>
-                  <DocsNavLink href="#architecture">{t("toc.architecture")}</DocsNavLink>
-                  <DocsNavLink href="#contribute">{t("toc.contribute")}</DocsNavLink>
-                  <DocsNavLink href="#help">{t("toc.help")}</DocsNavLink>
-                </nav>
-              </details>
-              <div className="hidden lg:block">
-                <p className="text-sm font-medium">{t("toc.label")}</p>
-                <nav aria-label={t("toc.label")} className="mt-4 grid gap-1">
-                  <DocsNavLink href="#start">{t("toc.start")}</DocsNavLink>
-                  <DocsNavLink href="#what">{t("toc.what")}</DocsNavLink>
-                  <DocsNavLink href="#workflow">{t("toc.workflow")}</DocsNavLink>
-                  <DocsNavLink href="#boundaries">{t("toc.boundaries")}</DocsNavLink>
-                  <DocsNavLink href="#architecture">{t("toc.architecture")}</DocsNavLink>
-                  <DocsNavLink href="#contribute">{t("toc.contribute")}</DocsNavLink>
-                  <DocsNavLink href="#help">{t("toc.help")}</DocsNavLink>
-                </nav>
-              </div>
-            </aside>
-
-            <article className="min-w-0">
+    <DocumentationShell locale={locale} toc={toc}>
+      <nav aria-label={t("breadcrumb.docs")} className="mb-7 flex items-center gap-2 text-sm text-muted">
+        <Link className={TEXT_LINK} href="/about">{t("nav.product")}</Link>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page" className="text-foreground">{t("breadcrumb.docs")}</span>
+      </nav>
+      <details className="group mb-8 border-y border-border xl:hidden">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium [&::-webkit-details-marker]:hidden">{t("toc.label")}<ChevronDownIcon className="transition-transform group-open:rotate-180" /></summary>
+        <nav aria-label={t("toc.label")} className="grid gap-1 pb-3 sm:grid-cols-2">{toc.map((item) => <DocsNavLink key={item.id} href={`#${item.id}`}>{item.label}</DocsNavLink>)}</nav>
+      </details>
+            <article className="min-w-0 max-w-3xl">
               <section id="start" aria-labelledby="docs-title" className="scroll-mt-28">
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
                   <span className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5">
@@ -120,10 +59,10 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
                     <span>{t("status")}</span>
                   </span>
                 </div>
-                <h1 id="docs-title" className="mt-6 max-w-4xl text-4xl font-semibold leading-[1.06] tracking-[-0.035em] sm:text-5xl lg:text-6xl">
+                <h1 id="docs-title" className="mt-6 max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
                   {t("title")}
                 </h1>
-                <p className="mt-6 max-w-3xl text-lg leading-8 text-muted sm:text-xl">{t("intro")}</p>
+                <p className="mt-6 max-w-3xl text-base leading-8 text-muted sm:text-lg">{t("intro")}</p>
                 <nav aria-label={t("paths.label")} className="mt-10 grid gap-3 sm:grid-cols-3">
                   <DocsPath href="#workflow" title={t("paths.join.title")}>{t("paths.join.body")}</DocsPath>
                   <DocsPath href="#boundaries" title={t("paths.record.title")}>{t("paths.record.body")}</DocsPath>
@@ -131,7 +70,7 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
                 </nav>
               </section>
 
-              <section id="what" aria-labelledby="what-title" className="mt-20 scroll-mt-28 border-t border-border pt-14 sm:mt-24 sm:pt-20">
+              <section id="what" aria-labelledby="what-title" className="mt-12 scroll-mt-28 border-t border-border pt-10 sm:mt-16 sm:pt-12">
                 <SectionIntro id="what-title" eyebrow={t("what.eyebrow")} title={t("what.title")}>
                   <p>{t("what.body")}</p>
                   <p className="mt-4">{t("what.mixed")}</p>
@@ -139,23 +78,23 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
                 </SectionIntro>
               </section>
 
-              <section id="workflow" aria-labelledby="workflow-title" className="mt-20 scroll-mt-28 border-t border-border pt-14 sm:mt-24 sm:pt-20">
+              <section id="workflow" aria-labelledby="workflow-title" className="mt-12 scroll-mt-28 border-t border-border pt-10 sm:mt-16 sm:pt-12">
                 <SectionIntro id="workflow-title" eyebrow={t("workflow.eyebrow")} title={t("workflow.title")}>
                   <p>{t("workflow.intro")}</p>
                 </SectionIntro>
-                <ol className="mt-10 grid gap-8 md:grid-cols-3 md:gap-6">
+                <ol className="mt-8 grid gap-6">
                   <DocsStep number="01" title={t("workflow.steps.join.title")}><p>{t("workflow.steps.join.body")}</p></DocsStep>
                   <DocsStep number="02" title={t("workflow.steps.work.title")}><p>{t("workflow.steps.work.body")}</p></DocsStep>
                   <DocsStep number="03" title={t("workflow.steps.review.title")}><p>{t("workflow.steps.review.body")}</p></DocsStep>
                 </ol>
               </section>
 
-              <section id="boundaries" aria-labelledby="boundaries-title" className="mt-20 scroll-mt-28 border-t border-border pt-14 sm:mt-24 sm:pt-20">
+              <section id="boundaries" aria-labelledby="boundaries-title" className="mt-12 scroll-mt-28 border-t border-border pt-10 sm:mt-16 sm:pt-12">
                 <SectionIntro id="boundaries-title" eyebrow={t("boundaries.eyebrow")} title={t("boundaries.title")}>
                   <p>{t("boundaries.intro")}</p>
                 </SectionIntro>
                 <div className="mt-10 hidden overflow-x-auto rounded-[var(--radius-lg)] border border-border lg:block">
-                  <table className="w-full min-w-[48rem] border-collapse text-start text-sm">
+                  <table className="w-full border-collapse text-start text-sm">
                     <caption className="sr-only">{t("boundaries.caption")}</caption>
                     <thead className="bg-surface"><tr className="border-b border-border"><th scope="col" className="w-[25%] px-5 py-4 font-medium">{t("boundaries.capability")}</th><th scope="col" className="w-[37.5%] px-5 py-4 font-medium">{t("boundaries.today")}</th><th scope="col" className="w-[37.5%] px-5 py-4 font-medium text-muted">{t("boundaries.planned")}</th></tr></thead>
                     <tbody className="divide-y divide-border">
@@ -179,7 +118,7 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
                 </div>
               </section>
 
-              <section id="architecture" aria-labelledby="architecture-title" className="mt-20 scroll-mt-28 border-t border-border pt-14 sm:mt-24 sm:pt-20">
+              <section id="architecture" aria-labelledby="architecture-title" className="mt-12 scroll-mt-28 border-t border-border pt-10 sm:mt-16 sm:pt-12">
                 <SectionIntro id="architecture-title" eyebrow={t("architecture.eyebrow")} title={t("architecture.title")}>
                   <p>{t("architecture.intro")}</p>
                 </SectionIntro>
@@ -195,11 +134,11 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
                 <p className="mt-5 max-w-3xl text-base leading-7 text-muted">{t("architecture.note")}</p>
               </section>
 
-              <section aria-labelledby="quick-start-title" className="mt-16 scroll-mt-28 rounded-[var(--radius-lg)] bg-foreground p-6 text-on-foreground sm:p-8">
-                <p className="text-sm opacity-65">{t("quickStart.eyebrow")}</p>
+              <section id="quick-start" aria-labelledby="quick-start-title" className="mt-12 scroll-mt-28 rounded-lg border border-border bg-surface p-5 sm:p-7">
+                <p className="text-sm text-muted">{t("quickStart.eyebrow")}</p>
                 <h2 id="quick-start-title" className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">{t("quickStart.title")}</h2>
-                <p className="mt-4 max-w-2xl text-base leading-7 opacity-75">{t("quickStart.intro")}</p>
-                <div className="mt-8 overflow-hidden rounded-[var(--radius-md)] border border-on-foreground/20 bg-background text-foreground">
+                <p className="mt-4 max-w-2xl text-base leading-7 text-muted">{t("quickStart.intro")}</p>
+                <div className="mt-8 overflow-hidden rounded-[var(--radius-md)] border border-border bg-background text-foreground">
                   <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-5 py-4">
                     <div><p className="text-sm font-medium">{t("quickStart.label")}</p><p className="mt-1 text-sm text-muted">{t("quickStart.hint")}</p></div>
                     <LandingCopyCommand value={QUICK_START} copyLabel={t("quickStart.copy")} copiedLabel={t("quickStart.copied")} />
@@ -209,7 +148,7 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
                 </div>
               </section>
 
-              <section id="contribute" aria-labelledby="contribute-title" className="mt-20 scroll-mt-28 border-t border-border pt-14 sm:mt-24 sm:pt-20">
+              <section id="contribute" aria-labelledby="contribute-title" className="mt-12 scroll-mt-28 border-t border-border pt-10 sm:mt-16 sm:pt-12">
                 <SectionIntro id="contribute-title" eyebrow={t("contribute.eyebrow")} title={t("contribute.title")}>
                   <p>{t("contribute.body")}</p>
                 </SectionIntro>
@@ -224,7 +163,7 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
                 </div>
               </section>
 
-              <section id="help" aria-labelledby="help-title" className="mt-20 scroll-mt-28 border-t border-border pt-14 sm:mt-24 sm:pt-20">
+              <section id="help" aria-labelledby="help-title" className="mt-12 scroll-mt-28 border-t border-border pt-10 sm:mt-16 sm:pt-12">
                 <SectionIntro id="help-title" eyebrow={t("help.eyebrow")} title={t("help.title")}>
                   <p>{t("help.intro")}</p>
                 </SectionIntro>
@@ -236,28 +175,17 @@ export default function DocsPage({ params }: PageProps<"/[locale]/docs">) {
                 </div>
               </section>
 
-              <aside className="mt-20 rounded-[var(--radius-lg)] border border-border bg-surface p-6 sm:mt-24 sm:p-8">
+              <aside className="mt-12 border-t border-border pt-8 sm:mt-16">
                 <h2 className="text-2xl font-semibold tracking-tight">{t("next.title")}</h2>
                 <p className="mt-3 max-w-2xl text-base leading-7 text-muted">{t("next.body")}</p>
                 <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-sm"><Link className={TEXT_LINK} href="/about">{t("next.project")}</Link><Link className={TEXT_LINK} href="/">{t("next.try")}</Link><Link className={TEXT_LINK} href="/resources/source">{t("next.source")}</Link></div>
               </aside>
             </article>
-          </div>
-        </div>
-      </main>
-
-      <footer className="border-t border-border">
-        <div className={`${CONTAINER} flex flex-col gap-6 py-9 text-sm text-muted sm:flex-row sm:items-start sm:justify-between`}>
-          <div><div className="flex items-center gap-3"><LorWordmark className="h-7 w-auto" /><span>{t("footer.license")}</span></div><p className="mt-3 max-w-sm leading-6">{t("footer.tagline")}</p></div>
-          <nav aria-label={t("footer.label")} className="grid grid-cols-2 gap-x-8 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-6"><Link className={TEXT_LINK} href="/about">{t("footer.landing")}</Link><Link className={TEXT_LINK} href="/">{t("footer.product")}</Link><Link className={TEXT_LINK} href="/resources/security">{t("footer.security")}</Link><Link className={TEXT_LINK} href="/resources/source">{t("footer.source")}</Link></nav>
-        </div>
-      </footer>
-    </div>
+    </DocumentationShell>
   );
 }
-
 function SectionIntro({ id, eyebrow, title, children }: { id: string; eyebrow: string; title: string; children: ReactNode }) {
-  return <div className="max-w-3xl"><p className="text-sm text-muted">{eyebrow}</p><h2 id={id} className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h2><div className="mt-5 text-base leading-7 text-muted sm:text-lg">{children}</div></div>;
+  return <div className="max-w-3xl"><p className="text-sm text-muted">{eyebrow}</p><h2 id={id} className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h2><div className="mt-4 text-base leading-8 text-muted">{children}</div></div>;
 }
 
 function DocsNavLink({ href, children }: { href: string; children: ReactNode }) {
@@ -265,11 +193,11 @@ function DocsNavLink({ href, children }: { href: string; children: ReactNode }) 
 }
 
 function DocsPath({ href, title, children }: { href: string; title: string; children: ReactNode }) {
-  return <a href={href} className="group flex min-h-32 flex-col justify-between rounded-[var(--radius-md)] border border-border bg-surface p-5 transition-colors duration-150 hover:bg-surface-strong"><span className="font-semibold group-hover:underline group-hover:underline-offset-4">{title}</span><span className="mt-3 text-sm leading-6 text-muted">{children}</span></a>;
+  return <a href={href} className="group flex flex-col gap-1 border-s-2 border-border ps-4 py-2 transition-colors duration-150 hover:border-foreground"><span className="font-semibold group-hover:underline group-hover:underline-offset-4">{title}</span><span className="text-sm leading-6 text-muted">{children}</span></a>;
 }
 
 function DocsStep({ number, title, children }: { number: string; title: string; children: ReactNode }) {
-  return <li className="border-t border-border pt-5"><span dir="ltr" className="font-mono text-xs tabular-nums text-muted">{number}</span><h3 className="mt-7 text-xl font-medium tracking-tight">{title}</h3><div className="mt-3 text-base leading-7 text-muted">{children}</div></li>;
+  return <li className="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-4"><span dir="ltr" className="font-mono text-xs tabular-nums text-muted">{number}</span><h3 className="text-lg font-semibold tracking-tight">{title}</h3><div className="col-start-2 mt-2 text-base leading-7 text-muted">{children}</div></li>;
 }
 
 function BoundaryRow({ label, today, planned }: { label: string; today: string; planned: string }) {
@@ -282,10 +210,6 @@ function ContributeRow({ number, children }: { number: string; children: ReactNo
 
 function DocsFaq({ question, children }: { question: string; children: ReactNode }) {
   return <details className="group"><summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-5 py-5 text-start font-medium [&::-webkit-details-marker]:hidden"><span>{question}</span><ChevronDownIcon className="shrink-0 text-muted transition-transform duration-150 group-open:rotate-180" /></summary><div className="max-w-3xl pb-6 pe-8 text-base leading-7 text-muted">{children}</div></details>;
-}
-
-function LorWordmark({ className = "" }: { className?: string }) {
-  return <svg role="img" aria-label="LOR." viewBox="0 0 360 140" fill="none" className={className}><title>LOR.</title><g stroke="currentColor" strokeWidth="20" strokeLinecap="butt" strokeLinejoin="round"><path d="M10 20V110H60" /><circle cx="136" cy="70" r="40" /><path d="M222 20V120M222 30H256A25 25 0 0 1 256 80H222M222 80L301 110" /></g><circle cx="332" cy="105" r="15" fill="var(--live)" /></svg>;
 }
 
 function ArrowUpRightIcon() {
