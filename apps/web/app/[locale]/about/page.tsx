@@ -7,6 +7,8 @@ import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { Brand } from "@/components/brand";
+import { ProductScreenshot } from "@/components/product-screenshot";
 import { LandingMeetingShowcase } from "@/components/landing-meeting-showcase";
 import {
   BoardIcon,
@@ -15,8 +17,7 @@ import {
   ShieldIcon,
 } from "@/components/landing-icons";
 
-const LIVE_APP = "https://lor-bay.vercel.app";
-const CONTAINER = "mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-12";
+const CONTAINER = "mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12";
 const TEXT_LINK =
   "underline decoration-border underline-offset-4 transition-colors duration-150 hover:decoration-foreground";
 
@@ -57,32 +58,32 @@ export default function PublicLanding({
 
       <header className="z-30 border-b border-border bg-background/95 lg:sticky lg:top-0 lg:backdrop-blur-sm">
         <div className={`${CONTAINER} py-4`}>
-          <div className="grid items-center gap-4 sm:grid-cols-[auto_1fr_auto]">
-            <Link href="/" aria-label="LOR." className="justify-self-start">
-              <LorWordmark className="h-9 w-auto" />
+          <div className="grid grid-cols-[auto_1fr] items-center gap-3 sm:grid-cols-[auto_1fr_auto]">
+            <Link href="/" aria-label="LOR." className="inline-flex min-h-11 items-center justify-self-start">
+              <Brand size="md" />
             </Link>
 
             <nav
               aria-label={t("nav.label")}
-              className="order-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted sm:order-none sm:justify-start"
+              className="order-3 col-span-2 flex flex-wrap items-center gap-x-5 text-sm text-muted sm:order-none sm:col-span-1 sm:justify-center"
             >
-              <a className={TEXT_LINK} href="#story">
+              <a className={`inline-flex min-h-11 items-center ${TEXT_LINK}`} href="#story">
                 {t("nav.product")}
               </a>
-              <a className={TEXT_LINK} href="#features">
+              <a className={`inline-flex min-h-11 items-center ${TEXT_LINK}`} href="#features">
                 {t("nav.features")}
               </a>
-              <Link className={TEXT_LINK} href="/docs">
+              <Link className={`inline-flex min-h-11 items-center ${TEXT_LINK}`} href="/docs">
                 {t("nav.docs")}
               </Link>
-              <a className={TEXT_LINK} href="#compare">
+              <a className={`inline-flex min-h-11 items-center ${TEXT_LINK}`} href="#compare">
                 {t("nav.compare")}
               </a>
             </nav>
 
-            <div className="flex items-center justify-self-end gap-2 sm:gap-3">
-              <Button asChild size="sm">
-                <a href={LIVE_APP}>{t("nav.try")}</a>
+            <div className="flex items-center justify-self-end gap-2 sm:gap-3 [&_nav_a]:inline-flex [&_nav_a]:min-h-11 [&_nav_a]:items-center [&_button]:min-h-11">
+              <Button asChild size="md" className="hidden sm:inline-flex">
+                <Link href="/">{t("nav.try")}</Link>
               </Button>
               <ThemeToggle />
               <LocaleSwitcher />
@@ -97,56 +98,27 @@ export default function PublicLanding({
           className="overflow-hidden border-b border-border"
         >
           <div
-            className={`${CONTAINER} grid gap-12 py-14 sm:py-20 lg:grid-cols-[0.86fr_1.14fr] lg:items-center lg:gap-16 lg:py-20`}
+            className={`${CONTAINER} grid gap-10 py-12 sm:py-16 lg:gap-14 lg:py-20`}
           >
-            <div className="max-w-2xl">
-              <p className="text-sm text-muted">
-                {t("hero.kicker")}
-              </p>
-
-              <h1
-                id="landing-title"
-                className="mt-5 max-w-[15ch] text-4xl font-semibold leading-[1.15] tracking-tight sm:text-5xl lg:text-6xl"
-              >
-                {t("hero.title")}
-              </h1>
-
-              <p className="mt-7 max-w-xl text-lg leading-8 text-muted sm:text-xl">
-                {t.rich("hero.description", {
-                  brand: (chunks) => (
-                    <bdi className="font-medium text-foreground">{chunks}</bdi>
-                  ),
-                })}
-              </p>
-
-              <p className="mt-4 max-w-xl text-base leading-7 text-muted">
-                {t("hero.supporting")}
-              </p>
-
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Button asChild size="lg">
-                  <a href={LIVE_APP}>
-                    {t("hero.liveCta")}
-                    <ArrowUpRightIcon />
-                  </a>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link href="/docs">
-                    {t("hero.docsCta")}
-                    <BookIcon />
-                  </Link>
-                </Button>
+            <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:gap-16">
+              <div>
+                <div className="mb-6 flex flex-wrap items-center gap-4"><Brand size="lg" /><span className="border-s border-border ps-4 text-sm text-muted">{t("hero.kicker")}</span></div>
+                <h1 id="landing-title" className="max-w-[20ch] text-4xl font-semibold leading-[1.2] tracking-tight text-balance sm:text-5xl lg:text-6xl">{t("hero.title")}</h1>
               </div>
-
-              <p className="mt-5 text-sm text-muted">
-                {t("hero.sourceLead")} {" "}
-                <Link className={TEXT_LINK} href="/resources/source">
-                  {t("hero.sourceCta")}
-                </Link>
-              </p>
-
+              <div className="max-w-xl">
+                <p className="text-lg leading-8 text-muted">{t.rich("hero.description", { brand: chunks => <bdi className="font-medium text-foreground">{chunks}</bdi> })}</p>
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <Button asChild size="lg"><Link href="/">{t("hero.liveCta")}<ArrowUpRightIcon /></Link></Button>
+                  <Button asChild size="lg" variant="outline"><Link href="/docs">{t("hero.docsCta")}<BookIcon /></Link></Button>
+                </div>
+                <p className="mt-4 text-sm leading-6 text-muted">{t("hero.sourceLead")} <Link className={TEXT_LINK} href="/resources/source">{t("hero.sourceCta")}</Link></p>
+              </div>
             </div>
-
+            <div className="flex flex-wrap gap-x-7 gap-y-3 border-t border-border pt-5 text-sm text-muted">
+              <span className="inline-flex items-center gap-2"><CodeIcon />{t("hero.proofLicense")}</span>
+              <span>{t("hero.proofLocale")}</span>
+              <Link href="/resources/roadmap" className={TEXT_LINK}>{t("hero.proofStatus")}</Link>
+            </div>
             <LandingMeetingShowcase />
           </div>
         </section>
@@ -161,17 +133,14 @@ export default function PublicLanding({
               <p className="mt-5 text-base leading-7 text-muted sm:text-lg">{t("story.intro")}</p>
             </div>
 
-            <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-7 lg:gap-12">
-              <StoryStep number="01" icon={<LinkIcon />} title={t("story.steps.join.title")}>
-                {t.rich("story.steps.join.body", { term: (chunks) => <bdi>{chunks}</bdi> })}
-              </StoryStep>
-              <StoryStep number="02" icon={<TogetherIcon />} title={t("story.steps.together.title")}>
-                {t.rich("story.steps.together.body", { term: (chunks) => <bdi>{chunks}</bdi> })}
-              </StoryStep>
-              <StoryStep number="03" icon={<EvidenceIcon />} title={t("story.steps.evidence.title")}>
-                {t.rich("story.steps.evidence.body", { term: (chunks) => <bdi>{chunks}</bdi> })}
-              </StoryStep>
-            </ol>
+            <div className="mt-10 grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-start lg:gap-14">
+              <ProductScreenshot src={`/landing/product-home-${locale}.webp`} alt={t("screenshot.homeAlt")} label={t("screenshot.homeLabel")} caption={t("screenshot.homeCaption")} inspect={t("screenshot.inspect")} sizes="(max-width: 1024px) 100vw, 640px" />
+              <ol className="grid gap-7">
+                <StoryStep number="01" icon={<LinkIcon />} title={t("story.steps.join.title")}>{t.rich("story.steps.join.body", { term: chunks => <bdi>{chunks}</bdi> })}</StoryStep>
+                <StoryStep number="02" icon={<TogetherIcon />} title={t("story.steps.together.title")}>{t.rich("story.steps.together.body", { term: chunks => <bdi>{chunks}</bdi> })}</StoryStep>
+                <StoryStep number="03" icon={<EvidenceIcon />} title={t("story.steps.evidence.title")}>{t.rich("story.steps.evidence.body", { term: chunks => <bdi>{chunks}</bdi> })}</StoryStep>
+              </ol>
+            </div>
           </div>
         </section>
 
@@ -208,32 +177,32 @@ export default function PublicLanding({
               <p className="max-w-2xl text-base leading-7 text-muted sm:text-lg">{t("compare.intro")}</p>
             </div>
 
-            <div className="mt-12 hidden overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-background lg:block">
-              <table className="w-full min-w-[48rem] border-collapse text-start text-sm">
+            <div className="mt-12 hidden overflow-hidden rounded-[var(--radius-lg)] border border-border bg-background lg:block">
+              <table className="w-full table-fixed border-collapse text-start text-sm leading-6">
                 <caption className="sr-only">{t("compare.caption")}</caption>
                 <thead className="bg-surface">
                   <tr className="border-b border-border">
-                    <th scope="col" className="w-[22%] px-5 py-4 font-medium">{t("compare.capability")}</th>
-                    <th scope="col" className="w-[26%] px-5 py-4 font-semibold">{t("compare.lor")}</th>
-                    <th scope="col" className="w-[26%] px-5 py-4 font-medium">Zoom</th>
-                    <th scope="col" className="w-[26%] px-5 py-4 font-medium">Google Meet</th>
+                    <th scope="col" className="text-start w-[22%] px-5 py-4 font-medium">{t("compare.capability")}</th>
+                    <th scope="col" className="text-start w-[26%] bg-foreground px-5 py-5 font-semibold text-on-foreground"><Brand size="md" /> <span className="mt-2 block text-xs font-normal">{t("compare.lorHint")}</span></th>
+                    <th scope="col" className="text-start w-[26%] px-5 py-4 font-medium">Zoom</th>
+                    <th scope="col" className="text-start w-[26%] px-5 py-4 font-medium">Google Meet</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {(["join", "collaboration", "captions", "record", "evidence"] as const).map((row) => (
+                  {(["openSource", "join", "collaboration", "captions", "record", "evidence", "keys", "search"] as const).map((row) => (
                     <ComparisonRow key={row} label={t(`compare.rows.${row}.label`)} lor={t(`compare.rows.${row}.lor`)} zoom={t(`compare.rows.${row}.zoom`)} meet={t(`compare.rows.${row}.meet`)} />
                   ))}
                 </tbody>
               </table>
             </div>
-            <div className="mt-10 grid gap-3 lg:hidden sm:grid-cols-2">
-              {(["join", "collaboration", "captions", "record", "evidence"] as const).map((row) => (
+            <div className="mt-10 grid gap-4 lg:hidden">
+              {(["openSource", "join", "collaboration", "captions", "record", "evidence", "keys", "search"] as const).map((row) => (
                 <article key={row} className="rounded-[var(--radius-lg)] border border-border bg-background p-5">
                   <h3 className="font-semibold">{t(`compare.rows.${row}.label`)}</h3>
-                  <dl className="mt-4 grid gap-3 text-sm leading-6">
-                    <div className="rounded-[var(--radius-md)] bg-surface p-3"><dt className="font-semibold">{t("compare.lor")}</dt><dd className="mt-1 text-muted">{t(`compare.rows.${row}.lor`)}</dd></div>
-                    <div><dt className="font-medium">Zoom</dt><dd className="mt-1 text-muted">{t(`compare.rows.${row}.zoom`)}</dd></div>
-                    <div><dt className="font-medium">Google Meet</dt><dd className="mt-1 text-muted">{t(`compare.rows.${row}.meet`)}</dd></div>
+                  <dl className="mt-4 grid gap-3 text-sm leading-6 sm:grid-cols-3">
+                    <div className="rounded-[var(--radius-md)] bg-foreground p-4 text-on-foreground"><dt className="font-semibold">{t("compare.lor")}</dt><dd className="mt-1">{t(`compare.rows.${row}.lor`)}</dd></div>
+                    <div className="px-1 py-2"><dt className="font-medium">Zoom</dt><dd className="mt-1 text-muted">{t(`compare.rows.${row}.zoom`)}</dd></div>
+                    <div className="px-1 py-2"><dt className="font-medium">Google Meet</dt><dd className="mt-1 text-muted">{t(`compare.rows.${row}.meet`)}</dd></div>
                   </dl>
                 </article>
               ))}
@@ -244,6 +213,8 @@ export default function PublicLanding({
               <a className={TEXT_LINK} href="https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0058013">{t("compare.sources.zoomSummary")}</a>
               <a className={TEXT_LINK} href="https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0059856">{t("compare.sources.zoomRecord")}</a>
               <a className={TEXT_LINK} href="https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0058810">{t("compare.sources.zoomCaptions")}</a>
+              <a className={TEXT_LINK} href="https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0078289">{t("compare.sources.zoomTasks")}</a>
+              <a className={TEXT_LINK} href="https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0057861">{t("compare.sources.zoomData")}</a>
               <a className={TEXT_LINK} href="https://support.google.com/meet/answer/9303069?hl=en">{t("compare.sources.meetJoin")}</a>
               <a className={TEXT_LINK} href="https://support.google.com/meet/answer/14754931?hl=en">{t("compare.sources.meetNotes")}</a>
               <a className={TEXT_LINK} href="https://support.google.com/meet/answer/9308681?hl=en">{t("compare.sources.meetRecord")}</a>
@@ -280,7 +251,7 @@ export default function PublicLanding({
                 <p className="mt-5 text-base leading-7 text-muted sm:text-lg">{t("openSource.body")}</p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3">
                 <ResourceCard href="/resources/source" title={t("openSource.source")} hint={t("openSource.sourceHint")} />
                 <ResourceCard href="/resources/contributing" title={t("openSource.contribute")} hint={t("openSource.contributeHint")} />
                 <ResourceCard href="/resources/roadmap" title={t("openSource.roadmap")} hint={t("openSource.roadmapHint")} />
@@ -310,12 +281,12 @@ export default function PublicLanding({
         <section aria-labelledby="final-title" className={`${CONTAINER} py-16 sm:py-20 lg:py-28`}>
           <div className="grid gap-8 rounded-[var(--radius-lg)] border border-border bg-foreground px-6 py-10 text-on-foreground sm:px-10 sm:py-14 lg:grid-cols-[1fr_auto] lg:items-end lg:gap-12 lg:px-14">
             <div className="max-w-2xl">
-              <div className="flex items-center gap-3"><LorMark /><p className="text-sm opacity-65">{t("final.eyebrow")}</p></div>
+              <div className="flex items-center gap-3"><Brand size="md" /><p className="text-sm opacity-65">{t("final.eyebrow")}</p></div>
               <h2 id="final-title" className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">{t("final.title")}</h2>
               <p className="mt-4 text-base leading-7 opacity-75 sm:text-lg">{t("final.body")}</p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <a href={LIVE_APP} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-on-foreground px-6 text-base font-medium text-foreground transition-opacity duration-150 hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-foreground">{t("final.liveCta")}<ArrowUpRightIcon /></a>
+              <Link href="/" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-on-foreground px-6 text-base font-medium text-foreground transition-opacity duration-150 hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-foreground">{t("final.liveCta")}<ArrowUpRightIcon /></Link>
               <Link href="/docs" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-on-foreground/40 px-6 text-base font-medium text-on-foreground transition-colors duration-150 hover:bg-on-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-foreground">{t("final.docsCta")}<BookIcon /></Link>
             </div>
           </div>
@@ -325,7 +296,7 @@ export default function PublicLanding({
       <footer className="border-t border-border">
         <div className={`${CONTAINER} flex flex-col gap-7 py-9 text-sm text-muted sm:flex-row sm:items-start sm:justify-between`}>
           <div>
-            <div className="flex items-center gap-3"><LorWordmark className="h-7 w-auto" /><span className="text-muted">{t("footer.descriptor")}</span></div>
+            <div className="flex items-center gap-3"><Brand size="md" /><span className="text-muted">{t("footer.descriptor")}</span></div>
             <p className="mt-3 max-w-sm leading-6">{t("footer.tagline")}</p>
           </div>
           <nav aria-label={t("footer.label")} className="grid grid-cols-2 gap-x-8 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-6">
@@ -341,7 +312,7 @@ export default function PublicLanding({
 }
 
 function StoryStep({ number, icon, title, children }: { number: string; icon: ReactNode; title: string; children: ReactNode }) {
-  return <li className="border-t border-border pt-5"><div className="flex items-center justify-between gap-4"><span dir="ltr" className="font-mono text-xs tabular-nums text-muted">{number}</span><span className="text-muted" aria-hidden="true">{icon}</span></div><h3 className="mt-8 text-xl font-medium tracking-tight">{title}</h3><p className="mt-3 text-base leading-7 text-muted">{children}</p></li>;
+  return <li className="border-t border-border pt-5"><div className="flex items-center justify-between gap-4"><span dir="ltr" className="font-mono text-xs tabular-nums text-muted">{number}</span><span className="text-muted" aria-hidden="true">{icon}</span></div><h3 className="mt-3 text-xl font-medium tracking-tight">{title}</h3><p className="mt-3 text-base leading-7 text-muted">{children}</p></li>;
 }
 
 function FeatureCard({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
@@ -359,19 +330,11 @@ function ResourceCard({ href, title, hint }: { href: string; title: string; hint
 }
 
 function ComparisonRow({ label, lor, zoom, meet }: { label: string; lor: string; zoom: string; meet: string }) {
-  return <tr><th scope="row" className="px-5 py-5 text-start font-medium">{label}</th><td className="bg-surface/60 px-5 py-5 font-medium">{lor}</td><td className="px-5 py-5 text-muted">{zoom}</td><td className="px-5 py-5 text-muted">{meet}</td></tr>;
+  return <tr><th scope="row" className="px-5 py-5 text-start font-medium">{label}</th><td className="border-x border-border bg-surface-strong px-5 py-5 font-medium">{lor}</td><td className="px-5 py-5 text-muted">{zoom}</td><td className="px-5 py-5 text-muted">{meet}</td></tr>;
 }
 
 function FaqItem({ question, children }: { question: string; children: ReactNode }) {
   return <details className="group"><summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-5 py-5 text-start font-medium [&::-webkit-details-marker]:hidden"><span>{question}</span><ChevronDownIcon className="shrink-0 text-muted transition-transform duration-150 group-open:rotate-180" /></summary><div className="max-w-2xl pb-6 pe-8 text-base leading-7 text-muted">{children}</div></details>;
-}
-
-function LorWordmark({ className = "" }: { className?: string }) {
-  return <svg role="img" aria-label="LOR." viewBox="0 0 360 140" fill="none" className={className}><title>LOR.</title><g stroke="currentColor" strokeWidth="20" strokeLinecap="butt" strokeLinejoin="round"><path d="M10 20V110H60" /><circle cx="136" cy="70" r="40" /><path d="M222 20V120M222 30H256A25 25 0 0 1 256 80H222M222 80L301 110" /></g><circle cx="332" cy="105" r="15" fill="var(--live)" /></svg>;
-}
-
-function LorMark() {
-  return <svg aria-hidden="true" viewBox="0 0 64 64" className="h-7 w-7"><circle cx="27" cy="30" r="13" fill="none" stroke="currentColor" strokeWidth="8" /><circle cx="50" cy="45" r="6" fill="var(--live)" /></svg>;
 }
 
 function ArrowUpRightIcon({ className = "" }: { className?: string }) {
