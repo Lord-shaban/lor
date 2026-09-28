@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { LocaleSwitcher } from "@/components/locale-switcher";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { DocumentationShell } from "@/components/documentation-shell";
+import { LandingCopyCommand } from "@/components/landing-copy-command";
 
 const repository = "https://github.com/Lord-shaban/lor";
 const topics = ["security", "contributing", "roadmap", "license", "help", "source"] as const;
@@ -19,7 +19,7 @@ const content: Record<"ar" | "en", Record<Topic, Copy>> = {
         { title: "أبلغ بسرية", body: "إذا اكتشفت ثغرة، أرسل بلاغاً خاصاً عبر تنبيهات الأمان في المستودع. نستهدف تأكيد استلامه خلال 72 ساعة ونشر إصلاح أو إجراء وقائي قبل الإعلان عنه." },
         { title: "مفاتيح مزودي الخدمة", body: "لا تُكتب مفاتيح API في قاعدة البيانات أو السجلات أو ذاكرة التخزين المؤقت. يبقى مفتاحك مشفراً في المتصفح، ويرسل مباشرة إلى المزود متى سمح بذلك. المسارات الوسيطة تمرر الطلب والنتيجة دون حفظهما." },
         { title: "النصوص والتسجيلات", body: "يُعلن بدء التفريغ وحفظ السجل كلٌّ على حدة. يتاح النص المحفوظ لمدة تصل إلى 30 يوماً، ويمكن حذفه مبكراً. تزال السطور المنتهية عند قراءتها، لذا قد تبقى بيانات غير مقروءة في التخزين إلى أن تُفتح الغرفة. يظل التسجيل المحلي في تبويب المتصفح ولا يرفعه LOR.‎." },
-        { title: "نطاق الغرفة", body: "ترتبط النصوص والقرارات والبحث بالغرفة المعنية. ويزيل حذف السجل الملخص المشتق منه. تعطيل ميزات الذكاء الاصطناعي لا يوقف الصوت أو الفيديو أو أدوات التعاون." },
+        { title: "نطاق الغرفة", body: "ترتبط النصوص والقرارات والمهام والبحث بالغرفة المعنية. يزيل حذف السجل البيانات المشتقة من مصدره، ولا يسمح البحث بإظهار مصادر منتهية أو محذوفة. تعطيل ميزات الذكاء الاصطناعي لا يوقف الصوت أو الفيديو أو أدوات التعاون." },
       ],
       action: "الإبلاغ عن ثغرة بسرية",
       url: `${repository}/security/advisories/new`,
@@ -40,7 +40,7 @@ const content: Record<"ar" | "en", Record<Topic, Copy>> = {
       title: "خريطة الطريق",
       intro: "الميزات الحالية متاحة للاستخدام. وتوضح المراحل التالية اتجاه التطوير، ولا تمثل موعد إصدار مؤكداً.",
       sections: [
-        { title: "الآن: تجربة الاجتماع", body: "غرفة فيديو برابط، وتعاون مباشر، وتفريغ نصي اختياري، وسجل قرارات ومهام مرتبط بالدليل المحفوظ داخل الغرفة." },
+        { title: "v0.7: تجربة الاجتماع المتاحة", body: "غرفة فيديو برابط، وتعاون مباشر، وتفريغ نصي اختياري، وسجل قرارات ومهام مرتبط بالدليل المحفوظ داخل الغرفة." },
         { title: "v0.8: التكاملات", body: "تحديد حدود آمنة للتكاملات الخارجية وصلاحياتها قبل طرح أي مزود أو واجهة عامة." },
         { title: "v0.9: المتانة والاستضافة الذاتية", body: "إعداد مرجعي قابل لإعادة الإنتاج مع تحقق تشغيلي وأمني. لا تتوفر الاستضافة الذاتية كمسار رسمي حالياً." },
         { title: "v1.0: الإضافات", body: "تحديد نموذج أذونات ومراجعة أمنية لمنظومة الإضافات قبل توفيرها للمستخدمين." },
@@ -90,7 +90,7 @@ const content: Record<"ar" | "en", Record<Topic, Copy>> = {
         { title: "Report privately", body: "Send vulnerability reports through GitHub Security Advisories. We aim to acknowledge reports within 72 hours and provide a fix or mitigation before public disclosure." },
         { title: "Provider keys", body: "API keys never enter the database, logs, or cache. Your key is encrypted in the browser and sent directly to the provider where possible. Proxy routes forward requests without retaining the key, audio, or transcript." },
         { title: "Transcripts and recordings", body: "Transcription and retention are announced separately. Retained text is available for up to 30 days and can be deleted sooner. Expired rows are removed on read, so unopened rooms may retain inaccessible rows until opened. Local recordings stay in the browser tab and are not uploaded by LOR." },
-        { title: "Room boundaries", body: "Transcripts, decisions, and search stay within their room. Deleting a transcript also invalidates its summary. The call and collaboration tools work without AI." },
+        { title: "Room boundaries", body: "Transcripts, decisions, tasks, and search stay within their room. Deleting a source removes its derived records; search excludes expired or deleted evidence. The call and collaboration tools work without AI." },
       ],
       action: "Report a vulnerability privately",
       url: `${repository}/security/advisories/new`,
@@ -111,7 +111,7 @@ const content: Record<"ar" | "en", Record<Topic, Copy>> = {
       title: "Roadmap",
       intro: "Current features are available today. Later phases describe direction, not promised release dates.",
       sections: [
-        { title: "Now: the meeting experience", body: "Link-based video rooms, live collaboration, optional captions, and room-scoped decisions and action items grounded in retained evidence." },
+        { title: "v0.7: the released meeting experience", body: "Link-based video rooms, live collaboration, optional captions, and room-scoped decisions and action items grounded in retained evidence." },
         { title: "v0.8: integrations", body: "Define safe permissions and boundaries for external integrations before shipping providers or a public API." },
         { title: "v0.9: hardening and self-hosting", body: "A reproducible reference deployment with operational and security checks. Self-hosting is not yet an official path." },
         { title: "v1.0: plugins", body: "Define permission and security review boundaries before offering a plugin ecosystem." },
@@ -178,46 +178,70 @@ export default async function ResourcePage({ params }: ResourceProps) {
     ? { home: "الرئيسية", docs: "دليل الاستخدام", product: "عن المنتج", back: "العودة إلى الدليل", explore: "المزيد من المعلومات" }
     : { home: "Home", docs: "Guide", product: "About", back: "Back to the guide", explore: "Explore more" };
 
+  const toc = copy.sections.map((section, index) => ({ id: `section-${index + 1}`, label: section.title }));
+  const isArabic = language === "ar";
+  const command = "npm run typecheck\nnpm run lint\nnpm test\nnpm run build\nnpm run check:docs";
+
   return (
-    <div className="min-h-full bg-background text-foreground">
-      <header className="border-b border-border bg-background">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-4 sm:px-8">
-          <Link href="/" aria-label="LOR." className="text-xl font-semibold tracking-tight"><bdi>LOR<span className="text-live">.</span></bdi></Link>
-          <nav aria-label={language === "ar" ? "التنقل" : "Navigation"} className="flex flex-wrap items-center gap-4 text-sm text-muted">
-            <Link href="/about" className="min-h-11 content-center hover:text-foreground">{labels.product}</Link>
-            <Link href="/docs" className="min-h-11 content-center hover:text-foreground">{labels.docs}</Link>
-            <ThemeToggle /><LocaleSwitcher />
-          </nav>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-6xl px-6 py-10 sm:px-8 sm:py-16">
-        <nav aria-label={language === "ar" ? "مسار الصفحة" : "Breadcrumb"} className="flex flex-wrap gap-2 text-sm text-muted">
-          <Link href="/" className="underline underline-offset-4">{labels.home}</Link><span aria-hidden="true">/</span>
-          <Link href="/docs" className="underline underline-offset-4">{labels.docs}</Link><span aria-hidden="true">/</span>
-          <span aria-current="page" className="text-foreground">{copy.title}</span>
+    <DocumentationShell locale={locale} current={topic} toc={toc}>
+      <article className="max-w-3xl">
+        <nav aria-label={isArabic ? "مسار الصفحة" : "Breadcrumb"} className="flex flex-wrap items-center gap-2 text-sm text-muted">
+          <Link href="/docs" className="min-h-11 content-center underline decoration-border underline-offset-4 hover:decoration-foreground">{labels.docs}</Link>
+          <span aria-hidden="true">/</span><span aria-current="page" className="text-foreground">{copy.title}</span>
         </nav>
-        <div className="mt-12 grid gap-12 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] lg:gap-20">
-          <div className="lg:sticky lg:top-10 lg:self-start">
-            <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">{copy.title}</h1>
-            <p className="mt-5 max-w-xl text-lg leading-8 text-muted">{copy.intro}</p>
-            <Link href="/docs" className="mt-8 inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-4">{labels.back}</Link>
-          </div>
-          <div>
-            <div className="divide-y divide-border border-y border-border">
-              {copy.sections.map((section) => (
-                <section key={section.title} className="py-8 sm:py-10">
-                  <h2 className="text-xl font-semibold">{section.title}</h2>
-                  <p className="mt-3 max-w-prose text-base leading-8 text-muted">{section.body}</p>
-                </section>
-              ))}
-            </div>
-            <div className="mt-10 rounded-[var(--radius-lg)] border border-border bg-surface p-6 sm:p-8">
-              <p className="text-sm text-muted">{labels.explore}</p>
-              <a href={copy.url} className="mt-4 inline-flex min-h-11 items-center rounded-[var(--radius-md)] bg-foreground px-5 text-sm font-medium text-on-foreground transition-opacity duration-150 hover:opacity-85">{copy.action}</a>
-            </div>
-          </div>
+        <header className="mt-5 border-b border-border pb-8 sm:pb-10">
+          <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{copy.title}</h1>
+          <p className="mt-5 max-w-prose text-base leading-8 text-muted sm:text-lg">{copy.intro}</p>
+        </header>
+        <details className="group border-b border-border xl:hidden">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+            {isArabic ? "في هذه الصفحة" : "On this page"}<span aria-hidden="true" className="text-xl text-muted group-open:rotate-45">+</span>
+          </summary>
+          <nav aria-label={isArabic ? "أقسام الصفحة" : "Page sections"} className="grid pb-3">
+            {toc.map((item) => <a key={item.id} href={`#${item.id}`} className="flex min-h-11 items-center rounded-md px-3 text-sm text-muted hover:bg-surface hover:text-foreground">{item.label}</a>)}
+          </nav>
+        </details>
+        <div className="divide-y divide-border">
+          {copy.sections.map((section, index) => (
+            <section id={`section-${index + 1}`} key={section.title} aria-labelledby={`heading-${index + 1}`} className="scroll-mt-28 py-8 sm:py-10">
+              <h2 id={`heading-${index + 1}`} className="text-xl font-semibold tracking-tight sm:text-2xl">{section.title}</h2>
+              <p className="mt-4 max-w-prose text-base leading-8 text-muted">{section.body}</p>
+            </section>
+          ))}
         </div>
-      </main>
-    </div>
+        {topic === "contributing" && (
+          <section className="mb-10 overflow-hidden rounded-lg border border-border bg-surface" aria-labelledby="verification-title">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4 sm:px-5">
+              <h2 id="verification-title" className="text-sm font-semibold">{isArabic ? "فحوصات مطلوبة قبل طلب الدمج" : "Checks before opening a pull request"}</h2>
+              <LandingCopyCommand value={command} copyLabel={isArabic ? "نسخ الأوامر" : "Copy commands"} copiedLabel={isArabic ? "تم النسخ" : "Copied"} />
+            </div>
+            <pre dir="ltr" className="overflow-x-auto p-5 text-start text-sm leading-7"><code>{command}</code></pre>
+            <p className="border-t border-border p-5 text-sm leading-7 text-muted">{isArabic ? "اختبار مكالمة الشخصين موجود، لكنه مستبعد حالياً من CI المستضاف. شغّله عند تعديل الوسائط إذا توفرت خدمات LiveKit وPostgres مؤقتة للاختبار؛ لا تستخدم بيانات الإنتاج." : "The two-person call test exists, but hosted CI currently skips it. Run it for media changes when disposable LiveKit and Postgres are available; use no production data."}</p>
+          </section>
+        )}
+        {topic === "security" && (
+          <aside className="mb-10 rounded-lg border border-border bg-surface p-5 sm:p-6">
+            <h2 className="font-semibold">{isArabic ? "حدود الضمانات الحالية" : "Current security boundaries"}</h2>
+            <p className="mt-3 text-sm leading-7 text-muted">{isArabic ? "لا يدّعي المشروع توفير تشفير طرفي كامل للاجتماع. يتصل المتصفح بخادم وسائط LiveKit، وترسل ميزات الذكاء الاصطناعي الاختيارية البيانات اللازمة إلى المزود المختار بعد الموافقة. لا تنشر روابط الغرف أو المفاتيح في البلاغات العامة." : "The project does not claim full meeting end-to-end encryption. Browsers connect through a LiveKit media server; optional AI sends the necessary data to the selected provider after consent. Keep room links and keys out of public reports."}</p>
+          </aside>
+        )}
+        {topic === "roadmap" && (
+          <aside className="mb-10 rounded-lg border border-border bg-surface p-5 sm:p-6">
+            <p className="font-semibold">{isArabic ? "ما الذي يمكنك استخدامه اليوم؟" : "What can you use today?"}</p>
+            <p className="mt-3 text-sm leading-7 text-muted">{isArabic ? "الإصدارات من v0.0 إلى v0.7 مكتملة. التكاملات، وحزمة Docker الرسمية، ونظام الإضافات مراحل مخطط لها؛ ليست ميزات متاحة حالياً." : "Releases v0.0 through v0.7 are complete. Integrations, the official Docker deployment, and the plugin system are planned milestones, not available features."}</p>
+          </aside>
+        )}
+        <aside className="border-t border-border pt-8">
+          <p className="text-sm text-muted">{isArabic ? "الخطوة التالية" : "Next step"}</p>
+          <a href={copy.url} className="mt-4 inline-flex min-h-11 items-center gap-3 rounded-md bg-foreground px-5 text-sm font-medium text-on-foreground transition-opacity hover:opacity-85">
+            {copy.action}<svg aria-hidden="true" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 15 15 5M6 5h9v9" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </a>
+          <div className="mt-8 flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted">
+            <Link href="/docs" className="flex min-h-11 items-center underline decoration-border underline-offset-4 hover:text-foreground">{labels.back}</Link>
+            <Link href={topic === "security" ? "/resources/help" : "/resources/security"} className="flex min-h-11 items-center underline decoration-border underline-offset-4 hover:text-foreground">{topic === "security" ? (isArabic ? "المساعدة والدعم" : "Help and support") : (isArabic ? "الأمان والخصوصية" : "Security and privacy")}</Link>
+          </div>
+        </aside>
+      </article>
+    </DocumentationShell>
   );
 }
