@@ -60,14 +60,17 @@
       "try": "Try the app"
     },
     "hero": {
-      "kicker": "Open source · Arabic-first",
-      "title": "From a live meeting to a decision you can trace.",
-      "description": "<brand>LOR.</brand> brings the conversation, shared work, and decision record into one room, so you can find what was agreed and why after the call.",
+      "kicker": "Open-source meetings, Arabic-first",
+      "title": "A place to meet. A record to return to.",
+      "description": "<brand>LOR.</brand> brings video calls and shared work into one room. Review decisions and commitments afterward, and return to the original words whenever you need context.",
       "supporting": "Join with a link and a name. Use audio, video, the board, and notes without an AI key, and enable optional features when you need them.",
       "liveCta": "Start a meeting",
       "docsCta": "Explore the guide",
       "sourceLead": "Want to inspect the build?",
-      "sourceCta": "Open the source"
+      "sourceCta": "Open the source",
+      "proofLicense": "AGPL-3.0 source you can inspect",
+      "proofLocale": "Arabic and English, in both directions",
+      "proofStatus": "v0.7 is available"
     },
     "showcase": {
       "live": "Live meeting",
@@ -135,9 +138,9 @@
       }
     },
     "compare": {
-      "eyebrow": "A clear comparison",
-      "title": "Which space fits your meeting?",
-      "intro": "All three services run real video meetings. The differences lie in joining, working together, and reviewing what came out of the call.",
+      "eyebrow": "Choose for the way you work",
+      "title": "Strong meetings. A different approach to the outcome.",
+      "intro": "Zoom and Google Meet offer capable meetings and advanced AI tools. LOR. focuses on inspectable source, an Arabic-first experience, and host-reviewed outcomes that stay connected to room evidence.",
       "caption": "Comparison of LOR., Zoom, and Google Meet",
       "capability": "Need",
       "lor": "LOR.",
@@ -167,10 +170,28 @@
           "meet": "Drive recording on eligible plans"
         },
         "evidence": {
-          "label": "Meeting outcomes",
-          "lor": "Host-reviewed decisions and tasks linked to a source quote",
-          "zoom": "AI Companion summary and transcript on eligible plans",
-          "meet": "Gemini notes on eligible plans, saved in Docs"
+          "label": "Decisions and tasks",
+          "lor": "Host-confirmed, with a fixed source quote, speaker, and time",
+          "zoom": "Summary, next steps, and task suggestions on eligible plans",
+          "meet": "Notes and next steps, with transcript citations when enabled, on eligible plans"
+        },
+        "openSource": {
+          "label": "Source ownership",
+          "lor": "AGPL-3.0 source you can inspect and modify",
+          "zoom": "Proprietary service",
+          "meet": "Proprietary service"
+        },
+        "keys": {
+          "label": "AI provider choice",
+          "lor": "Your key is encrypted in the browser; never stored on the server",
+          "zoom": "Configured Zoom models and services",
+          "meet": "Gemini within eligible Google services"
+        },
+        "search": {
+          "label": "Returning to knowledge",
+          "lor": "Search retained room evidence; optional semantic matches",
+          "zoom": "Questions and search through Zoom AI, depending on plan",
+          "meet": "Ask Gemini and Docs-linked notes, depending on plan"
         }
       },
       "note": "Based on product documentation in September 2026. Availability varies by plan, settings, and region. Official sources:",
@@ -182,8 +203,13 @@
         "meetJoin": "Meet guest access",
         "meetNotes": "Meet notes",
         "meetRecord": "Meet recording",
-        "meetCaptions": "Meet captions"
-      }
+        "meetCaptions": "Meet captions",
+        "zoomTasks": "Zoom tasks",
+        "zoomData": "Zoom AI data",
+        "zoomQuestions": "Zoom post-meeting questions",
+        "meetQuestions": "Ask Gemini in Meet"
+      },
+      "lorHint": "Open source · Arabic-first"
     },
     "control": {
       "eyebrow": "Designed with boundaries",
