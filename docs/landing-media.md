@@ -26,6 +26,10 @@ Documentation review evidence is recorded in
 These are 1440×900 development screenshots for PR review, not public marketing
 assets; the visible Next.js development indicator is intentional.
 
+The responsive competitor layout is recorded for review in
+[Arabic](assets/product-comparison-ar.webp) and
+[English](assets/product-comparison-en.webp), with the same development-only scope.
+
 ## Capture provenance
 
 - Captured on 2026-09-28 from the local Next.js development build on
