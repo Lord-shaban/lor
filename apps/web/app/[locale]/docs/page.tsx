@@ -8,7 +8,7 @@ import { DocumentationShell } from "@/components/documentation-shell";
 import { LandingCopyCommand } from "@/components/landing-copy-command";
 
 const TEXT_LINK =
-  "underline decoration-border underline-offset-4 transition-colors duration-150 hover:decoration-foreground";
+  "inline-flex min-h-11 min-w-11 items-center underline decoration-border underline-offset-4 transition-colors duration-150 hover:decoration-foreground";
 const QUICK_START = `git clone https://github.com/Lord-shaban/lor && cd lor
 cp .env.example .env.local
 npm install && npm run dev`;

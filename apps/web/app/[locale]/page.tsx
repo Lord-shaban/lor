@@ -80,7 +80,7 @@ export default function Home({ params }: PageProps<"/[locale]">) {
               </nav>
             </details>
             <ThemeToggle />
-            <div className="[&_a]:inline-flex"><LocaleSwitcher /></div>
+            <div className="[&_a]:inline-flex [&_a]:min-w-11 [&_a]:justify-center"><LocaleSwitcher /></div>
           </div>
         </div>
       </header>

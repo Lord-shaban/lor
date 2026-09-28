@@ -68,7 +68,7 @@ export function DocumentationShell({ locale, current = "docs", toc, children }: 
             <span aria-hidden="true" className="h-5 w-px bg-border" />
             <Link href="/docs" className="flex min-h-11 items-center text-sm font-semibold">{t.docs}</Link>
           </div>
-          <div className="flex items-center gap-1 sm:gap-3 [&_nav_a]:inline-flex [&_nav_a]:min-h-11 [&_nav_a]:items-center [&_button]:min-h-11">
+          <div className="flex items-center gap-1 sm:gap-3 [&_nav_a]:inline-flex [&_nav_a]:min-h-11 [&_nav_a]:min-w-11 [&_nav_a]:items-center [&_nav_a]:justify-center [&_button]:min-h-11">
             <Link href="/about" className="hidden min-h-11 items-center px-2 text-sm text-muted hover:text-foreground sm:inline-flex">{t.product}</Link>
             <Link href="/" className="hidden min-h-11 items-center rounded-md bg-foreground px-4 text-sm font-medium text-on-foreground sm:inline-flex">{t.start}</Link>
             <ThemeToggle /><LocaleSwitcher />

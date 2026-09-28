@@ -19,7 +19,7 @@ import {
 
 const CONTAINER = "mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12";
 const TEXT_LINK =
-  "underline decoration-border underline-offset-4 transition-colors duration-150 hover:decoration-foreground";
+  "inline-flex min-h-11 min-w-11 items-center underline decoration-border underline-offset-4 transition-colors duration-150 hover:decoration-foreground";
 
 export async function generateMetadata({
   params,
@@ -81,7 +81,7 @@ export default function PublicLanding({
               </a>
             </nav>
 
-            <div className="flex items-center justify-self-end gap-2 sm:gap-3 [&_nav_a]:inline-flex [&_nav_a]:min-h-11 [&_nav_a]:items-center [&_button]:min-h-11">
+            <div className="flex items-center justify-self-end gap-2 sm:gap-3 [&_nav_a]:inline-flex [&_nav_a]:min-h-11 [&_nav_a]:min-w-11 [&_nav_a]:items-center [&_nav_a]:justify-center [&_button]:min-h-11">
               <Button asChild size="md" className="hidden sm:inline-flex">
                 <Link href="/">{t("nav.try")}</Link>
               </Button>
