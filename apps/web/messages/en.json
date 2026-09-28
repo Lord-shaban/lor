@@ -173,7 +173,7 @@
           "label": "Decisions and tasks",
           "lor": "Host-confirmed, with a fixed source quote, speaker, and time",
           "zoom": "Summary, next steps, and task suggestions on eligible plans",
-          "meet": "Notes, decisions, and next steps through Gemini on eligible plans"
+          "meet": "Notes and next steps, with transcript citations when enabled, on eligible plans"
         },
         "openSource": {
           "label": "Source ownership",
@@ -205,7 +205,9 @@
         "meetRecord": "Meet recording",
         "meetCaptions": "Meet captions",
         "zoomTasks": "Zoom tasks",
-        "zoomData": "Zoom AI data"
+        "zoomData": "Zoom AI data",
+        "zoomQuestions": "Zoom post-meeting questions",
+        "meetQuestions": "Ask Gemini in Meet"
       },
       "lorHint": "Open source · Arabic-first"
     },
