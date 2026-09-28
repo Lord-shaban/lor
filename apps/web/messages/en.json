@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "LOR. — Live Open Rooms",
-    "description": "Open-source video meetings that remember. No account, no time limit, no download."
+    "description": "Open-source video meetings with shared work and decisions grounded in their source."
   },
   "offline": {
     "backHome": "Back to meetings",
@@ -9,8 +9,8 @@
     "body": "This page needs the network. Once you are back online, open your meeting link again."
   },
   "home": {
-    "title": "Start or join a meeting",
-    "tagline": "Open-source video meetings that remember. No account, no time limit, no download.",
+    "title": "Start the conversation. Keep what matters.",
+    "tagline": "Meet with a link and a name. Work together in one space, then return to the notes and decisions your team kept.",
     "trust": {
       "label": "What to expect",
       "noAccount": "No account",
@@ -28,7 +28,22 @@
       "contributing": "Contributing",
       "license": "AGPL-3.0"
     },
-    "roadmapHeading": "Release roadmap"
+    "roadmapHeading": "Release roadmap",
+    "workspace": {
+      "label": "One space for meetings and shared work",
+      "call": {
+        "title": "A straightforward call",
+        "body": "Audio, video, and screen sharing, right in your browser."
+      },
+      "work": {
+        "title": "Room for shared work",
+        "body": "Notes, a whiteboard, and chat without leaving the meeting."
+      },
+      "remember": {
+        "title": "Decisions with their evidence",
+        "body": "Review what was agreed, with its quote, speaker, and timestamp."
+      }
+    }
   },
   "landing": {
     "metadata": {

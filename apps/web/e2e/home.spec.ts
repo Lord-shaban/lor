@@ -9,26 +9,34 @@ const VIEWPORTS = [
 
 const copy = {
   ar: {
-    title: "ابدأ أو ادخل اجتماع",
-    start: "ابدأ اجتماع",
-    join: "ادخل",
-    badCode: "الكود ده مش مظبوط",
-    menu: "المساعدة والكود",
-    source: "الكود",
-    trust: ["من غير حساب", "من غير تحميل", "المكالمة شغالة من غير AI"],
-    starting: "بيجهّز…",
-    offline: "مفيش اتصال بالنت",
+      "title": "ابدأ المحادثة. واحتفظ بما يهم.",
+      "start": "إنشاء اجتماع",
+      "join": "انضمام",
+      "badCode": "الرمز غير صالح. تحقق منه أو الصق رابط الدعوة كاملًا.",
+      "menu": "المساعدة والمصدر",
+      "source": "الشيفرة المصدرية",
+      "trust": [
+          "لا يلزم إنشاء حساب",
+          "لا يلزم تنزيل تطبيق",
+          "تعمل المكالمة دون الذكاء الاصطناعي"
+      ],
+      "starting": "جارٍ إنشاء الاجتماع…",
+      "offline": "تعذر الاتصال بالإنترنت. تحقق من الشبكة ثم حاول مجددًا."
   },
   en: {
-    title: "Start or join a meeting",
-    start: "Start a meeting",
-    join: "Join",
-    badCode: "That code is not right",
-    menu: "Help and source",
-    source: "Source",
-    trust: ["No account", "No download", "The call works without AI"],
-    starting: "Starting…",
-    offline: "No connection",
+      "title": "Start the conversation. Keep what matters.",
+      "start": "Start a meeting",
+      "join": "Join",
+      "badCode": "That code is not right. Check it, or paste the whole link.",
+      "menu": "Help and source",
+      "source": "Source",
+      "trust": [
+          "No account",
+          "No download",
+          "The call works without AI"
+      ],
+      "starting": "Starting…",
+      "offline": "No connection. Check your network and try again."
   },
 } as const;
 

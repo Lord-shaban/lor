@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RoomLauncher } from "@/components/room-launcher";
+import { Brand } from "@/components/brand";
 
 const MENU_LINK_CLASS =
   "flex min-h-11 items-center rounded-sm px-3 py-2 text-sm text-foreground transition-colors duration-150 hover:bg-surface-strong focus-visible:bg-surface-strong";
@@ -31,16 +32,16 @@ export default function Home({ params }: PageProps<"/[locale]">) {
           <Link
             href="/"
             aria-label="LOR."
-            className="text-lg font-semibold tracking-tight"
+            className="inline-flex min-h-11 items-center"
           >
-            {/* The dot is part of the wordmark and the live indicator, not
-                punctuation. <bdi> keeps it on the right in Arabic. */}
-            <bdi>
-              LOR<span className="text-live">.</span>
-            </bdi>
+            <Brand size="sm" />
           </Link>
 
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 [&_nav_a]:min-h-11 [&_nav_a]:items-center [&_button]:min-h-11">
+            <nav aria-label={t("links.menu")} className="hidden items-center gap-1 md:flex">
+              <Link className={MENU_LINK_CLASS} href="/about">{t("links.about")}</Link>
+              <Link className={MENU_LINK_CLASS} href="/docs">{t("links.docs")}</Link>
+            </nav>
             <details className="group relative">
               <summary aria-label={t("links.menu")} className="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center gap-2 rounded-sm px-2 text-sm text-muted transition-colors duration-150 hover:bg-surface-strong hover:text-foreground">
                 <HelpIcon />
@@ -79,15 +80,16 @@ export default function Home({ params }: PageProps<"/[locale]">) {
               </nav>
             </details>
             <ThemeToggle />
-            <LocaleSwitcher />
+            <div className="[&_a]:inline-flex"><LocaleSwitcher /></div>
           </div>
         </div>
       </header>
 
-      <main className="flex flex-1 items-center justify-center px-6 py-10 sm:px-8 sm:py-16">
-        <div className="grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6 py-10 sm:px-8 sm:py-16">
+        <div className="grid w-full items-center gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-16">
           <div className="max-w-xl">
-            <h1 className="max-w-[14ch] text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+            <Brand size="lg" className="mb-8" />
+            <h1 className="text-balance text-[2rem] font-semibold leading-[1.25] tracking-tight sm:text-[2.75rem]">
               {t("title")}
             </h1>
 
@@ -111,6 +113,14 @@ export default function Home({ params }: PageProps<"/[locale]">) {
 
           <RoomLauncher />
         </div>
+        <section aria-label={t("workspace.label")} className="mt-12 grid gap-5 border-t border-border pt-6 sm:mt-16 sm:grid-cols-3 sm:gap-8">
+          {(["call", "work", "remember"] as const).map((item) => (
+            <div key={item}>
+              <h2 className="text-sm font-semibold">{t(`workspace.${item}.title`)}</h2>
+              <p className="mt-2 max-w-sm text-sm leading-6 text-muted">{t(`workspace.${item}.body`)}</p>
+            </div>
+          ))}
+        </section>
       </main>
     </div>
   );
