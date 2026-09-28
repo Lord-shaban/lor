@@ -907,7 +907,7 @@
   },
   "docs": {
     "metadata": {
-      "title": "LOR. Docs — Understand the room",
+      "title": "LOR. Documentation — Meetings, data, and development",
       "description": "A practical guide to running, understanding, and contributing to LOR. open-source video meetings."
     },
     "skip": "Skip to the documentation",
@@ -924,9 +924,9 @@
       "home": "LOR.",
       "docs": "Docs"
     },
-    "title": "Everything you need to use and understand LOR.",
-    "intro": "Start a meeting, learn what happens to its results, and find the architecture and local setup when you want to contribute.",
-    "status": "v0.7 shipped · Arabic-first · AGPL-3.0",
+    "title": "Meetings, documented.",
+    "intro": "Learn how to run a meeting, understand its retained record, or work on the code. This guide describes the released product and its limits.",
+    "status": "Product guide · v0.7.0",
     "paths": {
       "label": "Choose what to learn",
       "join": {
@@ -945,9 +945,9 @@
     "toc": {
       "label": "On this page",
       "start": "Start here",
-      "what": "What LOR. is",
+      "what": "The meeting workspace",
       "workflow": "How a room works",
-      "boundaries": "What is promised",
+      "boundaries": "Capabilities and limits",
       "architecture": "Architecture",
       "contribute": "Contribute",
       "help": "Questions"
@@ -957,60 +957,60 @@
       "title": "Run the project locally.",
       "intro": "Use the hosted app to try a meeting now. For code review or development, start with these commands and then add your local service settings.",
       "label": "Quick start",
-      "hint": "Three commands, then add your local values",
+      "hint": "Run these in a terminal, then configure services",
       "copy": "Copy commands",
       "copied": "Copied",
-      "note": "Put LiveKit and Supabase values in .env.local. The call itself does not depend on an AI key."
+      "note": "Configure LiveKit and Postgres in .env.local using .env.example. AI keys are optional. These are development steps; the official Docker deployment is planned for v0.9."
     },
     "what": {
       "eyebrow": "The product",
-      "title": "A video room that keeps work in context.",
-      "body": "Open a link, type a display name, and join. During the call, people can work together in the same room. Afterward, the useful record stays tied to its source instead of becoming a loose summary.",
-      "mixed": "Arabic and English can share a sentence without asking the transcript to choose a different language.",
-      "linkLabel": "See the public story"
+      "title": "A shared workspace with a traceable record.",
+      "body": "LOR. combines a link-based video call with chat, screen sharing, a shared board, and notes. Optional retained captions become the source for reviewed decisions and follow-up work in the same room.",
+      "mixed": "Transcription is designed for mixed Arabic and English speech. Accuracy still depends on audio and the selected provider: review the record before relying on it.",
+      "linkLabel": "Explore the product"
     },
     "workflow": {
       "eyebrow": "One room, one thread",
-      "title": "From invitation to review.",
-      "intro": "The flow is intentionally small. Each step has a clear owner and a clear edge.",
+      "title": "Use the room from start to finish.",
+      "intro": "Check your devices before joining. Choose the tools you need during the call, then review the resulting evidence with the host.",
       "steps": {
         "join": {
-          "title": "Join",
-          "body": "Share a room link, enter a name, and use the prejoin screen to check your devices before anyone hears you."
+          "title": "Check and join",
+          "body": "Open the invitation, enter a display name, and check the camera and microphone in prejoin. A waiting room may require the host to admit you."
         },
         "work": {
           "title": "Work together",
-          "body": "Keep chat, captions, a shared board, rich notes, and a local WebM close to the conversation."
+          "body": "Use chat, screen sharing, the board, and shared notes without an AI key. Captions and local recording are optional actions, with their own notices."
         },
         "review": {
           "title": "Review and return",
-          "body": "A host confirms decisions and participant-owned commitments. Timeline, Memory, and search return to retained evidence."
+          "body": "The host reviews decisions and confirms participant-owned commitments. Timeline, Memory, and search let you return to retained sources within this room."
         }
       }
     },
     "boundaries": {
-      "eyebrow": "Read this before you build",
-      "title": "Available now and planned later.",
-      "intro": "The product is deliberately explicit about what is shipped and what remains a contribution boundary.",
+      "eyebrow": "Released product",
+      "title": "Know what the product includes.",
+      "intro": "The left column describes available features. The right explains their boundaries or the release that will extend them.",
       "caption": "Current and planned LOR. capabilities",
       "capability": "Capability",
       "today": "Shipped today",
-      "planned": "Planned / not a promise",
+      "planned": "Scope and next steps",
       "rows": {
         "call": {
           "label": "Video meeting",
           "today": "LiveKit room, prejoin, chat, screen share",
-          "planned": "No account system or paid tier"
+          "planned": "Join with a link and a display name; no account required."
         },
         "evidence": {
           "label": "Retained evidence",
           "today": "Captions, decisions, tasks, Timeline, Memory, search",
-          "planned": "No cross-room or live-occurrence indexing"
+          "planned": "Search excludes other rooms, the live occurrence, expired data, and unreviewed proposals."
         },
         "privacy": {
           "label": "Privacy edges",
-          "today": "Room scope, retention cleanup, local-only recording",
-          "planned": "Self-hosting contract is v0.9 work"
+          "today": "Room-scoped records, deletion, retention rules, and browser-local recording",
+          "planned": "Retention is up to 30 days. Expired rows are cleaned on read. Official self-hosting is planned for v0.9."
         },
         "extension": {
           "label": "Extensions",
@@ -1035,26 +1035,26 @@
         }
       },
       "eyebrow": "Under the surface",
-      "title": "Three parts, clear boundaries.",
+      "title": "How the pieces fit together.",
       "intro": "Media and shared meeting state travel over LiveKit. Next.js handles short request/response work; Postgres holds the retained projection.",
       "note": "The application does not run its own long-lived WebSocket server. That boundary keeps the same code usable on a hosted or future self-hosted box."
     },
     "contribute": {
       "eyebrow": "Pick up a thread",
-      "title": "Start with a focused, testable issue.",
+      "title": "Make a change others can verify.",
       "body": "Every contribution starts with a scoped issue, a branch, the required checks, and a pull request that explains what changed. Arabic RTL is the first layout pass; English LTR follows.",
       "steps": {
         "read": "Read the contribution contract",
         "choose": "Choose a focused issue with acceptance criteria",
-        "verify": "Run typecheck, lint, tests, build, and the relevant browser check"
+        "verify": "Run typecheck, lint, tests, build, docs checks, and relevant browser verification"
       },
-      "cta": "Read CONTRIBUTING.md",
+      "cta": "Read the contribution guide",
       "roadmap": "See the contribution map"
     },
     "help": {
       "eyebrow": "Before you open an issue",
-      "title": "Questions about use and data.",
-      "intro": "If an answer is not here, the repository issue templates keep the next question concrete.",
+      "title": "Common questions",
+      "intro": "Understand the data and service boundaries before starting a meeting or opening an issue.",
       "items": {
         "keys": {
           "question": "Do API keys reach storage?",
@@ -1075,7 +1075,7 @@
       }
     },
     "next": {
-      "title": "Choose your next depth",
+      "title": "Continue exploring",
       "body": "Try the room, read the project story, or open the source when you have a concrete question to answer.",
       "project": "Read the project page",
       "try": "Try the live app",

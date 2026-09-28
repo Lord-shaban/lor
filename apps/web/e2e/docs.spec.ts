@@ -11,24 +11,26 @@ const copy = {
   ar: {
     path: "/ar/docs",
     direction: "rtl",
-    title: "كل ما تحتاج إليه لاستخدام LOR.‎ وفهمه.",
+    title: "دليل الاجتماع وما بعده.",
     start: "شغّل المشروع محلياً.",
-    workflow: "ماذا يحدث من الدعوة إلى المراجعة؟",
-    boundaries: "ما المتاح وما المخطط له؟",
-    architecture: "ثلاثة أجزاء، وحدود واضحة.",
-    contribute: "ابدأ بمهمة محددة وقابلة للاختبار.",
+    workflow: "استخدم الغرفة من البداية إلى النهاية.",
+    boundaries: "تعرّف إلى القدرات وحدودها.",
+    architecture: "كيف ترتبط أجزاء المشروع؟",
+    contribute: "قدّم تغييراً يمكن التحقق منه.",
     copy: "انسخ الأوامر",
+    browse: "تصفح التوثيق",
   },
   en: {
     path: "/en/docs",
     direction: "ltr",
-    title: "Everything you need to use and understand LOR.",
+    title: "Meetings, documented.",
     start: "Run the project locally.",
-    workflow: "From invitation to review.",
-    boundaries: "Available now and planned later.",
-    architecture: "Three parts, clear boundaries.",
-    contribute: "Start with a focused, testable issue.",
+    workflow: "Use the room from start to finish.",
+    boundaries: "Know what the product includes.",
+    architecture: "How the pieces fit together.",
+    contribute: "Make a change others can verify.",
     copy: "Copy commands",
+    browse: "Browse documentation",
   },
 } as const;
 
@@ -45,8 +47,8 @@ test.describe("public documentation hub", () => {
         await expect(page.locator("html")).toHaveAttribute("dir", text.direction);
         await expect(page.getByRole("heading", { level: 1, name: text.title })).toBeVisible();
         await expect(
-          page.getByRole("link", {
-            name: locale === "en" ? "Try the app" : "ابدأ اجتماعاً",
+          page.locator("#documentation-content").getByRole("link", {
+            name: locale === "en" ? "Try the live app" : "ابدأ اجتماعاً",
             exact: true,
           }).first(),
         ).toBeVisible();
@@ -57,7 +59,7 @@ test.describe("public documentation hub", () => {
         await expect(page.getByRole("heading", { level: 2, name: text.architecture })).toBeVisible();
         await expect(page.getByRole("heading", { level: 2, name: text.contribute })).toBeVisible();
 
-        for (const id of ["start", "what", "workflow", "boundaries", "architecture", "contribute", "help"]) {
+        for (const id of ["start", "what", "workflow", "boundaries", "architecture", "quick-start", "contribute", "help"]) {
           await expect(page.locator(`#${id}`)).toBeVisible();
         }
         await expect(page.locator("#boundaries table")).toHaveCount(1);
@@ -72,18 +74,29 @@ test.describe("public documentation hub", () => {
         await expect(page.locator("#help details")).toHaveCount(4);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
-        const mobileToc = page.locator("aside details");
+        const mobileNavigation = page.getByRole("group").filter({ has: page.getByText(text.browse, { exact: true }) });
         if (width < 1024) {
-          await expect(mobileToc.locator("summary")).toBeVisible();
-          await mobileToc.locator("summary").click();
-          await expect(mobileToc).toHaveAttribute("open", "");
+          await expect(mobileNavigation.locator("summary")).toBeVisible();
+          await mobileNavigation.locator("summary").click();
+          await expect(mobileNavigation).toHaveAttribute("open", "");
         }
         const firstNav = width < 1024
-          ? mobileToc.locator("nav a").first()
+          ? mobileNavigation.locator("nav a").first()
           : page.locator("aside > div nav a").first();
         await expect(firstNav).toBeVisible();
         await firstNav.focus();
         await expect(firstNav).toBeFocused();
+
+        if (width < 1280) {
+          const pageToc = page.locator("#documentation-content > details");
+          await pageToc.locator("summary").click();
+          await expect(pageToc).toHaveAttribute("open", "");
+          await pageToc.locator('a[href="#workflow"]').click();
+        } else {
+          await page.locator('aside > nav a[href="#workflow"]').click();
+        }
+        await expect(page).toHaveURL(/#workflow$/);
+        await expect(page.locator("#workflow-title")).toBeInViewport();
       }
     });
   }
