@@ -63,10 +63,13 @@ export function DocumentationShell({ locale, current = "docs", toc, children }: 
       <a href="#documentation-content" className="sr-only absolute start-4 top-4 z-50 rounded-md bg-foreground px-4 py-3 text-on-foreground focus:not-sr-only">{t.skip}</a>
       <header className="relative z-30 border-b border-border bg-background/95 lg:sticky lg:top-0 lg:backdrop-blur-sm">
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-8 lg:px-10">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <Link href="/" aria-label="LOR." className="inline-flex min-h-11 items-center"><Brand size="sm" /></Link>
             <span aria-hidden="true" className="h-5 w-px bg-border" />
-            <Link href="/docs" className="flex min-h-11 min-w-11 items-center text-sm font-semibold">{t.docs}</Link>
+            <Link href="/docs" className="flex min-h-11 min-w-11 items-center text-sm font-semibold">
+              <span className="sm:hidden">{locale === "en" ? "Docs" : t.docs}</span>
+              <span className="hidden sm:inline">{t.docs}</span>
+            </Link>
           </div>
           <div className="flex items-center gap-1 sm:gap-3 [&_nav_a]:inline-flex [&_nav_a]:min-h-11 [&_nav_a]:min-w-11 [&_nav_a]:items-center [&_nav_a]:justify-center [&_button]:min-h-11">
             <Link href="/about" className="hidden min-h-11 items-center px-2 text-sm text-muted hover:text-foreground sm:inline-flex">{t.product}</Link>
