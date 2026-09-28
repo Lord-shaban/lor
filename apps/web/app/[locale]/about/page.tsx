@@ -215,10 +215,12 @@ export default function PublicLanding({
               <a className={TEXT_LINK} href="https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0058810">{t("compare.sources.zoomCaptions")}</a>
               <a className={TEXT_LINK} href="https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0078289">{t("compare.sources.zoomTasks")}</a>
               <a className={TEXT_LINK} href="https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0057861">{t("compare.sources.zoomData")}</a>
+              <a className={TEXT_LINK} href="https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0076631">{t("compare.sources.zoomQuestions")}</a>
               <a className={TEXT_LINK} href="https://support.google.com/meet/answer/9303069?hl=en">{t("compare.sources.meetJoin")}</a>
               <a className={TEXT_LINK} href="https://support.google.com/meet/answer/14754931?hl=en">{t("compare.sources.meetNotes")}</a>
               <a className={TEXT_LINK} href="https://support.google.com/meet/answer/9308681?hl=en">{t("compare.sources.meetRecord")}</a>
               <a className={TEXT_LINK} href="https://support.google.com/meet/answer/15077804?hl=en">{t("compare.sources.meetCaptions")}</a>
+              <a className={TEXT_LINK} href="https://support.google.com/meet/answer/16024610?hl=en">{t("compare.sources.meetQuestions")}</a>
             </div>
           </div>
         </section>
