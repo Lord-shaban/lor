@@ -90,6 +90,8 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       dir={direction[locale as Locale]}
+      // ThemeScript applies the saved theme before hydration to avoid a flash.
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${plexArabic.variable} h-full antialiased`}
     >
       <head>
