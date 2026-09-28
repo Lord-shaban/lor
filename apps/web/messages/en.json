@@ -258,6 +258,15 @@
       "source": "Source",
       "security": "Security",
       "product": "Start a meeting"
+    },
+    "screenshot": {
+      "callLabel": "Meeting workspace · Product capture",
+      "callAlt": "Actual LOR. meeting interface showing participants and collaboration tools",
+      "callCaption": "Real product interface captured with demonstration data; this is not a live meeting and contains no user data.",
+      "homeLabel": "Start a meeting · Product capture",
+      "homeAlt": "Actual LOR. home screen with create and join meeting options",
+      "homeCaption": "The actual start screen. Create a room or follow an invitation, then choose your name and check your devices before joining.",
+      "inspect": "View full-size capture"
     }
   },
   "releases": {
