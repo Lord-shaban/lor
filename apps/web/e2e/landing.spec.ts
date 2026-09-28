@@ -9,27 +9,29 @@ const VIEWPORTS = [
 
 const copy = {
   ar: {
-    path: "/ar/about",
+    path: "/about",
+    productHref: "/",
     direction: "rtl",
-    title: "من اجتماع مباشر إلى قرار يمكن تتبّعه.",
+    title: "مساحة للقاء. ومرجع لما اتفقتم عليه.",
     live: "ابدأ اجتماعاً",
     docs: "استكشف الدليل",
     source: "استعرض الشيفرة",
-    visual: "تصوّر توضيحي مبني على واجهة الاجتماع والقرارات؛ لا يعرض اجتماعاً حقيقياً أو بيانات مستخدمين.",
+    visual: "لقطة من واجهة المنتج ببيانات توضيحية؛ لا تعرض اجتماعًا حقيقيًا أو بيانات مستخدمين.",
     product: "ادخل، تعاون، ثم ارجع إلى النتيجة.",
-    compare: "أي مساحة تناسب اجتماعك؟",
+    compare: "مكالمات قوية. وفلسفة مختلفة للمخرجات.",
     faq: "أسئلة قبل بدء الاجتماع.",
   },
   en: {
     path: "/en/about",
+    productHref: "/en",
     direction: "ltr",
-    title: "From a live meeting to a decision you can trace.",
+    title: "A place to meet. A record to return to.",
     live: "Start a meeting",
     docs: "Explore the guide",
     source: "Open the source",
-    visual: "Illustrative view based on the meeting and decision interfaces. It contains no real meeting or user data.",
+    visual: "Real product interface captured with demonstration data; this is not a live meeting and contains no user data.",
     product: "Join, collaborate, and return to the outcome.",
-    compare: "Which space fits your meeting?",
+    compare: "Strong meetings. A different approach to the outcome.",
     faq: "Questions before you join.",
   },
 } as const;
@@ -48,7 +50,7 @@ test.describe("public project landing", () => {
         await expect(page.getByRole("heading", { level: 1, name: text.title })).toBeVisible();
         await expect(page.getByRole("link", { name: text.live, exact: true }).first()).toHaveAttribute(
           "href",
-          "https://lor-bay.vercel.app",
+          text.productHref,
         );
         await expect(page.getByRole("link", { name: text.source, exact: true })).toHaveAttribute(
           "href",
@@ -59,7 +61,17 @@ test.describe("public project landing", () => {
           /docs/,
         );
 
-        await expect(page.getByRole("figure").first().getByText(text.visual, { exact: true })).toBeVisible();
+        const captures = page.getByRole("figure");
+        await expect(captures).toHaveCount(2);
+        await expect(captures.first().getByText(text.visual, { exact: true })).toBeVisible();
+        for (const [index, kind] of ["call", "home"].entries()) {
+          const image = captures.nth(index).getByRole("img");
+          await image.scrollIntoViewIfNeeded();
+          await expect(image).toHaveAttribute("src", new RegExp(`product-${kind}-${locale}`));
+          await expect.poll(() => image.evaluate((element: HTMLImageElement) =>
+            element.complete && element.naturalWidth > 0,
+          )).toBe(true);
+        }
 
         await expect(page.getByRole("heading", { level: 2, name: text.product })).toBeVisible();
         await expect(page.getByRole("heading", { level: 2, name: text.compare })).toBeVisible();
@@ -69,7 +81,7 @@ test.describe("public project landing", () => {
         }
         await expect(page.locator("#compare table")).toHaveCount(1);
         await expect(page.locator("#compare thead th")).toHaveCount(4);
-        await expect(page.locator("#compare tbody tr")).toHaveCount(5);
+        await expect(page.locator("#compare tbody tr")).toHaveCount(8);
         const comparison = width < 1024 ? page.locator("#compare article").first() : page.locator("#compare table");
         await expect(comparison.getByText("Zoom", { exact: true }).first()).toBeVisible();
         await expect(comparison.getByText("Google Meet", { exact: true }).first()).toBeVisible();
